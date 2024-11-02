@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "entitytesting",
+	"version": "${version}",
+	"name": "EntityTesting",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/entitytesting/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"io.github.brainage04.entitytesting.EntityTesting"
+		],
+		"client": [
+			"io.github.brainage04.entitytesting.EntityTestingClient"
+		]
+	},
+	"mixins": [
+		"entitytesting.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.9",
+		"minecraft": "~1.21.3",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
