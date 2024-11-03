@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
-	"id": "entitytesting",
+	"id": "magic_carpet",
 	"version": "${version}",
-	"name": "EntityTesting",
+	"name": "MagicCarpet",
 	"description": "This is an example description! Tell everyone what your mod is about!",
 	"authors": [
 		"Me!"
@@ -12,18 +12,18 @@
 		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/entitytesting/icon.png",
+	"icon": "assets/magic_carpet/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"io.github.brainage04.entitytesting.EntityTesting"
+			"io.github.brainage04.magic_carpet.MagicCarpet"
 		],
 		"client": [
-			"io.github.brainage04.entitytesting.EntityTestingClient"
+			"io.github.brainage04.magic_carpet.MagicCarpetClient"
 		]
 	},
 	"mixins": [
-		"entitytesting.mixins.json"
+      "magic_carpet.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.16.9",

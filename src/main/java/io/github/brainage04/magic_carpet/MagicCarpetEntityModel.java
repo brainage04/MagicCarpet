@@ -1,13 +1,18 @@
-package io.github.brainage04.entitytesting;
+package io.github.brainage04.magic_carpet;
 
 import net.minecraft.client.model.*;
 import net.minecraft.client.render.entity.model.EntityModel;
+import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.client.render.entity.model.EntityModelPartNames;
+import net.minecraft.util.Identifier;
 
-public class CubeEntityModel extends EntityModel<CubeEntityRenderState> {
+public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderState> {
+    public static final EntityModelLayer ENTITY_MODEL_LAYER =
+            new EntityModelLayer(Identifier.of(MagicCarpet.MOD_ID, "magic_carpet"), "main");
+
     private final ModelPart base;
 
-    public CubeEntityModel(ModelPart modelPart) {
+    public MagicCarpetEntityModel(ModelPart modelPart) {
         super(modelPart);
         this.base = modelPart.getChild(EntityModelPartNames.CUBE);
     }
