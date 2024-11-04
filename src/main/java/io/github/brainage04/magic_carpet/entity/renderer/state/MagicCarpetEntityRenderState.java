@@ -1,4 +1,4 @@
-package io.github.brainage04.magic_carpet;
+package io.github.brainage04.magic_carpet.entity.renderer.state;
 
 import net.minecraft.client.render.entity.state.EntityRenderState;
 

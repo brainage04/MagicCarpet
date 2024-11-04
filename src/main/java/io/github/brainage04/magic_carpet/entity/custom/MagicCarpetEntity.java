@@ -1,5 +1,7 @@
-package io.github.brainage04.magic_carpet;
+package io.github.brainage04.magic_carpet.entity.custom;
 
+import io.github.brainage04.magic_carpet.MagicCarpet;
+import io.github.brainage04.magic_carpet.item.ModItems;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.input.Input;
@@ -44,7 +46,7 @@ public class MagicCarpetEntity extends VehicleEntity {
 
     @Override
     public boolean isCollidable() {
-        return false;
+        return true;
     }
 
     @Override

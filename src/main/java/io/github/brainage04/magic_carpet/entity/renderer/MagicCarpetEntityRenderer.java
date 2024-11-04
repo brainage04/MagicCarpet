@@ -1,5 +1,8 @@
-package io.github.brainage04.magic_carpet;
+package io.github.brainage04.magic_carpet.entity.renderer;
 
+import io.github.brainage04.magic_carpet.entity.renderer.state.MagicCarpetEntityRenderState;
+import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
+import io.github.brainage04.magic_carpet.entity.model.MagicCarpetEntityModel;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
@@ -17,7 +20,7 @@ public class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarpetEntity,
     private final Identifier texture;
     private final EntityModel<MagicCarpetEntityRenderState> model;
 
-    protected MagicCarpetEntityRenderer(EntityRendererFactory.Context context) {
+    public MagicCarpetEntityRenderer(EntityRendererFactory.Context context) {
         super(context);
         this.texture = MagicCarpetEntityModel.ENTITY_MODEL_LAYER.id().withPath((path) -> "textures/entity/" + path + ".png");
         this.model = new MagicCarpetEntityModel(context.getPart(MagicCarpetEntityModel.ENTITY_MODEL_LAYER));

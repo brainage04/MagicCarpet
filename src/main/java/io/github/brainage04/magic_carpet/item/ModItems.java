@@ -1,5 +1,7 @@
-package io.github.brainage04.magic_carpet;
+package io.github.brainage04.magic_carpet.item;
 
+import io.github.brainage04.magic_carpet.MagicCarpet;
+import io.github.brainage04.magic_carpet.item.custom.MagicCarpetItem;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;

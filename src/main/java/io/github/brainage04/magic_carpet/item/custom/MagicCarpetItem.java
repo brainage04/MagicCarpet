@@ -1,5 +1,6 @@
-package io.github.brainage04.magic_carpet;
+package io.github.brainage04.magic_carpet.item.custom;
 
+import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.sound.SoundEvents;

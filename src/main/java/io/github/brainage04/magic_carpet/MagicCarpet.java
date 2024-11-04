@@ -1,5 +1,7 @@
 package io.github.brainage04.magic_carpet;
 
+import io.github.brainage04.magic_carpet.item.ModItemGroups;
+import io.github.brainage04.magic_carpet.item.ModItems;
 import net.fabricmc.api.ModInitializer;
 
 import org.slf4j.Logger;

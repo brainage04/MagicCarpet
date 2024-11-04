@@ -1,6 +1,6 @@
 package io.github.brainage04.magic_carpet.mixin;
 
-import io.github.brainage04.magic_carpet.MagicCarpetEntity;
+import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;

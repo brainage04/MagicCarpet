@@ -1,5 +1,7 @@
-package io.github.brainage04.magic_carpet;
+package io.github.brainage04.magic_carpet.entity.model;
 
+import io.github.brainage04.magic_carpet.MagicCarpet;
+import io.github.brainage04.magic_carpet.entity.renderer.state.MagicCarpetEntityRenderState;
 import net.minecraft.client.model.*;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
