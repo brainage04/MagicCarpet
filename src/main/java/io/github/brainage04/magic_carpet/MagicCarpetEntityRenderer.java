@@ -8,6 +8,8 @@ import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.RotationAxis;
 
@@ -33,9 +35,8 @@ public class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarpetEntity,
     public void render(MagicCarpetEntityRenderState state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
 
-        matrices.translate(0.0F, -0.75F, 0.0F);
+        matrices.translate(0.0F, -1.5F, 0.0F);
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - state.yaw));
-
 
         EntityModel<MagicCarpetEntityRenderState> entityModel = this.getModel();
         entityModel.setAngles(state);
@@ -54,7 +55,11 @@ public class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarpetEntity,
 
     @Override
     public void updateRenderState(MagicCarpetEntity entity, MagicCarpetEntityRenderState state, float tickDelta) {
-        state.yaw = entity.getLerpedYaw(tickDelta);
+        LivingEntity livingEntity = entity.getControllingPassenger();
+
+        if (livingEntity instanceof PlayerEntity player) {
+            state.yaw = player.getLerpedYaw(tickDelta);
+        }
 
         super.updateRenderState(entity, state, tickDelta);
     }

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "YDY",
+    "RNR",
+    "YDY"
+  ],
+  "key": {
+    "Y": "minecraft:yellow_wool",
+    "R": "minecraft:red_wool",
+    "D": "minecraft:diamond_block",
+    "N": "minecraft:nether_star"
+  },
+  "result": {
+    "id": "magic_carpet:magic_carpet",
+    "count": 2
+  }
+}
+

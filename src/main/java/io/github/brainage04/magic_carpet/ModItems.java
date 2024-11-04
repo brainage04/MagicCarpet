@@ -1,6 +1,8 @@
 package io.github.brainage04.magic_carpet;
 
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroups;
 import net.minecraft.item.Items;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -16,7 +18,9 @@ public class ModItems {
         return Items.register(registryKey, factory, settings);
     }
 
-    public static void initialize() {
-        MagicCarpet.LOGGER.info(MAGIC_CARPET.toString());
+    public static void registerToVanillaItemGroups() {
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> {
+            content.add(ModItems.MAGIC_CARPET);
+        });
     }
 }
