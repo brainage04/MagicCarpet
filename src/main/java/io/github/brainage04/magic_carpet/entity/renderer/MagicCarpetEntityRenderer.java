@@ -38,8 +38,9 @@ public class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarpetEntity,
     public void render(MagicCarpetEntityRenderState state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
 
-        matrices.translate(0.0F, -1.5F, 0.0F);
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - state.yaw));
+
+        matrices.translate(0.0F, -1.5F, 0.0F);
 
         EntityModel<MagicCarpetEntityRenderState> entityModel = this.getModel();
         entityModel.setAngles(state);

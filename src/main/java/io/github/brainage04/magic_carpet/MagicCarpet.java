@@ -13,7 +13,7 @@ public class MagicCarpet implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		ModItems.registerToVanillaItemGroups();
+		ModItems.initialize();
 		ModItemGroups.initialize();
 	}
 }

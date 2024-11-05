@@ -1,0 +1,36 @@
+{
+  "display": {
+    "icon": {
+      "id": "magic_carpet:magic_carpet",
+      "count": 1
+    },
+    "title": "Aladdin",
+    "description": "Flying magical carpets are back in",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "minecraft:magic_carpet/root",
+  "criteria": {
+    "got_magic_carpet": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "magic_carpet:magic_carpet"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "got_magic_carpet"
+    ]
+  ],
+  "rewards": {
+    "experience": 500
+  },
+  "sends_telemetry_event": true
+}

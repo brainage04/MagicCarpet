@@ -20,6 +20,10 @@ public class ModItems {
         return Items.register(registryKey, factory, settings);
     }
 
+    public static void initialize() {
+        registerToVanillaItemGroups();
+    }
+
     public static void registerToVanillaItemGroups() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> {
             content.add(ModItems.MAGIC_CARPET);

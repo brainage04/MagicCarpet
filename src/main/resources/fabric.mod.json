@@ -20,10 +20,13 @@
 		],
 		"client": [
 			"io.github.brainage04.magic_carpet.MagicCarpetClient"
+		],
+		"fabric-datagen": [
+			"io.github.brainage04.magic_carpet.MagicCarpetDatagen"
 		]
 	},
 	"mixins": [
-      "magic_carpet.json"
+		"magic_carpet.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.16.9",

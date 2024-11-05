@@ -1,0 +1,39 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:white_wool",
+      "count": 1
+    },
+    "title": "Magic Carpet",
+    "description": "A new form of flying transportation awaits...",
+    "background": "minecraft:textures/block/white_wool.png",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_wool": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "#minecraft:wool"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "got_wool"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "magic_carpet:magic_carpet"
+    ],
+    "experience": 50
+  },
+  "sends_telemetry_event": true
+}

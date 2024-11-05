@@ -3,7 +3,13 @@
 	"package": "io.github.brainage04.magic_carpet.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+
+	],
+	"client": [
 		"ClientPlayerEntityMixin"
+	],
+	"server": [
+
 	],
 	"injectors": {
 		"defaultRequire": 1

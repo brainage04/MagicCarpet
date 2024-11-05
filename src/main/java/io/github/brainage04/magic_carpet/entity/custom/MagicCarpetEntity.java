@@ -50,11 +50,6 @@ public class MagicCarpetEntity extends VehicleEntity {
     }
 
     @Override
-    public boolean isPushable() {
-        return false;
-    }
-
-    @Override
     public boolean canHit() {
         return !this.isRemoved();
     }
@@ -63,9 +58,12 @@ public class MagicCarpetEntity extends VehicleEntity {
     public void tick() {
         super.tick();
 
-        if (this.isLogicalSideForUpdatingMovement()) {
-            this.updateVelocity();
+        if (isLogicalSideForUpdatingMovement()) {
+            updateVelocity();
         }
+
+        // disable fall damage
+
     }
 
     @Override
@@ -89,13 +87,13 @@ public class MagicCarpetEntity extends VehicleEntity {
         if (actionResult != ActionResult.PASS) {
             return actionResult;
         } else {
-            return player.shouldCancelInteraction() || !this.getWorld().isClient && !player.startRiding(this) ? ActionResult.PASS : ActionResult.SUCCESS;
+            return player.shouldCancelInteraction() || !getWorld().isClient && !player.startRiding(this) ? ActionResult.PASS : ActionResult.SUCCESS;
         }
     }
 
     @Override
     protected boolean canAddPassenger(Entity passenger) {
-        return this.getPassengerList().size() < this.getMaxPassengers();
+        return getPassengerList().size() < getMaxPassengers();
     }
 
     protected int getMaxPassengers() {
@@ -111,7 +109,7 @@ public class MagicCarpetEntity extends VehicleEntity {
 
     @Override
     public @Nullable LivingEntity getControllingPassenger() {
-        Entity var2 = this.getFirstPassenger();
+        Entity var2 = getFirstPassenger();
         LivingEntity var10000;
         if (var2 instanceof LivingEntity livingEntity) {
             var10000 = livingEntity;
@@ -135,17 +133,25 @@ public class MagicCarpetEntity extends VehicleEntity {
     }
 
     private void updateVelocity() {
-        LivingEntity passenger = this.getControllingPassenger();
+        LivingEntity passenger = getControllingPassenger();
 
         if (!(passenger instanceof PlayerEntity player)) return;
 
         Vec3d velocity = new Vec3d(
                 MathHelper.sin(-player.getYaw() * 0.017453292F) * movementForward +
                         MathHelper.cos(-player.getYaw() * 0.017453292F) * movementSideways,
-                pressingSpace ? getVerticalVelocity(player.getPitch()) : getFinalGravity(),
+                0.0,
                 MathHelper.cos(player.getYaw() * 0.017453292F) * movementForward +
                         MathHelper.sin(player.getYaw() * 0.017453292F) * movementSideways
-        ).normalize();
+        ).normalize().add(
+                new Vec3d(
+                        0.0,
+                        pressingSpace ? getVerticalVelocity(player.getPitch()) : getFinalGravity(),
+                        0.0
+                )
+        );
+
+        setVelocity(velocity);
 
         move(MovementType.PLAYER, velocity);
     }
