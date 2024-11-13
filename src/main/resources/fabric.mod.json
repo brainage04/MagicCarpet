@@ -3,13 +3,13 @@
 	"id": "magic_carpet",
 	"version": "${version}",
 	"name": "MagicCarpet",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Adds Magic Carpets to Minecraft.",
 	"authors": [
-		"Me!"
+		"brainage04"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/brainage04",
+		"sources": "https://github.com/brainage04/MagicCarpet"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/magic_carpet/icon.png",
