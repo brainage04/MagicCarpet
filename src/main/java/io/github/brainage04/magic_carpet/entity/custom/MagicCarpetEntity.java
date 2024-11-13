@@ -35,6 +35,9 @@ public class MagicCarpetEntity extends VehicleEntity {
     private float movementSideways = 0.0f;
     private boolean pressingSpace = false;
 
+    // range: 0-1. lower = faster acceleration from 0 to max velocity
+    private static final double SMOOTHING_FACTOR = 0.1;
+
     public MagicCarpetEntity(EntityType<? extends VehicleEntity> entityType, World world) {
         super(entityType, world);
     }
@@ -61,9 +64,6 @@ public class MagicCarpetEntity extends VehicleEntity {
         if (isLogicalSideForUpdatingMovement()) {
             updateVelocity();
         }
-
-        // disable fall damage
-
     }
 
     @Override
@@ -137,7 +137,7 @@ public class MagicCarpetEntity extends VehicleEntity {
 
         if (!(passenger instanceof PlayerEntity player)) return;
 
-        Vec3d velocity = new Vec3d(
+        Vec3d targetVelocity = new Vec3d(
                 MathHelper.sin(-player.getYaw() * 0.017453292F) * movementForward +
                         MathHelper.cos(-player.getYaw() * 0.017453292F) * movementSideways,
                 0.0,
@@ -151,8 +151,11 @@ public class MagicCarpetEntity extends VehicleEntity {
                 )
         );
 
-        setVelocity(velocity);
+        Vec3d currentVelocity = getVelocity();
+        Vec3d smoothedVelocity = currentVelocity.lerp(targetVelocity, SMOOTHING_FACTOR);
 
-        move(MovementType.PLAYER, velocity);
+        setVelocity(smoothedVelocity);
+
+        move(MovementType.PLAYER, this.getVelocity());
     }
 }
