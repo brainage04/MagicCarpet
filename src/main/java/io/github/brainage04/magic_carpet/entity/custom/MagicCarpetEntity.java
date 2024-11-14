@@ -64,6 +64,10 @@ public class MagicCarpetEntity extends VehicleEntity {
         if (isLogicalSideForUpdatingMovement()) {
             updateVelocity();
         }
+
+        if (hasControllingPassenger()) {
+            setYaw(getControllingPassenger().getYaw());
+        }
     }
 
     @Override
@@ -157,5 +161,20 @@ public class MagicCarpetEntity extends VehicleEntity {
         setVelocity(smoothedVelocity);
 
         move(MovementType.PLAYER, this.getVelocity());
+    }
+
+    @Override
+    protected Vec3d getPassengerAttachmentPos(Entity passenger, EntityDimensions dimensions, float scaleFactor) {
+        float f = 0.0F;
+        if (this.getPassengerList().size() > 1) {
+            int i = this.getPassengerList().indexOf(passenger);
+            if (i == 0) {
+                f = 0.4F;
+            } else {
+                f = -0.4F;
+            }
+        }
+
+        return new Vec3d(0.0, dimensions.height() / 3.0F, f).rotateY(-this.getYaw() * 0.017453292F);
     }
 }

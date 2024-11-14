@@ -11,8 +11,6 @@ import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.RotationAxis;
 
@@ -59,11 +57,7 @@ public class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarpetEntity,
 
     @Override
     public void updateRenderState(MagicCarpetEntity entity, MagicCarpetEntityRenderState state, float tickDelta) {
-        LivingEntity livingEntity = entity.getControllingPassenger();
-
-        if (livingEntity instanceof PlayerEntity player) {
-            state.yaw = player.getLerpedYaw(tickDelta);
-        }
+        state.yaw = entity.getLerpedYaw(tickDelta);
 
         super.updateRenderState(entity, state, tickDelta);
     }
