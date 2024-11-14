@@ -20,9 +20,6 @@
 		],
 		"client": [
 			"io.github.brainage04.magic_carpet.MagicCarpetClient"
-		],
-		"fabric-datagen": [
-			"io.github.brainage04.magic_carpet.MagicCarpetDatagen"
 		]
 	},
 	"mixins": [
