@@ -4,4 +4,6 @@ import net.minecraft.client.render.entity.state.EntityRenderState;
 
 public class MagicCarpetEntityRenderState extends EntityRenderState {
     public float yaw;
+    public float pitch;
+    public float roll;
 }

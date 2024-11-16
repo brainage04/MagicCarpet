@@ -12,6 +12,7 @@ import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 
 public class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarpetEntity, MagicCarpetEntityRenderState> {
@@ -36,7 +37,13 @@ public class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarpetEntity,
     public void render(MagicCarpetEntityRenderState state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
 
+        // DO NOT CHANGE THE ORDER OF THESE STATEMENTS
+        // horizontal rotation (along controlling passenger's Y axis)
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - state.yaw));
+        // forward rotation (along controlling passenger's X axis)
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(state.pitch));
+        // sideways rotation (along controlling passenger's Z axis)
+        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(state.roll));
 
         matrices.translate(0.0F, -1.5F, 0.0F);
 
@@ -58,6 +65,26 @@ public class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarpetEntity,
     @Override
     public void updateRenderState(MagicCarpetEntity entity, MagicCarpetEntityRenderState state, float tickDelta) {
         state.yaw = entity.getLerpedYaw(tickDelta);
+
+        float yaw = (float) Math.toRadians(state.yaw);
+
+        float sin = MathHelper.sin(yaw);
+        float cos = MathHelper.cos(yaw);
+
+        double x = entity.getVelocity().getX();
+        double z = entity.getVelocity().getZ();
+
+        state.pitch = (float) MathHelper.clamp(
+                (entity.getVelocity().getY() - (cos * z - sin * x)) * 30.0F,
+                -45.0F,
+                45.0F
+        );
+
+        state.roll = (float) MathHelper.clamp(
+                (sin * z + cos * x) * 30.0F,
+                -30.0F,
+                30.0F
+        );
 
         super.updateRenderState(entity, state, tickDelta);
     }

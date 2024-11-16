@@ -6,10 +6,13 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.input.Input;
 import net.minecraft.entity.*;
+import net.minecraft.entity.mob.CreakingEntity;
+import net.minecraft.entity.mob.WaterCreatureEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.vehicle.VehicleEntity;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -21,6 +24,8 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class MagicCarpetEntity extends VehicleEntity {
     public static final EntityType<MagicCarpetEntity> ENTITY_TYPE = Registry.register(
@@ -64,6 +69,8 @@ public class MagicCarpetEntity extends VehicleEntity {
         if (isLogicalSideForUpdatingMovement()) {
             updateVelocity();
         }
+
+        collectAdditionalPassengers();
 
         if (hasControllingPassenger()) {
             setYaw(getControllingPassenger().getYaw());
@@ -141,18 +148,14 @@ public class MagicCarpetEntity extends VehicleEntity {
 
         if (!(passenger instanceof PlayerEntity player)) return;
 
+        float yaw = (float) Math.toRadians(player.getYaw());
+        float sin = MathHelper.sin(yaw);
+        float cos = MathHelper.cos(yaw);
+
         Vec3d targetVelocity = new Vec3d(
-                MathHelper.sin(-player.getYaw() * 0.017453292F) * movementForward +
-                        MathHelper.cos(-player.getYaw() * 0.017453292F) * movementSideways,
-                0.0,
-                MathHelper.cos(player.getYaw() * 0.017453292F) * movementForward +
-                        MathHelper.sin(player.getYaw() * 0.017453292F) * movementSideways
-        ).normalize().add(
-                new Vec3d(
-                        0.0,
-                        pressingSpace ? getVerticalVelocity(player.getPitch()) : getFinalGravity(),
-                        0.0
-                )
+                cos * movementSideways - sin * movementForward,
+                pressingSpace ? getVerticalVelocity(player.getPitch()) : getFinalGravity(),
+                sin * movementSideways + cos * movementForward
         );
 
         Vec3d currentVelocity = getVelocity();
@@ -176,5 +179,21 @@ public class MagicCarpetEntity extends VehicleEntity {
         }
 
         return new Vec3d(0.0, dimensions.height() / 3.0F, f).rotateY(-this.getYaw() * 0.017453292F);
+    }
+
+    private void collectAdditionalPassengers() {
+        List<Entity> list = this.getWorld().getOtherEntities(this, this.getBoundingBox().expand(0.20000000298023224, -0.009999999776482582, 0.20000000298023224), EntityPredicates.canBePushedBy(this));
+
+        if (!list.isEmpty()) {
+            boolean bl = !this.getWorld().isClient && !(this.getControllingPassenger() instanceof PlayerEntity);
+
+            for (Entity entity : list) {
+                if (bl && this.getPassengerList().size() < this.getMaxPassengers() && !entity.hasVehicle() && entity.getWidth() < this.getWidth() && entity instanceof LivingEntity && !(entity instanceof WaterCreatureEntity) && !(entity instanceof PlayerEntity) && !(entity instanceof CreakingEntity)) {
+                    entity.startRiding(this);
+                } else {
+                    this.pushAwayFrom(entity);
+                }
+            }
+        }
     }
 }
