@@ -9,4 +9,4 @@ To move down, look almost completely down.
 
 # Known Bugs
 - Velocity is paused when controlling passenger exits vehicle, then resumes when they re-enter
-- (is this a bug? might be annoying if you're going fast and then exit the Magic Carpet, and it moves out from underneath you while you're really high up and then you die of fall damage)
+- (is this a bug? might be annoying if you're going fast and then exit the Magic Carpet, and it moves out from underneath you while you're really high up, and then you die of fall damage)

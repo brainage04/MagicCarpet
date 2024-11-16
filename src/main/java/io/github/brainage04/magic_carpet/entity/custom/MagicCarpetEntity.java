@@ -73,6 +73,7 @@ public class MagicCarpetEntity extends VehicleEntity {
         collectAdditionalPassengers();
 
         if (hasControllingPassenger()) {
+            //noinspection DataFlowIssue - should be obvious why
             setYaw(getControllingPassenger().getYaw());
         }
     }

@@ -72,10 +72,11 @@ public class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarpetEntity,
         float cos = MathHelper.cos(yaw);
 
         double x = entity.getVelocity().getX();
+        double y = entity.getVelocity().getY();
         double z = entity.getVelocity().getZ();
 
         state.pitch = (float) MathHelper.clamp(
-                (entity.getVelocity().getY() - (cos * z - sin * x)) * 30.0F,
+                (y - (cos * z - sin * x)) * 30.0F,
                 -45.0F,
                 45.0F
         );

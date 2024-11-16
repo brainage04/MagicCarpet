@@ -53,7 +53,9 @@ public class MagicCarpetItem extends Item {
             if (hitResult.getType() == HitResult.Type.BLOCK) {
                 MagicCarpetEntity entity = createEntity(world, hitResult, itemStack, user);
 
-                if (!world.isSpaceEmpty(entity, entity.getBoundingBox())) {
+                if (entity == null) {
+                    return ActionResult.FAIL;
+                } else if (!world.isSpaceEmpty(entity, entity.getBoundingBox())) {
                     return ActionResult.FAIL;
                 } else {
                     if (!world.isClient) {
