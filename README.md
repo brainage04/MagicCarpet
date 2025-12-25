@@ -1,5 +1,6 @@
 # About
-The Magic Carpet recipe can be unlocked by collecting Wool of any colour, which will unlock the recipe.
+The first Magic Carpet recipe (Basic Magic Carpet) can be unlocked by collecting Wool of any colour.
+Crafting said Magic Carpet will unlock the recipe for the next tier of Magic Carpet.
 
 There are three different tiers of Magic Carpet:
 1. Basic - 4 Yellow Wool, 2 Red Wool, 2 String, 1 Stick
