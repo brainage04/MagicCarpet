@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PSP",
+    "DCD",
+    "EEE"
+  ],
+  "key": {
+    "P": "minecraft:ender_pearl",
+    "S": "minecraft:nether_star",
+    "D": "minecraft:diamond_block",
+    "C": "magic_carpet:advanced_magic_carpet",
+    "E": "minecraft:emerald_block"
+  },
+  "result": {
+    "id": "magic_carpet:legendary_magic_carpet"
+  }
+}
+

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "YSY",
+    "RIR",
+    "YSY"
+  ],
+  "key": {
+    "Y": "minecraft:yellow_wool",
+    "R": "minecraft:red_wool",
+    "S": "minecraft:string",
+    "I": "minecraft:stick"
+  },
+  "result": {
+    "id": "magic_carpet:basic_magic_carpet"
+  }
+}
+

@@ -1,0 +1,36 @@
+{
+  "display": {
+    "icon": {
+      "id": "magic_carpet:legendary_magic_carpet",
+      "count": 1
+    },
+    "title": "Aladdin",
+    "description": "Craft a Legendary Magic Carpet. Flying magical carpets are back in season!",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "magic_carpet:advanced_magic_carpet",
+  "criteria": {
+    "got_magic_carpet": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "magic_carpet:legendary_magic_carpet"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "got_magic_carpet"
+    ]
+  ],
+  "rewards": {
+    "experience": 2000
+  },
+  "sends_telemetry_event": true
+}

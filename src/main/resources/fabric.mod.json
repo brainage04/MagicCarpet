@@ -1,0 +1,34 @@
+{
+	"schemaVersion": 1,
+	"id": "magic_carpet",
+	"version": "${version}",
+	"name": "MagicCarpet",
+	"description": "Adds Magic Carpets to Minecraft.",
+	"authors": [
+		"brainage04"
+	],
+	"contact": {
+		"homepage": "https://github.com/brainage04/MagicCarpet",
+		"sources": "https://github.com/brainage04/MagicCarpet"
+	},
+	"license": "MIT",
+	"icon": "assets/magic_carpet/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"io.github.brainage04.magic_carpet.MagicCarpet"
+		],
+		"client": [
+			"io.github.brainage04.magic_carpet.MagicCarpetClient"
+		]
+	},
+	"mixins": [
+		"magic_carpet.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

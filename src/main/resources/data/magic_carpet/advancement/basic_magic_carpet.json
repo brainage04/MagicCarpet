@@ -1,0 +1,35 @@
+{
+  "display": {
+    "icon": {
+      "id": "magic_carpet:basic_magic_carpet",
+      "count": 1
+    },
+    "title": "Magic Carpet!!!",
+    "description": "Craft a Basic Magic Carpet",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "magic_carpet:root",
+  "criteria": {
+    "got_magic_carpet": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "magic_carpet:basic_magic_carpet"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "got_magic_carpet"
+    ]
+  ],
+  "rewards": {
+    "experience": 500
+  },
+  "sends_telemetry_event": true
+}
