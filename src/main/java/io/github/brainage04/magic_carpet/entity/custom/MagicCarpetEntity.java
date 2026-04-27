@@ -132,8 +132,8 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     }
 
     @Override
-    public InteractionResult interact(Player player, InteractionHand hand) {
-        InteractionResult actionResult = super.interact(player, hand);
+    public InteractionResult interact(Player player, InteractionHand hand, Vec3 hitPos) {
+        InteractionResult actionResult = super.interact(player, hand, hitPos);
         if (actionResult != InteractionResult.PASS) {
             return actionResult;
         } else {
