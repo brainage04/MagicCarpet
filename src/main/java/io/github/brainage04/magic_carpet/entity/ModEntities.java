@@ -8,8 +8,8 @@ import io.github.brainage04.magic_carpet.entity.renderer.AdvancedMagicCarpetEnti
 import io.github.brainage04.magic_carpet.entity.renderer.BasicMagicCarpetEntityRenderer;
 import io.github.brainage04.magic_carpet.entity.renderer.LegendaryMagicCarpetEntityRenderer;
 import io.github.brainage04.magic_carpet.entity.renderer.MagicCarpetEntityRenderer;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
 
 public class ModEntities {
     public static void initialize() {
@@ -17,6 +17,6 @@ public class ModEntities {
         EntityRendererRegistry.register(AdvancedMagicCarpetEntity.ENTITY_TYPE, AdvancedMagicCarpetEntityRenderer::new);
         EntityRendererRegistry.register(LegendaryMagicCarpetEntity.ENTITY_TYPE, LegendaryMagicCarpetEntityRenderer::new);
 
-        EntityModelLayerRegistry.registerModelLayer(MagicCarpetEntityRenderer.ENTITY_MODEL_LAYER, MagicCarpetEntityModel::getTexturedModelData);
+        ModelLayerRegistry.registerModelLayer(MagicCarpetEntityRenderer.ENTITY_MODEL_LAYER, MagicCarpetEntityModel::getTexturedModelData);
     }
 }

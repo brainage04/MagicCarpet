@@ -1,7 +1,7 @@
 package io.github.brainage04.magic_carpet.item;
 
 import io.github.brainage04.magic_carpet.MagicCarpet;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -14,7 +14,7 @@ public class ModItemGroups {
         return "itemGroup.%s.%s".formatted(MagicCarpet.MOD_ID, itemGroup);
     }
 
-    public static final CreativeModeTab MAIN_GROUP = FabricItemGroup.builder()
+    public static final CreativeModeTab MAIN_GROUP = FabricCreativeModeTab.builder()
             .icon(() -> new ItemStack(ModItems.BASIC_MAGIC_CARPET))
             .title(Component.translatable(getKey("main_group")))
             .displayItems((context, entries) -> {

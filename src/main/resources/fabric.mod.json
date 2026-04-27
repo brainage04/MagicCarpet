@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
-	"id": "magic_carpet",
-	"version": "${version}",
-	"name": "MagicCarpet",
+	"id": "${mod_id}",
+	"version": "${mod_version}",
+	"name": "${mod_name}",
 	"description": "Adds Magic Carpets to Minecraft.",
 	"authors": [
 		"brainage04"
@@ -26,9 +26,9 @@
 		"magic_carpet.mixins.json"
 	],
 	"depends": {
-		"fabricloader": ">=0.18.4",
-		"minecraft": "~1.21.11",
-		"java": ">=21",
+		"fabricloader": ">=${loader_version}",
+		"minecraft": "~${minecraft_version}",
+		"java": ">=25",
 		"fabric-api": "*"
 	}
 }
