@@ -36,6 +36,7 @@ processResources {
 	inputs.property "mod_name", project.properties.mod_name
 	inputs.property "loader_version", project.properties.loader_version
 	inputs.property "minecraft_version", project.properties.minecraft_version
+	inputs.property "java_version", project.properties.java_version
 
 	filesMatching("fabric.mod.json") {
 		expand([
@@ -44,19 +45,20 @@ processResources {
 				"mod_name": inputs.properties.mod_name,
 				"loader_version": inputs.properties.loader_version,
 				"minecraft_version": inputs.properties.minecraft_version,
+				"java_version": inputs.properties.java_version,
 		])
 	}
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 25
+	it.options.release = project.java_version.toInteger()
 }
 
 java {
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
+	sourceCompatibility = JavaVersion.toVersion(project.java_version)
+	targetCompatibility = JavaVersion.toVersion(project.java_version)
 }
 
 jar {
