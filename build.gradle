@@ -27,7 +27,7 @@ dependencies {
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
 	// DevAuth
-	runtimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
+	runtimeOnly "me.djtheredstoner:DevAuth-fabric:${project.devauth_version}"
 }
 
 processResources {
