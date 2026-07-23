@@ -77,7 +77,7 @@ public abstract class MagicCarpetItem extends Item {
         entity.setPos(hitResult.getLocation());
 
         if (world instanceof ServerLevel serverWorld) {
-            EntityType.createDefaultStackConfig(serverWorld, stack, player).accept(entity);
+            EntityType.createDefaultStackConfig(serverWorld, stack, player).apply(entity);
         }
 
         return entity;

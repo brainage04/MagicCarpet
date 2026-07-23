@@ -1,5 +1,6 @@
 package io.github.brainage04.magic_carpet;
 
+import io.github.brainage04.magic_carpet.entity.ModEntities;
 import io.github.brainage04.magic_carpet.item.ModItemGroups;
 import io.github.brainage04.magic_carpet.item.ModItems;
 import net.fabricmc.api.ModInitializer;
@@ -16,6 +17,7 @@ public class MagicCarpet implements ModInitializer {
 	public void onInitialize() {
 		LOGGER.info("{} initialising server...", MOD_NAME);
 
+		ModEntities.initialize();
 		ModItems.initialize();
 		ModItemGroups.initialize();
 

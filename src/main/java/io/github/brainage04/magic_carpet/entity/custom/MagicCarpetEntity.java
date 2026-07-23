@@ -1,9 +1,6 @@
 package io.github.brainage04.magic_carpet.entity.custom;
 
 import io.github.brainage04.magic_carpet.MagicCarpet;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.client.player.ClientInput;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -152,18 +149,16 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         return 2;
     }
 
-    @Environment(EnvType.CLIENT)
-    public void setInputs(ClientInput input) {
-        Vec2 movement = input.getMoveVector();
+    public void setInputs(Vec2 movement, boolean pressingSpace) {
         this.movementForward = movement.y;
         this.movementSideways = movement.x;
-        this.pressingSpace = input.keyPresses.jump();
+        this.pressingSpace = pressingSpace;
     }
 
     @Override
     public @Nullable LivingEntity getControllingPassenger() {
-        Entity var2 = getFirstPassenger();
-        if (var2 instanceof LivingEntity livingEntity) {
+        Entity passenger = getFirstPassenger();
+        if (passenger instanceof LivingEntity livingEntity) {
             return livingEntity;
         }
         return super.getControllingPassenger();

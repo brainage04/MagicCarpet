@@ -1,10 +1,30 @@
 pluginManagement {
 	repositories {
 		maven {
+			url = uri("../FabricModdingConventions/build/local-repo")
+			content {
+				includeGroupByRegex("io\\.github\\.brainage04(\\..*)?")
+			}
+		}
+		mavenLocal()
+		maven {
 			name = 'Fabric'
 			url = 'https://maven.fabricmc.net/'
 		}
 		mavenCentral()
 		gradlePluginPortal()
 	}
+
+	resolutionStrategy {
+		eachPlugin {
+			if (requested.id.id.startsWith('io.github.brainage04.')) {
+				def pluginModuleName = requested.id.id.replace('io.github.brainage04.', '')
+				useModule("io.github.brainage04:${pluginModuleName}.gradle.plugin:${requested.version}")
+			}
+		}
+	}
+}
+
+if (file("../FabricModdingConventions/settings.gradle").exists()) {
+	includeBuild("../FabricModdingConventions")
 }

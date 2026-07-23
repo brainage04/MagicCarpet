@@ -1,16 +1,19 @@
 # Create a new release
 
 1. Update `mod_version` in `gradle.properties`.
-2. Commit that change.
-3. Push that commit.
-4. Create a matching annotated git tag in the form `vX.Y.Z` so the tag message becomes the GitHub release notes.
-5. For a short release note, run `git tag -a v1.0.1 -m "Summarise the release here"`.
-6. For longer release notes, put them in a file and run `git tag -a v1.0.1 -F RELEASE_NOTES.md`.
-7. Push the tag with `git push origin v1.0.1`.
+2. Commit and push that change.
+3. Create a matching annotated tag in the form `vX.Y.Z`; its annotation becomes the release notes.
+4. Push the tag.
 
-The release workflow reads the annotated tag message and uses it as the GitHub release body.
-If the tag has no annotation text, GitHub auto-generated release notes are used as a fallback.
-GitHub Actions checks out tag pushes in a way that can obscure annotated tag contents, so the workflow fetches the remote tag object before reading the notes.
+For a short release note:
 
-If `MODRINTH_TOKEN` is configured, the same `release.yml` workflow runs a second job after the GitHub release is created and publishes the same build to Modrinth.
-That job reuses the same tag notes as the Modrinth version changelog.
+```shell
+git tag -a v1.0.3 -m "Summarise the release here"
+git push origin v1.0.3
+```
+
+For longer notes, put them in a file and use `git tag -a v1.0.3 -F RELEASE_NOTES.md`.
+
+The release workflow validates that the tag and `mod_version` match, builds the release JAR, and publishes a GitHub Release. If the tag has no annotation text, GitHub-generated notes are used as a fallback.
+
+If `MODRINTH_TOKEN` is configured, the same workflow creates or updates the Modrinth project and publishes the release JAR. If both `CURSEFORGE_TOKEN` and `CURSEFORGE_PROJECT_ID` are configured, it also publishes to CurseForge. Missing third-party credentials skip only that destination; the GitHub Release still proceeds.

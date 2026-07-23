@@ -7,9 +7,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 
 public class LegendaryMagicCarpetEntity extends MagicCarpetEntity {
-    public static final EntityType<LegendaryMagicCarpetEntity> ENTITY_TYPE =
-            MagicCarpetEntity.generateEntityType("legendary", LegendaryMagicCarpetEntity::new);
-
     public LegendaryMagicCarpetEntity(EntityType<? extends VehicleEntity> entityType, Level world) {
         super(entityType, world);
     }

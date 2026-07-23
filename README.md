@@ -1,17 +1,42 @@
-# About
-The first Magic Carpet recipe (Basic Magic Carpet) can be unlocked by collecting Wool of any colour.
-Crafting said Magic Carpet will unlock the recipe for the next tier of Magic Carpet.
+# MagicCarpet
 
-There are three different tiers of Magic Carpet:
-1. Basic - 4 Yellow Wool, 2 Red Wool, 2 String, 1 Stick
-2. Advanced - 1 Basic Magic Carpet, 4 Blaze Powder, 4 Gold Blocks
-3. Legendary - 1 Advanced Magic Carpet, 1 Nether Star, 2 Ender Pearls, 2 Diamond Blocks, 3 Emerald Blocks
+MagicCarpet is a Fabric mod for Minecraft 26.2 that adds three craftable, rideable flying carpets. Install it on both the client and server.
 
-Each Magic Carpet tier has the following stats (time from stationary to max speed):
-1. Basic - 0 to 10m/s in 2 seconds
-2. Advanced - 0 to 20m/s in 1 second
-3. Legendary - 0 to 40m/s in 0.5 seconds
+## Requirements
 
-Once in the vehicle, players can move horizontally using WASD.
-To move up, hold space while looking straight ahead or slightly up.
-To move down, look almost completely down.
+- Minecraft 26.2
+- Fabric Loader 0.19.3 or newer
+- Fabric API
+- Java 25 or newer
+
+## Carpet tiers
+
+| Tier | Recipe | Maximum horizontal speed | Acceleration time |
+| --- | --- | ---: | ---: |
+| Basic | 4 yellow wool, 2 red wool, 2 string, and 1 stick | 12 blocks/s | 2 seconds |
+| Advanced | 1 basic carpet, 4 blaze rods, and 4 gold blocks | 24 blocks/s | 1 second |
+| Legendary | 1 advanced carpet, 1 nether star, 2 ender pearls, 2 diamond blocks, and 3 emerald blocks | 48 blocks/s | 0.5 seconds |
+
+Collecting wool unlocks the basic carpet recipe. Each crafted carpet unlocks the next tier's advancement path.
+
+## Controls
+
+- Right-click a block with a carpet item to place the carpet.
+- Right-click the placed carpet to ride it.
+- Use the normal movement keys for horizontal motion.
+- Hold jump while looking forward or upward to ascend.
+- Hold jump while looking steeply downward to descend.
+- Sneak to dismount.
+
+Carpet riders do not take fall damage while mounted. Each carpet can carry two passengers.
+
+## Development
+
+```shell
+./gradlew build
+./gradlew runClientGameTest
+```
+
+The client GameTest validates dedicated-server entity registration, recipe loading, spawning, and rendering for all three carpet tiers.
+
+Release automation is documented in [docs/RELEASE.md](docs/RELEASE.md). Optional Modrinth publishing is documented in [docs/MODRINTH.md](docs/MODRINTH.md).
