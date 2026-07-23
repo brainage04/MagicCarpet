@@ -3,20 +3,21 @@ package io.github.brainage04.magic_carpet.entity;
 import io.github.brainage04.magic_carpet.entity.custom.AdvancedMagicCarpetEntity;
 import io.github.brainage04.magic_carpet.entity.custom.BasicMagicCarpetEntity;
 import io.github.brainage04.magic_carpet.entity.custom.LegendaryMagicCarpetEntity;
-import io.github.brainage04.magic_carpet.entity.model.MagicCarpetEntityModel;
-import io.github.brainage04.magic_carpet.entity.renderer.AdvancedMagicCarpetEntityRenderer;
-import io.github.brainage04.magic_carpet.entity.renderer.BasicMagicCarpetEntityRenderer;
-import io.github.brainage04.magic_carpet.entity.renderer.LegendaryMagicCarpetEntityRenderer;
-import io.github.brainage04.magic_carpet.entity.renderer.MagicCarpetEntityRenderer;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
+import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
+import net.minecraft.world.entity.EntityType;
 
-public class ModEntities {
+public final class ModEntities {
+    public static final EntityType<BasicMagicCarpetEntity> BASIC_MAGIC_CARPET =
+            MagicCarpetEntity.generateEntityType("basic", BasicMagicCarpetEntity::new);
+    public static final EntityType<AdvancedMagicCarpetEntity> ADVANCED_MAGIC_CARPET =
+            MagicCarpetEntity.generateEntityType("advanced", AdvancedMagicCarpetEntity::new);
+    public static final EntityType<LegendaryMagicCarpetEntity> LEGENDARY_MAGIC_CARPET =
+            MagicCarpetEntity.generateEntityType("legendary", LegendaryMagicCarpetEntity::new);
+
+    private ModEntities() {
+    }
+
     public static void initialize() {
-        EntityRendererRegistry.register(BasicMagicCarpetEntity.ENTITY_TYPE, BasicMagicCarpetEntityRenderer::new);
-        EntityRendererRegistry.register(AdvancedMagicCarpetEntity.ENTITY_TYPE, AdvancedMagicCarpetEntityRenderer::new);
-        EntityRendererRegistry.register(LegendaryMagicCarpetEntity.ENTITY_TYPE, LegendaryMagicCarpetEntityRenderer::new);
-
-        ModelLayerRegistry.registerModelLayer(MagicCarpetEntityRenderer.ENTITY_MODEL_LAYER, MagicCarpetEntityModel::getTexturedModelData);
+        // Class loading registers every entity type.
     }
 }

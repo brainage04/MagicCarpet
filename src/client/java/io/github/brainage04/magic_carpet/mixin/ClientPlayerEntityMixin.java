@@ -29,6 +29,6 @@ public class ClientPlayerEntityMixin {
         if (v == null) return;
         if (!(v instanceof MagicCarpetEntity vehicle)) return;
 
-        vehicle.setInputs(input);
+        vehicle.setInputs(input.getMoveVector(), input.keyPresses.jump());
     }
 }
