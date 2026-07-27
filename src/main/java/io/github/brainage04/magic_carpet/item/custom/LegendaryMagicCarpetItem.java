@@ -12,6 +12,6 @@ public class LegendaryMagicCarpetItem extends MagicCarpetItem {
 
     @Override
     public MagicCarpetEntity createEntity(Level world) {
-        return ModEntities.LEGENDARY_MAGIC_CARPET.create(world, EntitySpawnReason.SPAWN_ITEM_USE);
+        return ModEntities.legendary().create(world, EntitySpawnReason.SPAWN_ITEM_USE);
     }
 }

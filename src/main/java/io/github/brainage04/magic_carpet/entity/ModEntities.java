@@ -6,18 +6,16 @@ import io.github.brainage04.magic_carpet.entity.custom.LegendaryMagicCarpetEntit
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import net.minecraft.world.entity.EntityType;
 
+import java.util.function.Supplier;
+
 public final class ModEntities {
-    public static final EntityType<BasicMagicCarpetEntity> BASIC_MAGIC_CARPET =
-            MagicCarpetEntity.generateEntityType("basic", BasicMagicCarpetEntity::new);
-    public static final EntityType<AdvancedMagicCarpetEntity> ADVANCED_MAGIC_CARPET =
-            MagicCarpetEntity.generateEntityType("advanced", AdvancedMagicCarpetEntity::new);
-    public static final EntityType<LegendaryMagicCarpetEntity> LEGENDARY_MAGIC_CARPET =
-            MagicCarpetEntity.generateEntityType("legendary", LegendaryMagicCarpetEntity::new);
-
-    private ModEntities() {
-    }
-
-    public static void initialize() {
-        // Class loading registers every entity type.
-    }
+    private static Supplier<? extends EntityType<BasicMagicCarpetEntity>> basic;
+    private static Supplier<? extends EntityType<AdvancedMagicCarpetEntity>> advanced;
+    private static Supplier<? extends EntityType<LegendaryMagicCarpetEntity>> legendary;
+    public static void register(Supplier<? extends EntityType<BasicMagicCarpetEntity>> basic, Supplier<? extends EntityType<AdvancedMagicCarpetEntity>> advanced, Supplier<? extends EntityType<LegendaryMagicCarpetEntity>> legendary) { ModEntities.basic = basic; ModEntities.advanced = advanced; ModEntities.legendary = legendary; }
+    public static EntityType<BasicMagicCarpetEntity> basic() { return basic.get(); }
+    public static EntityType<AdvancedMagicCarpetEntity> advanced() { return advanced.get(); }
+    public static EntityType<LegendaryMagicCarpetEntity> legendary() { return legendary.get(); }
+    public static <T extends MagicCarpetEntity> EntityType.Builder<T> builder(EntityType.EntityFactory<T> factory) { return EntityType.Builder.of(factory, net.minecraft.world.entity.MobCategory.MISC).sized(2.0F, .25F); }
+    public static void initialize() { }
 }

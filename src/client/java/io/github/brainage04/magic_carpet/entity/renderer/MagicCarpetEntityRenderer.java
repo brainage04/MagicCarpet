@@ -19,16 +19,15 @@ import io.github.brainage04.magic_carpet.entity.model.MagicCarpetEntityModel;
 import org.jspecify.annotations.NonNull;
 
 public abstract class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarpetEntity, MagicCarpetEntityRenderState> {
-    public abstract String getCarpetType();
 
     public static final ModelLayerLocation ENTITY_MODEL_LAYER =
             new ModelLayerLocation(Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "magic_carpet"), "main");
     private final Identifier texture;
     private final EntityModel<MagicCarpetEntityRenderState> model;
 
-    public MagicCarpetEntityRenderer(EntityRendererProvider.Context context) {
+    protected MagicCarpetEntityRenderer(EntityRendererProvider.Context context, String carpetType) {
         super(context);
-        this.texture = ENTITY_MODEL_LAYER.model().withPath(path -> "textures/entity/%s_%s.png".formatted(getCarpetType(), path));
+        this.texture = ENTITY_MODEL_LAYER.model().withPath(path -> "textures/entity/%s_%s.png".formatted(carpetType, path));
         this.model = new MagicCarpetEntityModel(context.bakeLayer(ENTITY_MODEL_LAYER));
     }
 

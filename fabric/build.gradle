@@ -1,0 +1,21 @@
+plugins {
+ id 'io.github.brainage04.fabric-mod-conventions' version "${fabricmoddingconventions_version}"
+ id 'io.github.brainage04.client-gametest-recorder' version "${fabricmoddingconventions_version}"
+ id 'io.github.brainage04.production-gametests' version "${fabricmoddingconventions_version}"
+ id 'io.github.brainage04.workspace-dependencies' version "${fabricmoddingconventions_version}"
+ id 'io.github.brainage04.mod-publishing' version "${fabricmoddingconventions_version}"
+}
+base { archivesName = rootProject.archives_base_name }
+loom { mods { main { sourceSet sourceSets.main; sourceSet sourceSets.client; sourceSet project(':common').sourceSets.main } }; runs { client { runDir 'run/client' } } }
+sourceSets.main.java.exclude 'io/github/brainage04/magic_carpet/fabric/MagicCarpetFabricClient.java'
+sourceSets {
+ gametest { java.srcDir rootProject.file('src/gametest/java'); resources.srcDir rootProject.file('src/gametest/resources') }
+}
+configurations { common { canBeResolved = true; canBeConsumed = false }; compileClasspath.extendsFrom common; runtimeClasspath.extendsFrom common; developmentFabric.extendsFrom common }
+workspaceDependencies { siblingMaven('FabricModdingConventions') { coordinate.set("io.github.brainage04:fabricmoddingconventions:${project.fabricmoddingconventions_version}"); siblingDirectory.set(rootProject.layout.projectDirectory.dir('../FabricModdingConventions')) } }
+productionGameTests { includeServer = true }
+modPublishing { github.repository.set('brainage04/MagicCarpet'); licenseFile.set(rootProject.file('LICENSE')); modrinth.projectConfig.set(rootProject.file('.modrinth/project.json')); modrinth.projectBody.set(rootProject.file('README.md')); modrinth.iconFile.set(rootProject.file('src/main/resources/assets/magic_carpet/icon.png')) }
+dependencies { common(project(':common')) { transitive = false }; implementation "io.github.brainage04:fabricmoddingconventions:${project.fabricmoddingconventions_version}" }
+tasks.named('jar') { from project(':common').sourceSets.main.output; duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
+tasks.named('sourcesJar') { from project(':common').sourceSets.main.allSource }
+tasks.matching { it.name.startsWith('run') }.configureEach { dependsOn project(':common').tasks.named('jar') }

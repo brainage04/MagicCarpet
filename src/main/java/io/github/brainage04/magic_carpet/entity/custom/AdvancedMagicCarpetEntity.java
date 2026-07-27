@@ -23,6 +23,6 @@ public class AdvancedMagicCarpetEntity extends MagicCarpetEntity {
 
     @Override
     protected Item getDropItem() {
-        return ModItems.ADVANCED_MAGIC_CARPET;
+        return ModItems.advanced();
     }
 }

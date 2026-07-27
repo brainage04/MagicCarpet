@@ -15,12 +15,12 @@ public class ModItemGroups {
     }
 
     public static final CreativeModeTab MAIN_GROUP = FabricCreativeModeTab.builder()
-            .icon(() -> new ItemStack(ModItems.BASIC_MAGIC_CARPET))
+            .icon(() -> new ItemStack(ModItems.basic()))
             .title(Component.translatable(getKey("main_group")))
             .displayItems((context, entries) -> {
-                entries.accept(ModItems.BASIC_MAGIC_CARPET);
-                entries.accept(ModItems.ADVANCED_MAGIC_CARPET);
-                entries.accept(ModItems.LEGENDARY_MAGIC_CARPET);
+                entries.accept(ModItems.basic());
+                entries.accept(ModItems.advanced());
+                entries.accept(ModItems.legendary());
             })
             .build();
 

@@ -23,6 +23,6 @@ public class LegendaryMagicCarpetEntity extends MagicCarpetEntity {
 
     @Override
     protected Item getDropItem() {
-        return ModItems.LEGENDARY_MAGIC_CARPET;
+        return ModItems.legendary();
     }
 }
