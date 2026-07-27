@@ -62,15 +62,14 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
             );
         }
 
-        spawn(level, ModEntities.BASIC_MAGIC_CARPET.create(level, EntitySpawnReason.COMMAND), -3.0D);
-        spawn(level, ModEntities.ADVANCED_MAGIC_CARPET.create(level, EntitySpawnReason.COMMAND), 0.0D);
-        spawn(level, ModEntities.LEGENDARY_MAGIC_CARPET.create(level, EntitySpawnReason.COMMAND), 3.0D);
-
+        spawn(level, ModEntities.basic().create(level, EntitySpawnReason.COMMAND), -3.0D);
+        spawn(level, ModEntities.advanced().create(level, EntitySpawnReason.COMMAND), 0.0D);
+        spawn(level, ModEntities.legendary().create(level, EntitySpawnReason.COMMAND), 3.0D);
         player.setGameMode(GameType.CREATIVE);
         player.getInventory().clearContent();
-        player.getInventory().setItem(0, new ItemStack(ModItems.BASIC_MAGIC_CARPET));
-        player.getInventory().setItem(1, new ItemStack(ModItems.ADVANCED_MAGIC_CARPET));
-        player.getInventory().setItem(2, new ItemStack(ModItems.LEGENDARY_MAGIC_CARPET));
+        player.getInventory().setItem(0, new ItemStack(ModItems.basic()));
+        player.getInventory().setItem(1, new ItemStack(ModItems.advanced()));
+        player.getInventory().setItem(2, new ItemStack(ModItems.legendary()));
         player.getInventory().setSelectedSlot(0);
         player.teleportTo(0.5D, 64.0D, -6.5D);
         player.setYRot(0.0F);
@@ -88,9 +87,9 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
     }
 
     private static void verifyEntityRegistration() {
-        verifyEntityRegistration(ModEntities.BASIC_MAGIC_CARPET, "basic_magic_carpet");
-        verifyEntityRegistration(ModEntities.ADVANCED_MAGIC_CARPET, "advanced_magic_carpet");
-        verifyEntityRegistration(ModEntities.LEGENDARY_MAGIC_CARPET, "legendary_magic_carpet");
+        verifyEntityRegistration(ModEntities.basic(), "basic_magic_carpet");
+        verifyEntityRegistration(ModEntities.advanced(), "advanced_magic_carpet");
+        verifyEntityRegistration(ModEntities.legendary(), "legendary_magic_carpet");
     }
 
     private static void verifyEntityRegistration(EntityType<?> entityType, String path) {

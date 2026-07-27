@@ -12,6 +12,6 @@ public class BasicMagicCarpetItem extends MagicCarpetItem {
 
     @Override
     public MagicCarpetEntity createEntity(Level world) {
-        return ModEntities.BASIC_MAGIC_CARPET.create(world, EntitySpawnReason.SPAWN_ITEM_USE);
+        return ModEntities.basic().create(world, EntitySpawnReason.SPAWN_ITEM_USE);
     }
 }

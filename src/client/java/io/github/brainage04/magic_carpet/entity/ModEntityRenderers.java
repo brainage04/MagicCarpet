@@ -10,9 +10,9 @@ import net.minecraft.client.renderer.entity.EntityRenderers;
 
 public class ModEntityRenderers {
     public static void initialize() {
-        EntityRenderers.register(ModEntities.BASIC_MAGIC_CARPET, BasicMagicCarpetEntityRenderer::new);
-        EntityRenderers.register(ModEntities.ADVANCED_MAGIC_CARPET, AdvancedMagicCarpetEntityRenderer::new);
-        EntityRenderers.register(ModEntities.LEGENDARY_MAGIC_CARPET, LegendaryMagicCarpetEntityRenderer::new);
+        EntityRenderers.register(ModEntities.basic(), BasicMagicCarpetEntityRenderer::new);
+        EntityRenderers.register(ModEntities.advanced(), AdvancedMagicCarpetEntityRenderer::new);
+        EntityRenderers.register(ModEntities.legendary(), LegendaryMagicCarpetEntityRenderer::new);
 
         ModelLayerRegistry.registerModelLayer(MagicCarpetEntityRenderer.ENTITY_MODEL_LAYER, MagicCarpetEntityModel::getTexturedModelData);
     }

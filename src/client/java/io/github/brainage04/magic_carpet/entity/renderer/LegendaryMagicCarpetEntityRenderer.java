@@ -4,11 +4,6 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
 public class LegendaryMagicCarpetEntityRenderer extends MagicCarpetEntityRenderer {
     public LegendaryMagicCarpetEntityRenderer(EntityRendererProvider.Context context) {
-        super(context);
-    }
-
-    @Override
-    public String getCarpetType() {
-        return "legendary";
+        super(context, "legendary");
     }
 }
