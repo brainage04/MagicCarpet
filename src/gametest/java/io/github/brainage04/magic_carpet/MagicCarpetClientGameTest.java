@@ -7,7 +7,7 @@ import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import io.github.brainage04.magic_carpet.item.ModItems;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
-import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -27,26 +27,23 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
     public void runTest(ClientGameTestContext context) {
         Properties serverProperties = ClientGameTestServers.flatServerProperties();
 
-        try (TestDedicatedServerContext server = context.worldBuilder().createServer(serverProperties)) {
-            ClientGameTestServers.connectToDedicatedServer(context, server, "MagicCarpet entity rendering GameTest");
-            try {
-                server.runOnServer(minecraftServer -> prepareStage(
-                        minecraftServer.getPlayerList().getPlayers().getFirst()));
-                ClientGameTestServers.assertClientWorldAndPlayerAvailable(context);
-                context.waitTicks(30);
-
-                ClientGameTestRecorder.startRecording(context);
-                ClientGameTestRecorder.showStep(
-                        context,
-                        "magic_carpet.tiers",
-                        "Magic Carpet tiers",
-                        "Basic, advanced, and legendary carpet entities must all render"
-                );
-                context.waitTicks(80);
-            } finally {
-                ClientGameTestServers.disconnectFromDedicatedServer(context);
-            }
-        }
+        ClientGameTestServers.withDedicatedServer(context, serverProperties, "MagicCarpet entity rendering GameTest", server -> { try {
+            server.runOnServer(minecraftServer -> prepareStage(
+                    minecraftServer.getPlayerList().getPlayers().getFirst()));
+            ClientGameTestServers.assertClientWorldAndPlayerAvailable(context);
+            context.waitTicks(30);
+        
+            ClientGameTestRecorder.startRecording(context);
+            ClientGameTestRecorder.showStep(
+                    context,
+                    "magic_carpet.tiers",
+                    "Magic Carpet tiers",
+                    "Basic, advanced, and legendary carpet entities must all render"
+            );
+            context.waitTicks(80);
+        } finally {
+            ;
+        } });
     }
 
     private static void prepareStage(ServerPlayer player) {
