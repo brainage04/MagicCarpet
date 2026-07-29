@@ -3,14 +3,6 @@ plugins {
  id 'dev.architectury.loom'
 }
 loom { silentMojangMappingsLicense() }
-sourceSets {
- main {
-  java.srcDirs = [rootProject.file('src/main/java'), rootProject.file('src/client/java')]
-  java.exclude 'io/github/brainage04/magic_carpet/item/ModItemGroups.java', 'io/github/brainage04/magic_carpet/MagicCarpetClient.java', 'io/github/brainage04/magic_carpet/entity/ModEntityRenderers.java'
-  resources.srcDirs = [rootProject.file('src/main/resources'), rootProject.file('src/client/resources')]
-  resources.exclude 'fabric.mod.json'
- }
-}
 dependencies {
  minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
  compileOnly "net.fabricmc:fabric-loader:${rootProject.loader_version}"

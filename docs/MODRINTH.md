@@ -16,7 +16,7 @@ Create a Modrinth personal access token with these scopes and save it as the `MO
 
 The shared release workflow reads:
 
-- `src/main/resources/fabric.mod.json` for the slug, title, description fallback, contact links, licence, dependencies, and side support;
+- `fabric/src/main/resources/fabric.mod.json` for the slug, title, description fallback, contact links, licence, dependencies, and side support;
 - `README.md` for the long project description;
 - the GitHub repository description for the project summary;
 - `.modrinth/project.json` for Modrinth-specific category overrides;
