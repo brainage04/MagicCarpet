@@ -1,0 +1,8 @@
+{
+  "blockers": [],
+  "scope_notes": [
+    "Both variants are original-size 64x14 texture alternatives, not replacements for the currently active approved 128x28 assets. Choose A or B using the install_path mapping in texture-variants/original-resolution/variants.json.",
+    "No Minecraft launch or project-wide build/test suite was performed: this assignment changes only separate PNG alternatives and their inventory. Proof covers generated asset bytes, native UV crops, rank pip counts, packed Blender scenes and rendered pixels.",
+    "The approved floating Vanilla enchant glyphs, glow and glints remain preview styling, not new in-game behavior."
+  ]
+}

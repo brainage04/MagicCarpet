@@ -1,0 +1,20 @@
+{
+  "root_cause": "Approved f08018a texture authoring explicitly resizes the 64x14 original atlas to 128x28 before drawing 48x16 middle panels. This doubles texel density; changing Blender filtering or model UVs cannot restore the native art resolution.",
+  "evidence": {
+    "original_revision": "f08018a^",
+    "approved_revision": "f08018a3a4982bcd091419e7c061da3389da8ee1",
+    "all_six_original_assets_size": [64, 14],
+    "all_six_approved_assets_size": [128, 28],
+    "approved_authoring_source": "../blender-r/revamp-textures.py:119-125",
+    "source_bytes_verified": "git show for each original/revamp asset exactly matches blender-r/before or blender-r/textures",
+    "model_native_face": "24x32 texels assembled from 24x4 end strip and three repeats of 24x8 middle panel"
+  },
+  "plan": [
+    "Re-author the approved palettes, diamond/compass/crown, miniature runes and stitched rails directly on the original 64x14 pixel grid. Do not resample the 128x28 artwork to create either variant.",
+    "Create B by replacing only A's end-strip embroidery with a high-contrast rank badge: basic one, advanced two, legendary three 2x2 ivory square pips, evenly separated on a dark field. The badge appears at both carpet ends; body motifs remain identical to A.",
+    "Render A and B by replacing only packed image bindings in the approved tier-stack scene. Preserve geometry, UVs, camera, lights, vanilla enchant glyphs, glints, material values and compositor.",
+    "Create four-column original/2x/A/B comparison with exact atlas pixels and model-assembled faces, plus native-size badge details; record every tier/entity/item dimension and SHA-256.",
+    "Empirically verify alpha, native dimensions, UV repeats, rank pip count, packed-image bytes, rendered output and unrelated dirty-file preservation. Commit only new variant files in MagicCarpet; never push. Record cleanup."
+  ],
+  "limits": {"blender_cpu_cores_max": 3, "render_threads": 2, "cpu_weight": 20, "device": "CPU", "audio": "disabled with -noaudio", "display": "headless; no GUI or sink created"}
+}

@@ -1,0 +1,11 @@
+{
+  "method": "Direct image inspection with read on both actual 1024x1024 Blender PNGs and the 1696x1620 comparison sheet",
+  "reviewed": [
+    "magic-carpet-01-native-a-stack.png",
+    "magic-carpet-02-native-b-ranked-stack.png",
+    "texture-comparison.png"
+  ],
+  "variant_b": "Ivory rank pips are visible on the front border of every tier: one on the bottom ruby carpet, two on the middle slate carpet, three on the top amethyst carpet. The rear border repeats the same badge. Body motifs, rails and particle styling match A; the rank scheme does not depend on hue, floating glyphs or text labels.",
+  "presentation_boundary": "Floating vanilla enchant glyphs, luminous perimeter and bloom are only the unchanged approved Blender preview style. No mod particle, lighting or shader behavior was added.",
+  "framing": "All three carpets and glyph clouds are inside the image; no crop or overlap hides the front rank badges."
+}

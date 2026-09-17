@@ -1,0 +1,107 @@
+{
+  "original_size": [
+    64,
+    14
+  ],
+  "approved_2x_size": [
+    128,
+    28
+  ],
+  "variant_size": [
+    64,
+    14
+  ],
+  "native_top_face_size": [
+    24,
+    32
+  ],
+  "authoring": "New integer-grid pixel art at 64x14 using only original 64x14 wool luminance and the approved palette; no resampling of 128x28 art. Comparison display scaling is separate.",
+  "tier_encoding": "Variant B has a dark rank badge on BOTH end borders: 1 ivory 2x2 square pip = basic / tier 1; 2 = advanced / tier 2; 3 = legendary / tier 3. Each pip is separated by four dark pixels. No color key, floating particles or label is needed. A and B have identical middle/body panels.",
+  "selection": "Choose one variant and copy its six entity/item PNGs to the listed install_path values, replacing the existing six textures. These are texture alternatives, not standalone resource packs. Active approved f08018a assets are deliberately unchanged.",
+  "textures": [
+    {
+      "variant": "variant-b",
+      "tier": 1,
+      "tier_name": "basic",
+      "kind": "entity",
+      "name": "basic_magic_carpet.png",
+      "path": "variant-b/entity/basic_magic_carpet.png",
+      "size": [
+        64,
+        14
+      ],
+      "sha256": "0b35ebd912b21e8ef9f9f607d4c943499834a054e637ea9e89370eef8ba7049e",
+      "install_path": "common/src/main/resources/assets/magic_carpet/textures/entity/basic_magic_carpet.png"
+    },
+    {
+      "variant": "variant-b",
+      "tier": 1,
+      "tier_name": "basic",
+      "kind": "item",
+      "name": "basic_magic_carpet.png",
+      "path": "variant-b/item/basic_magic_carpet.png",
+      "size": [
+        64,
+        14
+      ],
+      "sha256": "0b35ebd912b21e8ef9f9f607d4c943499834a054e637ea9e89370eef8ba7049e",
+      "install_path": "common/src/main/resources/assets/magic_carpet/textures/item/basic_magic_carpet.png"
+    },
+    {
+      "variant": "variant-b",
+      "tier": 2,
+      "tier_name": "advanced",
+      "kind": "entity",
+      "name": "advanced_magic_carpet.png",
+      "path": "variant-b/entity/advanced_magic_carpet.png",
+      "size": [
+        64,
+        14
+      ],
+      "sha256": "50c93e1b3c3d5bc4ce9e768ae2fb2f1882c9b4166f2e732d7655130bdd6cd632",
+      "install_path": "common/src/main/resources/assets/magic_carpet/textures/entity/advanced_magic_carpet.png"
+    },
+    {
+      "variant": "variant-b",
+      "tier": 2,
+      "tier_name": "advanced",
+      "kind": "item",
+      "name": "advanced_magic_carpet.png",
+      "path": "variant-b/item/advanced_magic_carpet.png",
+      "size": [
+        64,
+        14
+      ],
+      "sha256": "50c93e1b3c3d5bc4ce9e768ae2fb2f1882c9b4166f2e732d7655130bdd6cd632",
+      "install_path": "common/src/main/resources/assets/magic_carpet/textures/item/advanced_magic_carpet.png"
+    },
+    {
+      "variant": "variant-b",
+      "tier": 3,
+      "tier_name": "legendary",
+      "kind": "entity",
+      "name": "legendary_magic_carpet.png",
+      "path": "variant-b/entity/legendary_magic_carpet.png",
+      "size": [
+        64,
+        14
+      ],
+      "sha256": "affec40cf995bc3cba1c4652afb8d7530e0d02df0a8bc8a9ce4d80df622cabae",
+      "install_path": "common/src/main/resources/assets/magic_carpet/textures/entity/legendary_magic_carpet.png"
+    },
+    {
+      "variant": "variant-b",
+      "tier": 3,
+      "tier_name": "legendary",
+      "kind": "item",
+      "name": "legendary_magic_carpet.png",
+      "path": "variant-b/item/legendary_magic_carpet.png",
+      "size": [
+        64,
+        14
+      ],
+      "sha256": "affec40cf995bc3cba1c4652afb8d7530e0d02df0a8bc8a9ce4d80df622cabae",
+      "install_path": "common/src/main/resources/assets/magic_carpet/textures/item/legendary_magic_carpet.png"
+    }
+  ]
+}

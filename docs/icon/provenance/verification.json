@@ -1,0 +1,101 @@
+{
+  "result": "PASS",
+  "original_asset_size": [
+    64,
+    14
+  ],
+  "approved_revamp_size": [
+    128,
+    28
+  ],
+  "variant_A_B_size": [
+    64,
+    14
+  ],
+  "native_png_count": 12,
+  "tier_rank_components_per_end": [
+    1,
+    2,
+    3
+  ],
+  "asset_PNG_regeneration_byte_identical": true,
+  "all_original_alpha_preserved": true,
+  "A_B_body_pixels_identical": true,
+  "repository_committed_PNGs_match_render_sources": true,
+  "approved_scene_invariants_unchanged": true,
+  "packed_native_scene_count": 2,
+  "reopened_B_max_pixel_delta": 0,
+  "reopened_B_compressed_IDAT_bytes_identical": true,
+  "reopened_B_file_hash_difference": "Only tEXt Date, RenderTime, cycles.ViewLayer.total_time and cycles.ViewLayer.render_time differ; see evidence/rerender-png-byte-comparison.json.",
+  "visual_review": "Direct read image inspection of both actual renders and comparison sheet; see visual-review.json.",
+  "commands_executed": [
+    {
+      "cwd": "/home/thomas/01_TM/Coding/Websites/brainage04.github.io/.local-icon-variants/round3/blender-u",
+      "env": {
+        "PYTHONPATH": "/nix/store/4v9j9wbzyhrlx9980ygbr812313mazy0-python3.13-pillow-12.3.0/lib/python3.13/site-packages",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "command": "python3 author-native-textures.py"
+    },
+    {
+      "cwd": "/home/thomas/01_TM/Coding/Websites/brainage04.github.io/.local-icon-variants/round3/blender-u",
+      "env": {
+        "PYTHONPATH": "/nix/store/4v9j9wbzyhrlx9980ygbr812313mazy0-python3.13-pillow-12.3.0/lib/python3.13/site-packages",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "command": "python3 verify-assets.py"
+    },
+    {
+      "cwd": "/home/thomas/01_TM/Coding/Websites/brainage04.github.io/.local-icon-variants/round3/blender-u",
+      "command": "python3 run-blender.py render-native.py variant-a variant-b",
+      "expanded_command": [
+        "nix",
+        "shell",
+        "nixpkgs#blender",
+        "--command",
+        "blender",
+        "--background",
+        "-noaudio",
+        "--threads",
+        "2",
+        "--python",
+        "/home/thomas/01_TM/Coding/Websites/brainage04.github.io/.local-icon-variants/round3/blender-u/render-native.py",
+        "--",
+        "variant-a",
+        "variant-b"
+      ]
+    },
+    {
+      "cwd": "/home/thomas/01_TM/Coding/Websites/brainage04.github.io/.local-icon-variants/round3/blender-u",
+      "command": "python3 run-blender.py verify-scenes.py",
+      "expanded_command": [
+        "nix",
+        "shell",
+        "nixpkgs#blender",
+        "--command",
+        "blender",
+        "--background",
+        "-noaudio",
+        "--threads",
+        "2",
+        "--python-exit-code",
+        "1",
+        "--python",
+        "/home/thomas/01_TM/Coding/Websites/brainage04.github.io/.local-icon-variants/round3/blender-u/verify-scenes.py",
+        "--"
+      ]
+    }
+  ],
+  "render_seconds": {
+    "variant-a": 178.5495836899936,
+    "variant-b": 104.07983615499688
+  },
+  "render_PNG_sha256": {
+    "variant-a": "b1d193056c60e873e9c8f15655ec684ff5bd2434c6c8c3759b7fd73604e0bfef",
+    "variant-b": "17535071e0afecc04eec944dbbffe290c47a0fa8e01ad40eb596bafbfe90ac27"
+  },
+  "initial_verification_script_issue_resolved": "Initial particle inventory excluded carpet images by display-name substring, but new native image names lacked that substring. It now follows actual particle material texture bindings. Blender Python exit-code flag was also enabled. Artwork was unchanged. Successful rerun evidence: logs/verify-scenes.log and packed-scene-verification.json.",
+  "project_wide_tests_or_builds_run": false,
+  "no_game_runtime_claim": true,
+  "commit": "cc88d9bd69ad7261ddbadadbec708363bbb6003f"
+}

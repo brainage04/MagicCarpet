@@ -1,0 +1,46 @@
+{
+  "build.gradle": {
+    "status": " M",
+    "sha256": "1b074459315d7c4fb5572a6b99ef8e89369e2dc45d2bb10be8393759adbbf3f8"
+  },
+  "common/build.gradle": {
+    "status": " M",
+    "sha256": "0cec3074de1fc9755f4ddbc292c970e39c670c45af250142be4f1fd5b0ee491b"
+  },
+  "common/src/main/java/io/github/brainage04/magic_carpet/entity/custom/MagicCarpetEntity.java": {
+    "status": " M",
+    "sha256": "7acafe7c605d8583909bc7da4b3afee700d8d97949895ca87341fcfdeaf3c9b5"
+  },
+  "common/src/main/java/io/github/brainage04/magic_carpet/mixin/ClientPlayerEntityMixin.java": {
+    "status": " D",
+    "sha256": null
+  },
+  "common/src/main/resources/magic_carpet.mixins.json": {
+    "status": " M",
+    "sha256": "394f74015c350a6d8228749c983487414e4a1db16d3b2ffb16d41c83bce3878e"
+  },
+  "fabric/build.gradle": {
+    "status": " M",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "gradle.properties": {
+    "status": " M",
+    "sha256": "c6d005f87388ad1fe7890ef306af76eb2766169fbdae9597d9475bef7a31a0c8"
+  },
+  "neoforge/build.gradle": {
+    "status": " M",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "settings.gradle": {
+    "status": " M",
+    "sha256": "d5ea3a61783c6628389ce2e2969873176e0e31e1a51950baa7073c55d46fe8bc"
+  },
+  ".editorconfig": {
+    "status": "??",
+    "sha256": "0ef09ad2bd70021a93f96beb09c38993a0b4a79a46cb9639ea91fd85789e9c31"
+  },
+  ".java-version": {
+    "status": "??",
+    "sha256": "64aeb9975f234becd55bb4635e6e2f2da7a6b7bf0a896f0c07763bdfbfb31420"
+  }
+}

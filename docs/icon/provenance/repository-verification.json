@@ -1,0 +1,147 @@
+{
+  "result": "PASS",
+  "commit": "cc88d9bd69ad7261ddbadadbec708363bbb6003f",
+  "committed_PNG_bytes": [
+    {
+      "path": "texture-variants/original-resolution/variant-a/entity/basic_magic_carpet.png",
+      "sha256": "79a7d05bedf34db19a6f8c2ec6e66904289708bbb6a7166c13854ed9b91276a7",
+      "matches_render_source": true
+    },
+    {
+      "path": "texture-variants/original-resolution/variant-a/item/basic_magic_carpet.png",
+      "sha256": "79a7d05bedf34db19a6f8c2ec6e66904289708bbb6a7166c13854ed9b91276a7",
+      "matches_render_source": true
+    },
+    {
+      "path": "texture-variants/original-resolution/variant-a/entity/advanced_magic_carpet.png",
+      "sha256": "f8277d79502ed3a93a951c60d231d430c4da04905f97f3779213fa1621de7a5e",
+      "matches_render_source": true
+    },
+    {
+      "path": "texture-variants/original-resolution/variant-a/item/advanced_magic_carpet.png",
+      "sha256": "f8277d79502ed3a93a951c60d231d430c4da04905f97f3779213fa1621de7a5e",
+      "matches_render_source": true
+    },
+    {
+      "path": "texture-variants/original-resolution/variant-a/entity/legendary_magic_carpet.png",
+      "sha256": "6b97b879d00800e7084755eba7e4e2e4682ae7c9938cf6c0700a75d5cbad0540",
+      "matches_render_source": true
+    },
+    {
+      "path": "texture-variants/original-resolution/variant-a/item/legendary_magic_carpet.png",
+      "sha256": "6b97b879d00800e7084755eba7e4e2e4682ae7c9938cf6c0700a75d5cbad0540",
+      "matches_render_source": true
+    },
+    {
+      "path": "texture-variants/original-resolution/variant-b/entity/basic_magic_carpet.png",
+      "sha256": "0b35ebd912b21e8ef9f9f607d4c943499834a054e637ea9e89370eef8ba7049e",
+      "matches_render_source": true
+    },
+    {
+      "path": "texture-variants/original-resolution/variant-b/item/basic_magic_carpet.png",
+      "sha256": "0b35ebd912b21e8ef9f9f607d4c943499834a054e637ea9e89370eef8ba7049e",
+      "matches_render_source": true
+    },
+    {
+      "path": "texture-variants/original-resolution/variant-b/entity/advanced_magic_carpet.png",
+      "sha256": "50c93e1b3c3d5bc4ce9e768ae2fb2f1882c9b4166f2e732d7655130bdd6cd632",
+      "matches_render_source": true
+    },
+    {
+      "path": "texture-variants/original-resolution/variant-b/item/advanced_magic_carpet.png",
+      "sha256": "50c93e1b3c3d5bc4ce9e768ae2fb2f1882c9b4166f2e732d7655130bdd6cd632",
+      "matches_render_source": true
+    },
+    {
+      "path": "texture-variants/original-resolution/variant-b/entity/legendary_magic_carpet.png",
+      "sha256": "affec40cf995bc3cba1c4652afb8d7530e0d02df0a8bc8a9ce4d80df622cabae",
+      "matches_render_source": true
+    },
+    {
+      "path": "texture-variants/original-resolution/variant-b/item/legendary_magic_carpet.png",
+      "sha256": "affec40cf995bc3cba1c4652afb8d7530e0d02df0a8bc8a9ce4d80df622cabae",
+      "matches_render_source": true
+    }
+  ],
+  "preexisting_dirty_paths": [
+    {
+      "path": "build.gradle",
+      "status_before": " M",
+      "sha256_before": "1b074459315d7c4fb5572a6b99ef8e89369e2dc45d2bb10be8393759adbbf3f8",
+      "sha256_after": "1b074459315d7c4fb5572a6b99ef8e89369e2dc45d2bb10be8393759adbbf3f8",
+      "unchanged": true
+    },
+    {
+      "path": "common/build.gradle",
+      "status_before": " M",
+      "sha256_before": "0cec3074de1fc9755f4ddbc292c970e39c670c45af250142be4f1fd5b0ee491b",
+      "sha256_after": "0cec3074de1fc9755f4ddbc292c970e39c670c45af250142be4f1fd5b0ee491b",
+      "unchanged": true
+    },
+    {
+      "path": "common/src/main/java/io/github/brainage04/magic_carpet/entity/custom/MagicCarpetEntity.java",
+      "status_before": " M",
+      "sha256_before": "7acafe7c605d8583909bc7da4b3afee700d8d97949895ca87341fcfdeaf3c9b5",
+      "sha256_after": "7acafe7c605d8583909bc7da4b3afee700d8d97949895ca87341fcfdeaf3c9b5",
+      "unchanged": true
+    },
+    {
+      "path": "common/src/main/java/io/github/brainage04/magic_carpet/mixin/ClientPlayerEntityMixin.java",
+      "status_before": " D",
+      "sha256_before": null,
+      "sha256_after": null,
+      "unchanged": true
+    },
+    {
+      "path": "common/src/main/resources/magic_carpet.mixins.json",
+      "status_before": " M",
+      "sha256_before": "394f74015c350a6d8228749c983487414e4a1db16d3b2ffb16d41c83bce3878e",
+      "sha256_after": "394f74015c350a6d8228749c983487414e4a1db16d3b2ffb16d41c83bce3878e",
+      "unchanged": true
+    },
+    {
+      "path": "fabric/build.gradle",
+      "status_before": " M",
+      "sha256_before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256_after": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    {
+      "path": "gradle.properties",
+      "status_before": " M",
+      "sha256_before": "c6d005f87388ad1fe7890ef306af76eb2766169fbdae9597d9475bef7a31a0c8",
+      "sha256_after": "c6d005f87388ad1fe7890ef306af76eb2766169fbdae9597d9475bef7a31a0c8",
+      "unchanged": true
+    },
+    {
+      "path": "neoforge/build.gradle",
+      "status_before": " M",
+      "sha256_before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256_after": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    {
+      "path": "settings.gradle",
+      "status_before": " M",
+      "sha256_before": "d5ea3a61783c6628389ce2e2969873176e0e31e1a51950baa7073c55d46fe8bc",
+      "sha256_after": "d5ea3a61783c6628389ce2e2969873176e0e31e1a51950baa7073c55d46fe8bc",
+      "unchanged": true
+    },
+    {
+      "path": ".editorconfig",
+      "status_before": "??",
+      "sha256_before": "0ef09ad2bd70021a93f96beb09c38993a0b4a79a46cb9639ea91fd85789e9c31",
+      "sha256_after": "0ef09ad2bd70021a93f96beb09c38993a0b4a79a46cb9639ea91fd85789e9c31",
+      "unchanged": true
+    },
+    {
+      "path": ".java-version",
+      "status_before": "??",
+      "sha256_before": "64aeb9975f234becd55bb4635e6e2f2da7a6b7bf0a896f0c07763bdfbfb31420",
+      "sha256_after": "64aeb9975f234becd55bb4635e6e2f2da7a6b7bf0a896f0c07763bdfbfb31420",
+      "unchanged": true
+    }
+  ],
+  "active_approved_textures_unchanged": true,
+  "no_push": true
+}

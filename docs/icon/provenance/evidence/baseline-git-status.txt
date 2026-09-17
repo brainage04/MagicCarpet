@@ -1,0 +1,11 @@
+ M build.gradle
+ M common/build.gradle
+ M common/src/main/java/io/github/brainage04/magic_carpet/entity/custom/MagicCarpetEntity.java
+ D common/src/main/java/io/github/brainage04/magic_carpet/mixin/ClientPlayerEntityMixin.java
+ M common/src/main/resources/magic_carpet.mixins.json
+ M fabric/build.gradle
+ M gradle.properties
+ M neoforge/build.gradle
+ M settings.gradle
+?? .editorconfig
+?? .java-version

@@ -1,0 +1,10 @@
+[
+  {
+    "project": "magic-carpet",
+    "label": "Variant B \u2014 native ranked 64\u00d714 tier stack",
+    "path": "blender-u/magic-carpet-02-native-b-ranked-stack.png",
+    "method": "Headless Blender 5.1.1, Cycles CPU, 96 samples, 1024\u00d71024; two threads within shared three-core CPU quota / CPUWeight 20",
+    "source": "blender-r/magic-carpet-01-revamped-stack.blend; blender-u/textures/variant-b/entity/*.png",
+    "notes": "Variant A body motifs unchanged. A dark rank badge on BOTH end borders has 1 ivory 2\u00d72 square pip for basic / tier 1, 2 for advanced / tier 2, 3 for legendary / tier 3. Four dark pixels separate adjacent pips. Rank lives in the texture, not floating effects or labels. Same-basename .py and packed .blend accompany the PNG."
+  }
+]

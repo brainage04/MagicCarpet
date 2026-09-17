@@ -1,0 +1,28 @@
+{
+  "command": [
+    "nix",
+    "shell",
+    "nixpkgs#blender",
+    "--command",
+    "blender",
+    "--background",
+    "-noaudio",
+    "--threads",
+    "2",
+    "--python-exit-code",
+    "1",
+    "--python",
+    "/home/thomas/01_TM/Coding/Websites/brainage04.github.io/.local-icon-variants/round3/blender-u/verify-scenes.py",
+    "--"
+  ],
+  "cwd": "/home/thomas/01_TM/Coding/Websites/brainage04.github.io/.local-icon-variants/round3/blender-u",
+  "cpu.max": "300000 100000",
+  "cpu.weight": "20",
+  "cgroup_membership": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/render-blender.service",
+  "pid": 2002336,
+  "display": null,
+  "audio": null,
+  "gpu": false,
+  "returncode": 0,
+  "stopped": true
+}

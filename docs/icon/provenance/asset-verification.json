@@ -1,0 +1,199 @@
+{
+  "result": "PASS",
+  "reproducible_PNG_bytes": true,
+  "source_inventory": [
+    {
+      "stage": "original",
+      "name": "advanced_magic_carpet.png",
+      "path": "original/entity/advanced_magic_carpet.png",
+      "size": [
+        64,
+        14
+      ],
+      "sha256": "49520580a48dc1532e959c0dc93026092214443dcea60978e399bf04c2a4cfc6"
+    },
+    {
+      "stage": "original",
+      "name": "basic_magic_carpet.png",
+      "path": "original/entity/basic_magic_carpet.png",
+      "size": [
+        64,
+        14
+      ],
+      "sha256": "367fec83e6864594c6cc9e01aa07a1d45acf6482904ea71370d28f0fb5c68e19"
+    },
+    {
+      "stage": "original",
+      "name": "legendary_magic_carpet.png",
+      "path": "original/entity/legendary_magic_carpet.png",
+      "size": [
+        64,
+        14
+      ],
+      "sha256": "28cf588ef051e5f629e83f04f7f26228371ff7fb0ed46365a65d7f734dcb0640"
+    },
+    {
+      "stage": "original",
+      "name": "advanced_magic_carpet.png",
+      "path": "original/item/advanced_magic_carpet.png",
+      "size": [
+        64,
+        14
+      ],
+      "sha256": "49520580a48dc1532e959c0dc93026092214443dcea60978e399bf04c2a4cfc6"
+    },
+    {
+      "stage": "original",
+      "name": "basic_magic_carpet.png",
+      "path": "original/item/basic_magic_carpet.png",
+      "size": [
+        64,
+        14
+      ],
+      "sha256": "367fec83e6864594c6cc9e01aa07a1d45acf6482904ea71370d28f0fb5c68e19"
+    },
+    {
+      "stage": "original",
+      "name": "legendary_magic_carpet.png",
+      "path": "original/item/legendary_magic_carpet.png",
+      "size": [
+        64,
+        14
+      ],
+      "sha256": "28cf588ef051e5f629e83f04f7f26228371ff7fb0ed46365a65d7f734dcb0640"
+    }
+  ],
+  "tiers": [
+    {
+      "tier": "basic",
+      "rank": 1,
+      "native_atlas_size": [
+        64,
+        14
+      ],
+      "native_top_face_size": [
+        24,
+        32
+      ],
+      "item_entity_identical": true,
+      "original_alpha_preserved": true,
+      "top_bottom_uv_identical": true,
+      "three_body_repeats_identical": true,
+      "body_A_B_identical": true,
+      "A_B_difference_bounds": [
+        4,
+        1,
+        52,
+        3
+      ],
+      "pip_components_per_end": [
+        [
+          11,
+          1,
+          13,
+          3
+        ]
+      ],
+      "pip_pixels_per_end": 4,
+      "not_resampled_revamp": true
+    },
+    {
+      "tier": "advanced",
+      "rank": 2,
+      "native_atlas_size": [
+        64,
+        14
+      ],
+      "native_top_face_size": [
+        24,
+        32
+      ],
+      "item_entity_identical": true,
+      "original_alpha_preserved": true,
+      "top_bottom_uv_identical": true,
+      "three_body_repeats_identical": true,
+      "body_A_B_identical": true,
+      "A_B_difference_bounds": [
+        4,
+        1,
+        52,
+        3
+      ],
+      "pip_components_per_end": [
+        [
+          8,
+          1,
+          10,
+          3
+        ],
+        [
+          14,
+          1,
+          16,
+          3
+        ]
+      ],
+      "pip_pixels_per_end": 8,
+      "not_resampled_revamp": true
+    },
+    {
+      "tier": "legendary",
+      "rank": 3,
+      "native_atlas_size": [
+        64,
+        14
+      ],
+      "native_top_face_size": [
+        24,
+        32
+      ],
+      "item_entity_identical": true,
+      "original_alpha_preserved": true,
+      "top_bottom_uv_identical": true,
+      "three_body_repeats_identical": true,
+      "body_A_B_identical": true,
+      "A_B_difference_bounds": [
+        4,
+        1,
+        52,
+        3
+      ],
+      "pip_components_per_end": [
+        [
+          5,
+          1,
+          7,
+          3
+        ],
+        [
+          11,
+          1,
+          13,
+          3
+        ],
+        [
+          17,
+          1,
+          19,
+          3
+        ]
+      ],
+      "pip_pixels_per_end": 12,
+      "not_resampled_revamp": true
+    }
+  ],
+  "texture_hashes": {
+    "textures/variant-b/entity/advanced_magic_carpet.png": "50c93e1b3c3d5bc4ce9e768ae2fb2f1882c9b4166f2e732d7655130bdd6cd632",
+    "textures/variant-b/entity/basic_magic_carpet.png": "0b35ebd912b21e8ef9f9f607d4c943499834a054e637ea9e89370eef8ba7049e",
+    "textures/variant-b/entity/legendary_magic_carpet.png": "affec40cf995bc3cba1c4652afb8d7530e0d02df0a8bc8a9ce4d80df622cabae",
+    "textures/variant-b/item/advanced_magic_carpet.png": "50c93e1b3c3d5bc4ce9e768ae2fb2f1882c9b4166f2e732d7655130bdd6cd632",
+    "textures/variant-b/item/basic_magic_carpet.png": "0b35ebd912b21e8ef9f9f607d4c943499834a054e637ea9e89370eef8ba7049e",
+    "textures/variant-b/item/legendary_magic_carpet.png": "affec40cf995bc3cba1c4652afb8d7530e0d02df0a8bc8a9ce4d80df622cabae"
+  },
+  "comparison_sha256": "58a3988320812218794ff6243e80431057218d29fd0c6dd6df6f2ce3dc599ea1",
+  "commands": [
+    "python3 author-native-textures.py",
+    "python3 verify-assets.py"
+  ],
+  "pillow_pythonpath": "/nix/store/4v9j9wbzyhrlx9980ygbr812313mazy0-python3.13-pillow-12.3.0/lib/python3.13/site-packages"
+}

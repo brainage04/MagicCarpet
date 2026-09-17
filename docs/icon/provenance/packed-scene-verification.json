@@ -1,0 +1,148 @@
+{
+  "result": "PASS",
+  "scenes": [
+    {
+      "name": "magic-carpet-02-native-b-ranked-stack",
+      "variant": "variant-b",
+      "packed_images": [
+        {
+          "name": "advanced variant-b native 64x14",
+          "sha256": "50c93e1b3c3d5bc4ce9e768ae2fb2f1882c9b4166f2e732d7655130bdd6cd632",
+          "size": [
+            64,
+            14
+          ]
+        },
+        {
+          "name": "basic variant-b native 64x14",
+          "sha256": "0b35ebd912b21e8ef9f9f607d4c943499834a054e637ea9e89370eef8ba7049e",
+          "size": [
+            64,
+            14
+          ]
+        },
+        {
+          "name": "glint.png.001",
+          "sha256": "7d931715101093be704bf25017c19f45aa68e8066b2556f79c1763fe6440ed5e",
+          "size": [
+            8,
+            8
+          ]
+        },
+        {
+          "name": "legendary variant-b native 64x14",
+          "sha256": "affec40cf995bc3cba1c4652afb8d7530e0d02df0a8bc8a9ce4d80df622cabae",
+          "size": [
+            64,
+            14
+          ]
+        },
+        {
+          "name": "sga_a.png",
+          "sha256": "f2c96c8a425d80e04df13c4dd6eab4daf951558dad3d3eac36f05dc2dee3d04a",
+          "size": [
+            8,
+            8
+          ]
+        },
+        {
+          "name": "sga_b.png",
+          "sha256": "a65b6c7858fb47ce55ebaa136c8256e55d8d72392ee846ec6f2a00a2a45a2592",
+          "size": [
+            8,
+            8
+          ]
+        },
+        {
+          "name": "sga_d.png",
+          "sha256": "4a105e2a1242cce3cbb12f8ca9aaa8fb48528e6606cb252383a57a2eb310f13c",
+          "size": [
+            8,
+            8
+          ]
+        },
+        {
+          "name": "sga_e.png",
+          "sha256": "2a04a1b6a17e8e9720ffc9dc08a746028163eb7b7ff13a2d313df75776f9612d",
+          "size": [
+            8,
+            8
+          ]
+        },
+        {
+          "name": "sga_f.png",
+          "sha256": "a0aea2f182ac0e93450b8f5b133fc16895e7cecbf3e128a8f42633143a044c0e",
+          "size": [
+            8,
+            8
+          ]
+        },
+        {
+          "name": "sga_h.png",
+          "sha256": "55bf601f41a2ebea9f1949eef5fe35ccba806278c773036ffa9b3af7253ff995",
+          "size": [
+            8,
+            8
+          ]
+        },
+        {
+          "name": "sga_k.png",
+          "sha256": "cedfb0e710e78a7b14ba303cf17337b26105d755ce6edbe0816d4e81317dd881",
+          "size": [
+            8,
+            8
+          ]
+        },
+        {
+          "name": "sga_m.png",
+          "sha256": "4516f4bc991466801b0c6b515a7b9e50c6eca70e86c210509649de0aa559637c",
+          "size": [
+            8,
+            8
+          ]
+        },
+        {
+          "name": "sga_n.png",
+          "sha256": "3de8d5c0d29cf8ab95796ccddfe4946f019be76b61aee8e3ada8ea653f425b16",
+          "size": [
+            8,
+            8
+          ]
+        },
+        {
+          "name": "sga_p.png",
+          "sha256": "85f3dd42860e541464cbd793f59fe58f8f20d7d5f7091f31c829fe03fd8908db",
+          "size": [
+            8,
+            8
+          ]
+        },
+        {
+          "name": "sga_r.png",
+          "sha256": "e33ed4ab7ed566e052307933a90ba706f45eda8e86a000fb5b9053da17a32bbf",
+          "size": [
+            8,
+            8
+          ]
+        }
+      ],
+      "all_geometry_UV_camera_lights_effects_unchanged": true,
+      "all_material_parameters_world_compositor_unchanged": true,
+      "particle_texture_bytes_unchanged": true,
+      "embedded_scripts_equal_saved_scripts": true,
+      "native_carpet_images": [
+        64,
+        14
+      ],
+      "source_geometry_objects": 15,
+      "particle_objects": 60,
+      "pixel_stddev": 0.22908344864845276,
+      "blend_sha256": "fce61bd98e5b09caede890196161591624dc2476613696a5c952ac41a5c3ba34",
+      "png_sha256": "17535071e0afecc04eec944dbbffe290c47a0fa8e01ad40eb596bafbfe90ac27"
+    }
+  ],
+  "reopened_B_render_max_pixel_delta": 0.0,
+  "reopened_B_render_file_sha256": "3affd0db91d02a03d8b8ae69854953cd7bb1d888b521f9db9ea0ee855c430ef6",
+  "original_B_render_file_sha256": "17535071e0afecc04eec944dbbffe290c47a0fa8e01ad40eb596bafbfe90ac27",
+  "reopened_B_render_bytes_identical": false
+}

@@ -1,0 +1,27 @@
+{
+  "result": "PASS",
+  "decoded_pixels_identical": true,
+  "compressed_IDAT_bytes_identical": true,
+  "only_differing_chunks": [
+    {
+      "kind": "tEXt",
+      "original": "Date\u00002026/09/14 23:43:45",
+      "reopened": "Date\u00002026/09/14 23:48:00"
+    },
+    {
+      "kind": "tEXt",
+      "original": "RenderTime\u000001:44.00",
+      "reopened": "RenderTime\u000003:07.12"
+    },
+    {
+      "kind": "tEXt",
+      "original": "cycles.ViewLayer.total_time\u000001:43.81",
+      "reopened": "cycles.ViewLayer.total_time\u000003:06.91"
+    },
+    {
+      "kind": "tEXt",
+      "original": "cycles.ViewLayer.render_time\u000001:43.81",
+      "reopened": "cycles.ViewLayer.render_time\u000003:06.90"
+    }
+  ]
+}

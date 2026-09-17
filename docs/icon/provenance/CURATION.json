@@ -1,0 +1,113 @@
+{
+  "mod": "MagicCarpet",
+  "source_folder": "round3/blender-u",
+  "source_folder_absolute": "/home/thomas/01_TM/Coding/Websites/brainage04.github.io/.local-icon-variants/round3/blender-u",
+  "icon_source": "blender-u/magic-carpet-02-native-b-ranked-stack.png",
+  "icon_sha256_source": "17535071e0afecc04eec944dbbffe290c47a0fa8e01ad40eb596bafbfe90ac27",
+  "icon_sha256_copy": "17535071e0afecc04eec944dbbffe290c47a0fa8e01ad40eb596bafbfe90ac27",
+  "icon_dimensions": [
+    1024,
+    1024
+  ],
+  "files_copied": [
+    "asset-verification.json",
+    "author-native-textures.py",
+    "blockers.json",
+    "cleanup-report.json",
+    "evidence/baseline-git-status.txt",
+    "evidence/baseline-head.txt",
+    "evidence/rerender-png-byte-comparison.json",
+    "evidence/resources-render-native.json",
+    "evidence/resources-verify-scenes-initial.json",
+    "evidence/resources-verify-scenes.json",
+    "evidence/unrelated-dirty-files.json",
+    "local-commit.json",
+    "magic-carpet-02-native-b-ranked-stack-metadata.json",
+    "magic-carpet-02-native-b-ranked-stack.blend",
+    "magic-carpet-02-native-b-ranked-stack.py",
+    "manifest.json",
+    "original/entity/advanced_magic_carpet.png",
+    "original/entity/basic_magic_carpet.png",
+    "original/entity/legendary_magic_carpet.png",
+    "original/item/advanced_magic_carpet.png",
+    "original/item/basic_magic_carpet.png",
+    "original/item/legendary_magic_carpet.png",
+    "packed-scene-verification.json",
+    "plan-and-diagnosis.json",
+    "render-native.py",
+    "repository-verification.json",
+    "run-blender.py",
+    "sources/approved-stack.blend",
+    "texture-inventory.json",
+    "textures/variant-b/entity/advanced_magic_carpet.png",
+    "textures/variant-b/entity/basic_magic_carpet.png",
+    "textures/variant-b/entity/legendary_magic_carpet.png",
+    "textures/variant-b/item/advanced_magic_carpet.png",
+    "textures/variant-b/item/basic_magic_carpet.png",
+    "textures/variant-b/item/legendary_magic_carpet.png",
+    "verification.json",
+    "verify-assets.py",
+    "verify-scenes.py",
+    "visual-review.json"
+  ],
+  "file_count_copied": 39,
+  "json_curation": [
+    {
+      "file": "manifest.json",
+      "curation": "kept only the selected variant-B entry"
+    },
+    {
+      "file": "texture-inventory.json",
+      "curation": "kept the variant-B texture rows; the comparison-sheet staging note is retained verbatim"
+    },
+    {
+      "file": "asset-verification.json",
+      "curation": "kept original and variant-B rows only; the commands list still names the comparison sheet step"
+    },
+    {
+      "file": "packed-scene-verification.json",
+      "curation": "kept the variant-B packed scene row"
+    },
+    {
+      "file": "visual-review.json",
+      "curation": "kept the variant-B review plus shared framing notes; the variant-A and comparison-sheet entries were dropped"
+    }
+  ],
+  "excluded": [
+    {
+      "path": "blender-u/magic-carpet-01-native-a-stack.*",
+      "reason": "retired variant-A candidate"
+    },
+    {
+      "path": "blender-u/textures/variant-a/**",
+      "reason": "variant-A textures"
+    },
+    {
+      "path": "blender-u/revamp-2x/**",
+      "reason": "approved 2x art of a previous round; used only by the excluded comparison sheet"
+    },
+    {
+      "path": "blender-u/texture-comparison.png",
+      "reason": "evidence comparison sheet, not the icon"
+    },
+    {
+      "path": "blender-u/logs/**",
+      "reason": "run logs"
+    },
+    {
+      "path": "blender-u/evidence/verify-scenes-initial-selector-failure.log",
+      "reason": "run log"
+    }
+  ],
+  "bytes_added_total": 1867293,
+  "deliverable": {
+    "icon": "icon.png",
+    "icon_sha256_round3_source": "17535071e0afecc04eec944dbbffe290c47a0fa8e01ad40eb596bafbfe90ac27",
+    "icon_sha256_shipped_copy": "17535071e0afecc04eec944dbbffe290c47a0fa8e01ad40eb596bafbfe90ac27",
+    "provenance_file_count": 39,
+    "total_file_count": 42,
+    "total_bytes": 1877511,
+    "largest_file": "icon.png",
+    "largest_file_bytes": 1397692
+  }
+}

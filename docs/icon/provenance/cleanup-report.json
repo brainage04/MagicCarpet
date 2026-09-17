@@ -1,0 +1,36 @@
+{
+  "result": "COMPLETE",
+  "owned_runtime_resources_started": [
+    {
+      "resource": "Headless offline Blender render job",
+      "launch": "python3 run-blender.py render-native.py variant-a variant-b",
+      "stopped": true
+    },
+    {
+      "resource": "Headless Blender packed-scene verification and rerender",
+      "launch": "python3 run-blender.py verify-scenes.py",
+      "stopped": true
+    }
+  ],
+  "shutdown_evidence": {
+    "command": "pgrep -af /home/thomas/01_TM/Coding/Websites/brainage04.github.io/.local-icon-variants/round3/blender-u/",
+    "exit_code": 1,
+    "stdout": "",
+    "meaning": "No remaining matching owned processes"
+  },
+  "display_resources_started": [],
+  "audio_resources_started": [],
+  "minecraft_or_chunky_started": false,
+  "primary_desktop_or_audio_touched": false,
+  "existing_shared_render_cgroup": "Reused, never created or stopped; cpu.max=300000 100000, cpu.weight=20. Each render used 2 threads and Cycles CPU.",
+  "protected_osu_cpu_weight": 1000,
+  "removed": [
+    "evidence/reopened-b.png (duplicate smoke rerender; pixel/chunk/hash proof retained)"
+  ],
+  "retained": "Requested PNGs, same-basename packed .blends and render scripts, native authoring script, source images, reusable local verification scripts, logs and JSON evidence.",
+  "portfolio_git_commits": 0,
+  "portfolio_tracked_file_edits": 0,
+  "magiccarpet_commit": "cc88d9bd69ad7261ddbadadbec708363bbb6003f",
+  "remote_pushes": 0,
+  "unrelated_dirty_paths_preserved": 11
+}
