@@ -1,10 +1,1 @@
-plugins {
- id 'dev.architectury.loom-no-remap'
- id 'dev.architectury.loom'
-}
-loom { silentMojangMappingsLicense() }
-dependencies {
- minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
- compileOnly "net.fabricmc:fabric-loader:${rootProject.loader_version}"
- compileOnly 'org.spongepowered:mixin:0.8.5'
-}
+dependencies { compileOnly 'org.spongepowered:mixin:0.8.5' }
