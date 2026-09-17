@@ -8,17 +8,18 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.animal.fish.WaterAnimal;
 import net.minecraft.world.entity.monster.creaking.Creaking;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.entity.vehicle.VehicleEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
@@ -129,6 +130,11 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     }
 
     @Override
+    public boolean isClientAuthoritative() {
+        return false;
+    }
+
+    @Override
     public InteractionResult interact(Player player, InteractionHand hand, Vec3 hitPos) {
         InteractionResult actionResult = super.interact(player, hand, hitPos);
         if (actionResult != InteractionResult.PASS) {
@@ -149,11 +155,6 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         return 2;
     }
 
-    public void setInputs(Vec2 movement, boolean pressingSpace) {
-        this.movementForward = movement.y;
-        this.movementSideways = movement.x;
-        this.pressingSpace = pressingSpace;
-    }
 
     @Override
     public @Nullable LivingEntity getControllingPassenger() {
@@ -178,6 +179,9 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         LivingEntity passenger = getControllingPassenger();
 
         if (!(passenger instanceof Player player)) return;
+        if (player instanceof ServerPlayer serverPlayer) {
+            updateInputs(serverPlayer.getLastClientInput());
+        }
 
         float yaw = (float) Math.toRadians(player.getYRot());
         Vec3 targetVelocity = getTargetVelocity(player, yaw);
@@ -195,7 +199,7 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
 
         Vec3 targetVelocity = new Vec3(
                 cos * movementSideways - sin * movementForward,
-                pressingSpace ? getVerticalVelocity(player.getXRot()) : getGravity(),
+                pressingSpace ? getVerticalVelocity(player.getXRot()) : 0.0,
                 sin * movementSideways + cos * movementForward
         );
 
@@ -207,6 +211,24 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
                 targetVelocity.z * maxSpeed
         );
         return targetVelocity;
+    }
+
+    private void updateInputs(Input input) {
+        movementForward = impulse(input.forward(), input.backward());
+        movementSideways = impulse(input.left(), input.right());
+        float length = Mth.sqrt(movementForward * movementForward + movementSideways * movementSideways);
+        if (length > 1.0F) {
+            movementForward /= length;
+            movementSideways /= length;
+        }
+        pressingSpace = input.jump();
+    }
+
+    private static float impulse(boolean positive, boolean negative) {
+        if (positive == negative) {
+            return 0.0F;
+        }
+        return positive ? 1.0F : -1.0F;
     }
 
     @Override

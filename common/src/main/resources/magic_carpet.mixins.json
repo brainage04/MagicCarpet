@@ -6,9 +6,7 @@
     "EntityAccessor",
     "LivingEntityMixin"
   ],
-  "client": [
-    "ClientPlayerEntityMixin"
-  ],
+  "client": [],
   "server": [
   ],
   "injectors": {
