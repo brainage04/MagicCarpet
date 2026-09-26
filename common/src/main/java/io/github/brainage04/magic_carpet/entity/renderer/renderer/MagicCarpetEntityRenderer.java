@@ -1,42 +1,47 @@
 package io.github.brainage04.magic_carpet.entity.renderer;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import io.github.brainage04.magic_carpet.MagicCarpet;
+import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
+import io.github.brainage04.magic_carpet.entity.model.MagicCarpetEntityModel;
 import io.github.brainage04.magic_carpet.entity.renderer.state.MagicCarpetEntityRenderState;
-import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
-import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
-import io.github.brainage04.magic_carpet.entity.model.MagicCarpetEntityModel;
+import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
 public abstract class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarpetEntity, MagicCarpetEntityRenderState> {
+    private final MagicCarpetEntityModel model;
+    private final RenderType renderType;
+    private final @Nullable RenderType emissiveRenderType;
 
-    public static final ModelLayerLocation ENTITY_MODEL_LAYER =
-            new ModelLayerLocation(Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "magic_carpet"), "main");
-    private final Identifier texture;
-    private final EntityModel<MagicCarpetEntityRenderState> model;
-
-    protected MagicCarpetEntityRenderer(EntityRendererProvider.Context context, String carpetType) {
+    /**
+     * @param carpetType the tier name, e.g. {@code basic}
+     * @param emissive   whether {@code textures/entity/<tier>_magic_carpet_glow.png} is drawn at full brightness on top
+     */
+    protected MagicCarpetEntityRenderer(EntityRendererProvider.Context context, String carpetType, boolean emissive) {
         super(context);
-        this.texture = ENTITY_MODEL_LAYER.model().withPath(path -> "textures/entity/%s_%s.png".formatted(carpetType, path));
-        this.model = new MagicCarpetEntityModel(context.bakeLayer(ENTITY_MODEL_LAYER));
+        this.model = new MagicCarpetEntityModel(context.bakeLayer(modelLayer(carpetType)));
+        this.renderType = this.model.renderType(texture(carpetType, ""));
+        this.emissiveRenderType = emissive ? RenderTypes.eyes(texture(carpetType, "_glow")) : null;
     }
 
-    protected EntityModel<MagicCarpetEntityRenderState> getModel() {
-        return this.model;
+    protected static ModelLayerLocation modelLayer(String carpetType) {
+        return new ModelLayerLocation(Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, carpetType + "_magic_carpet"), "main");
     }
 
-    protected RenderType getRenderLayer() {
-        return this.model.renderType(this.texture);
+    private static Identifier texture(String carpetType, String suffix) {
+        return Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "textures/entity/%s_magic_carpet%s.png".formatted(carpetType, suffix));
     }
 
     @Override
@@ -51,21 +56,12 @@ public abstract class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarp
         // sideways rotation (along controlling passenger's Z axis)
         matrices.mulPose(Axis.ZP.rotationDegrees(state.roll));
 
-        matrices.translate(0.0F, -1.5F, 0.0F);
-
-        EntityModel<MagicCarpetEntityRenderState> entityModel = this.getModel();
-        entityModel.setupAnim(state);
-
-        queue.submitModel(
-                entityModel,
-                state,
-                matrices,
-                this.getRenderLayer(),
-                state.lightCoords,
-                OverlayTexture.NO_OVERLAY,
-                state.outlineColor,
-                null
-        );
+        queue.submitModel(this.model, state, matrices, this.renderType,
+                state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor, null);
+        if (this.emissiveRenderType != null) {
+            queue.submitModel(this.model, state, matrices, this.emissiveRenderType,
+                    LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, state.outlineColor, null);
+        }
 
         matrices.popPose();
 
@@ -79,10 +75,12 @@ public abstract class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarp
 
     @Override
     public void extractRenderState(MagicCarpetEntity entity, MagicCarpetEntityRenderState state, float tickDelta) {
+        super.extractRenderState(entity, state, tickDelta);
+
         state.yaw = entity.getYRot(tickDelta);
         state.pitch = Mth.rotLerp(tickDelta, entity.prevRenderPitch, entity.renderPitch);
         state.roll = Mth.rotLerp(tickDelta, entity.prevRenderRoll, entity.renderRoll);
-
-        super.extractRenderState(entity, state, tickDelta);
+        state.speed = Mth.lerp(tickDelta, entity.prevAnimationSpeed, entity.animationSpeed);
+        state.animationOffset = (entity.getId() * 37) % 1000;
     }
 }

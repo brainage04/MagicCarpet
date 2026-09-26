@@ -2,11 +2,9 @@ package io.github.brainage04.magic_carpet.neoforge;
 
 import io.github.brainage04.magic_carpet.MagicCarpet;
 import io.github.brainage04.magic_carpet.entity.ModEntities;
-import io.github.brainage04.magic_carpet.entity.model.MagicCarpetEntityModel;
 import io.github.brainage04.magic_carpet.entity.renderer.AdvancedMagicCarpetEntityRenderer;
 import io.github.brainage04.magic_carpet.entity.renderer.BasicMagicCarpetEntityRenderer;
 import io.github.brainage04.magic_carpet.entity.renderer.LegendaryMagicCarpetEntityRenderer;
-import io.github.brainage04.magic_carpet.entity.renderer.MagicCarpetEntityRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -20,5 +18,9 @@ public final class MagicCarpetNeoForgeClient {
         event.registerEntityRenderer(ModEntities.advanced(), AdvancedMagicCarpetEntityRenderer::new);
         event.registerEntityRenderer(ModEntities.legendary(), LegendaryMagicCarpetEntityRenderer::new);
     }
-    private void registerLayers(EntityRenderersEvent.RegisterLayerDefinitions event) { event.registerLayerDefinition(MagicCarpetEntityRenderer.ENTITY_MODEL_LAYER, MagicCarpetEntityModel::getTexturedModelData); }
+    private void registerLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(BasicMagicCarpetEntityRenderer.MODEL_LAYER, BasicMagicCarpetEntityRenderer::createBodyLayer);
+        event.registerLayerDefinition(AdvancedMagicCarpetEntityRenderer.MODEL_LAYER, AdvancedMagicCarpetEntityRenderer::createBodyLayer);
+        event.registerLayerDefinition(LegendaryMagicCarpetEntityRenderer.MODEL_LAYER, LegendaryMagicCarpetEntityRenderer::createBodyLayer);
+    }
 }

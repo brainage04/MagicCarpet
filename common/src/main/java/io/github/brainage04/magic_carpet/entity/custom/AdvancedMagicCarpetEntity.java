@@ -1,10 +1,12 @@
 package io.github.brainage04.magic_carpet.entity.custom;
 
 import io.github.brainage04.magic_carpet.item.ModItems;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.vehicle.VehicleEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public class AdvancedMagicCarpetEntity extends MagicCarpetEntity {
     public AdvancedMagicCarpetEntity(EntityType<? extends VehicleEntity> entityType, Level world) {
@@ -12,13 +14,21 @@ public class AdvancedMagicCarpetEntity extends MagicCarpetEntity {
     }
 
     @Override
-    protected double getMaxSpeed() {
+    public double getMaxSpeed() {
         return 1.2;
     }
 
     @Override
     protected double getAccelerationTime() {
         return 1.0;
+    }
+
+    @Override
+    protected void spawnAmbientParticle(Vec3 position, Vec3 backward, float speed) {
+        Vec3 drift = backward.scale(0.04 * speed);
+        level().addParticle(ParticleTypes.SMALL_FLAME,
+                position.x, position.y, position.z,
+                drift.x, 0.005 + getRandom().nextDouble() * 0.01, drift.z);
     }
 
     @Override

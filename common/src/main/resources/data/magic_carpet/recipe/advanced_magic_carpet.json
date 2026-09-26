@@ -1,12 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "BGB",
+    "BGR",
     "GCG",
-    "BGB"
+    "RGB"
   ],
   "key": {
     "B": "minecraft:blaze_rod",
+    "R": "minecraft:breeze_rod",
     "G": "minecraft:gold_block",
     "C": "magic_carpet:basic_magic_carpet"
   },
@@ -14,4 +15,3 @@
     "id": "magic_carpet:advanced_magic_carpet"
   }
 }
-

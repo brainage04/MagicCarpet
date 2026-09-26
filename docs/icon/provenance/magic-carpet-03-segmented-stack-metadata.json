@@ -1,0 +1,74 @@
+{
+  "name": "magic-carpet-03-segmented-stack",
+  "engine": "CYCLES",
+  "device": "CPU",
+  "threads": 24,
+  "samples": 96,
+  "blender": "5.1.1",
+  "resolution": [
+    1024,
+    1024
+  ],
+  "seconds": 23.66021203401033,
+  "approved_scene_sha256": "109d7e4d54bf301427070988b8c6078d696381142e9dda5bbb5e9d91bbfa07c2",
+  "tiers": [
+    {
+      "tier": "basic",
+      "texture": "basic_magic_carpet.png",
+      "size": [
+        192,
+        96
+      ],
+      "sha256": "db03719a683296683f9e27f50287774bfd0984600ef368541b0dd432c3f304ec",
+      "perimeter_points": 18,
+      "faces": 156,
+      "pose": {
+        "speed": 0.35,
+        "time": 12.0
+      }
+    },
+    {
+      "tier": "advanced",
+      "texture": "advanced_magic_carpet.png",
+      "size": [
+        192,
+        96
+      ],
+      "sha256": "4fe6ffd2a2d4a043e472a60a149c731d26ab6c90189f39015d34b95690c2512a",
+      "perimeter_points": 18,
+      "faces": 216,
+      "pose": {
+        "speed": 0.35,
+        "time": 31.0
+      }
+    },
+    {
+      "tier": "legendary",
+      "texture": "legendary_magic_carpet.png",
+      "size": [
+        192,
+        96
+      ],
+      "sha256": "103b48538b622ac0a53b95a44b774246ad47f7bbd8eeeeb4e3e2f178a3cca7e9",
+      "glow": {
+        "texture": "legendary_magic_carpet_glow.png",
+        "sha256": "2a9843e2570b5b2738799bb1e0d119d4949e1c1776c1c50d6be3ea75934e7beb"
+      },
+      "perimeter_points": 20,
+      "faces": 228,
+      "pose": {
+        "speed": 0.35,
+        "time": 47.0
+      }
+    }
+  ],
+  "bounds": [
+    0.1333824247121811,
+    0.09537467360496521,
+    0.8585047721862793,
+    0.9729593992233276
+  ],
+  "visible_particles": 60,
+  "png_sha256": "52f52a9ab6a20315c47b65fab1c5bd61760cb2287046af641b390fb59ba15a84",
+  "blend_sha256": "1b71d0356f92c808af8a30bac6906d5cc5638ebb54d2d31dcb12e8b5f620201a"
+}

@@ -16,6 +16,6 @@ public final class ModEntities {
     public static EntityType<BasicMagicCarpetEntity> basic() { return basic.get(); }
     public static EntityType<AdvancedMagicCarpetEntity> advanced() { return advanced.get(); }
     public static EntityType<LegendaryMagicCarpetEntity> legendary() { return legendary.get(); }
-    public static <T extends MagicCarpetEntity> EntityType.Builder<T> builder(EntityType.EntityFactory<T> factory) { return EntityType.Builder.of(factory, net.minecraft.world.entity.MobCategory.MISC).sized(2.0F, .25F); }
+    public static <T extends MagicCarpetEntity> EntityType.Builder<T> builder(EntityType.EntityFactory<T> factory) { return EntityType.Builder.of(factory, net.minecraft.world.entity.MobCategory.MISC).sized(1.5F, .25F); }
     public static void initialize() { }
 }

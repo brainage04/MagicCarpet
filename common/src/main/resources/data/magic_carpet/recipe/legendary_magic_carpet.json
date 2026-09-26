@@ -1,19 +1,18 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "PSP",
+    "BSB",
     "DCD",
-    "EEE"
+    "HHH"
   ],
   "key": {
-    "P": "minecraft:ender_pearl",
+    "B": "minecraft:dragon_breath",
     "S": "minecraft:nether_star",
     "D": "minecraft:diamond_block",
     "C": "magic_carpet:advanced_magic_carpet",
-    "E": "minecraft:emerald_block"
+    "H": "minecraft:shulker_shell"
   },
   "result": {
     "id": "magic_carpet:legendary_magic_carpet"
   }
 }
-
