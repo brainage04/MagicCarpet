@@ -9,7 +9,7 @@ displayName="MagicCarpet"
 description='''Adds Magic Carpets to Minecraft.'''
 authors="brainage04"
 displayURL="https://github.com/brainage04/MagicCarpet"
-logoFile="assets/magic_carpet/icon.png"
+iconFile="assets/magic_carpet/icon.png"
 
 [[mixins]]
 config="magic_carpet.mixins.json"
