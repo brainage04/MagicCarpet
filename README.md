@@ -6,7 +6,7 @@ MagicCarpet is a Minecraft 26.2 mod for Fabric and NeoForge that adds three craf
 
 - Minecraft 26.2
 - Java 25 or newer
-- Fabric Loader 0.19.3 or newer and Fabric API, or NeoForge 26.2.0.41-beta or newer
+- Fabric Loader 0.19.3 or newer and Fabric API, or NeoForge 26.2.0.88 or newer
 
 ## Migrating from the Fabric-only release
 
