@@ -4,10 +4,13 @@
 	"version": "${mod_version}",
 	"name": "${mod_name} Game Tests",
 	"icon": "assets/magic_carpet/icon.png",
-	"environment": "client",
+	"environment": "*",
 	"entrypoints": {
 		"fabric-client-gametest": [
 			"io.github.brainage04.magic_carpet.MagicCarpetClientGameTest"
+		],
+		"fabric-gametest": [
+			"io.github.brainage04.magic_carpet.MagicCarpetGameTest"
 		]
 	},
 	"depends": {
