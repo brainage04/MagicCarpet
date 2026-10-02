@@ -41,7 +41,7 @@ Carpet riders do not take fall damage while mounted. Each carpet can carry two p
 
 ```shell
 ./gradlew build
-./gradlew runClientGameTest
+./gradlew :fabric:runProductionClientGameTest
 ```
 
 The client GameTest validates dedicated-server entity registration, recipe loading, spawning, and rendering for all three carpet tiers.
