@@ -3,8 +3,8 @@
 Check `heavy status` before starting a build or GameTest run. Run Gradle through `heavy`, with `--no-daemon` and the options-file override so client tasks do not copy personal game options.
 
 ```shell
-heavy --quick -- ./gradlew --no-daemon -Pfabricmoddingconventions.devClientOptions=/nonexistent build
-heavy --mem 6G -- ./gradlew --no-daemon -Pfabricmoddingconventions.devClientOptions=/nonexistent runAllGameTests
+heavy --quick -- ./gradlew --no-daemon build
+heavy --mem 6G -- ./gradlew --no-daemon runAllGameTests
 ```
 
 `runAllGameTests` runs Fabric and NeoForge development and production server GameTests, plus the Fabric production client GameTests. The client scenarios connect to a dedicated server.
