@@ -31,14 +31,14 @@ Each tier looks different: basic carpets have a plain rolled edge, advanced carp
 - Right-click a block with a carpet item to place the carpet.
 - Right-click the placed carpet to ride it.
 
-## Commands
-
-No commands yet.
-
 - Use the normal movement keys for horizontal motion.
 - Hold jump while looking forward or upward to ascend.
 - Hold jump while looking steeply downward to descend.
 - Sneak to dismount.
+
+## Commands
+
+No commands yet.
 
 ## Configuration
 
