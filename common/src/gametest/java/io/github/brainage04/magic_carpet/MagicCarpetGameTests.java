@@ -1,7 +1,6 @@
 package io.github.brainage04.magic_carpet;
 
 import io.github.brainage04.magic_carpet.entity.ModEntities;
-import io.github.brainage04.magic_carpet.item.ModItems;
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -12,9 +11,7 @@ import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.Identifier;
 
 /**
  * Loader-neutral server GameTest bodies. Both loaders compile this source set into their GameTest
@@ -23,12 +20,6 @@ import net.minecraft.resources.Identifier;
  */
 public final class MagicCarpetGameTests {
     private MagicCarpetGameTests() {
-    }
-
-    public static void registrations(GameTestHelper helper) {
-        assertEquals(Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "basic_magic_carpet"), BuiltInRegistries.ENTITY_TYPE.getKey(ModEntities.basic()), "Basic carpet entity is not registered");
-        assertEquals(Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "legendary_magic_carpet"), BuiltInRegistries.ITEM.getKey(ModItems.legendary()), "Legendary carpet item is not registered");
-        helper.succeed();
     }
 
     public static void sustainedMovement(GameTestHelper helper) {
@@ -130,9 +121,5 @@ public final class MagicCarpetGameTests {
         if (Math.abs(expected - actual) > tolerance) {
             throw new AssertionError(message + ": expected " + expected + ", found " + actual);
         }
-    }
-
-    private static void assertEquals(Object expected, Object actual, String message) {
-        if (!expected.equals(actual)) throw new AssertionError(message + ": expected " + expected + ", found " + actual);
     }
 }

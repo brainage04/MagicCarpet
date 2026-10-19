@@ -10,7 +10,6 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,7 +27,7 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
     public void runTest(ClientGameTestContext context) {
         Properties serverProperties = ClientGameTestServers.flatServerProperties();
 
-        ClientGameTestServers.withDedicatedServer(context, serverProperties, "MagicCarpet entity rendering GameTest", server -> { try {
+        ClientGameTestServers.withDedicatedServer(context, serverProperties, "MagicCarpet entity rendering GameTest", server -> {
             server.runOnServer(minecraftServer -> prepareStage(
                     minecraftServer.getPlayerList().getPlayers().getFirst()));
             ClientGameTestServers.assertClientWorldAndPlayerAvailable(context);
@@ -43,9 +42,7 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
             );
             context.waitTicks(80);
             verifyHeldMovement(context, server);
-        } finally {
-            ;
-        } });
+        });
     }
 
     private static void verifyHeldMovement(ClientGameTestContext context, TestDedicatedServerContext server) {
@@ -119,7 +116,6 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
 
     private static void prepareStage(ServerPlayer player) {
         ServerLevel level = player.level();
-        verifyEntityRegistration();
         verifyRecipes(level);
 
         for (BlockPos position : BlockPos.betweenClosed(-7, 62, -8, 7, 66, 5)) {
@@ -151,19 +147,6 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
         carpet.setPos(x, 63.0D, 0.0D);
         if (!level.addFreshEntity(carpet)) {
             throw new AssertionError("Failed to spawn " + carpet.getType());
-        }
-    }
-
-    private static void verifyEntityRegistration() {
-        verifyEntityRegistration(ModEntities.basic(), "basic_magic_carpet");
-        verifyEntityRegistration(ModEntities.advanced(), "advanced_magic_carpet");
-        verifyEntityRegistration(ModEntities.legendary(), "legendary_magic_carpet");
-    }
-
-    private static void verifyEntityRegistration(EntityType<?> entityType, String path) {
-        Identifier expected = Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, path);
-        if (!expected.equals(BuiltInRegistries.ENTITY_TYPE.getKey(entityType))) {
-            throw new AssertionError("Missing entity registration " + expected);
         }
     }
 

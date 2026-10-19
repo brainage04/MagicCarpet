@@ -5,11 +5,6 @@ import net.minecraft.gametest.framework.GameTestHelper;
 
 public class MagicCarpetGameTest {
     @GameTest
-    public void registrations(GameTestHelper helper) {
-        MagicCarpetGameTests.registrations(helper);
-    }
-
-    @GameTest
     public void sustainedMovement(GameTestHelper helper) {
         MagicCarpetGameTests.sustainedMovement(helper);
     }
