@@ -145,6 +145,12 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     }
 
     @Override
+    protected boolean isLocalClientAuthoritative() {
+        // Entity checks this separately from isClientAuthoritative on the controlling rider's client.
+        return false;
+    }
+
+    @Override
     public InteractionResult interact(Player player, InteractionHand hand, Vec3 hitPos) {
         InteractionResult actionResult = super.interact(player, hand, hitPos);
         if (actionResult != InteractionResult.PASS) {

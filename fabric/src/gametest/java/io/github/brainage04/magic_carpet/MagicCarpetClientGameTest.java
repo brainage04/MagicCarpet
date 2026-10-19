@@ -7,6 +7,7 @@ import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import io.github.brainage04.magic_carpet.item.ModItems;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
+import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -41,9 +42,79 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                     "Basic, advanced, and legendary carpet entities must all render"
             );
             context.waitTicks(80);
+            verifyHeldMovement(context, server);
         } finally {
             ;
         } });
+    }
+
+    private static void verifyHeldMovement(ClientGameTestContext context, TestDedicatedServerContext server) {
+        EntityType<?>[] tiers = {ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary()};
+        double[] speeds = {0.6, 1.2, 2.4};
+        for (int tier = 0; tier < tiers.length; tier++) {
+            EntityType<?> type = tiers[tier];
+            double speed = speeds[tier];
+            server.runOnServer(minecraftServer -> {
+                ServerPlayer player = minecraftServer.getPlayerList().getPlayers().getFirst();
+                player.stopRiding();
+                MagicCarpetEntity carpet = (MagicCarpetEntity) type.create(player.level(), EntitySpawnReason.COMMAND);
+                carpet.setPos(0.5, 100, 0.5);
+                player.level().addFreshEntity(carpet);
+                player.teleportTo(0.5, 101, 0.5);
+                player.setYRot(0);
+                player.setXRot(0);
+                if (!player.startRiding(carpet)) throw new AssertionError("Could not mount " + type);
+            });
+            context.waitFor(client -> client.player != null && client.player.getVehicle() != null
+                    && client.player.getVehicle().getType() == type);
+            context.runOnClient(client -> {
+                if (client.player.getVehicle().isLocalInstanceAuthoritative()) {
+                    throw new AssertionError("A carpet must be server-authoritative on its rider's client");
+                }
+                client.player.setYRot(0);
+                client.player.setXRot(0);
+            });
+            context.getInput().holdKey(options -> options.keyUp);
+            context.getInput().holdKey(options -> options.keyJump);
+            try {
+                // No mouse movement or repeat input: exercise the actual input packet path for eight seconds.
+                context.waitTicks(160);
+                double[] before = server.computeOnServer(minecraftServer -> {
+                    ServerPlayer player = minecraftServer.getPlayerList().getPlayers().getFirst();
+                    return new double[]{player.getVehicle().getZ(), player.level().getGameTime()};
+                });
+                context.waitTicks(40);
+                context.runOnClient(client -> {
+                    if (!client.player.input.keyPresses.forward() || !client.player.input.keyPresses.jump()) {
+                        throw new AssertionError("Client stopped holding input: " + client.player.input.keyPresses);
+                    }
+                });
+                server.runOnServer(minecraftServer -> {
+                    ServerPlayer player = minecraftServer.getPlayerList().getPlayers().getFirst();
+                    MagicCarpetEntity carpet = (MagicCarpetEntity) player.getVehicle();
+                    double measured = (carpet.getZ() - before[0]) / (player.level().getGameTime() - before[1]);
+                    if (Math.abs(measured - speed) > 0.01) {
+                        throw new AssertionError(type + " sustained speed: expected " + speed * 20 + ", found " + measured * 20
+                                + " blocks/s; input=" + player.getLastClientInput() + ", motion=" + carpet.getDeltaMovement()
+                                + ", pos=" + carpet.position() + ", rider=" + player.position() + ", ticks=" + carpet.tickCount);
+                    }
+                    if (Math.abs(carpet.getDeltaMovement().y - speed / 2) > 0.01) {
+                        throw new AssertionError("Held jump stopped climbing for " + type);
+                    }
+                    MagicCarpet.LOGGER.info("Held-input speed for {}: {} blocks/s", type, measured * 20);
+                });
+            } finally {
+                context.getInput().releaseKey(options -> options.keyUp);
+                context.getInput().releaseKey(options -> options.keyJump);
+                server.runOnServer(minecraftServer -> {
+                    ServerPlayer player = minecraftServer.getPlayerList().getPlayers().getFirst();
+                    if (player.getVehicle() instanceof MagicCarpetEntity carpet) {
+                        player.stopRiding();
+                        carpet.discard();
+                    }
+                });
+            }
+        }
     }
 
     private static void prepareStage(ServerPlayer player) {

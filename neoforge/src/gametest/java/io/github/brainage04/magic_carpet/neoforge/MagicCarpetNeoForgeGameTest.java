@@ -20,5 +20,8 @@ public final class MagicCarpetNeoForgeGameTest {
     @SubscribeEvent
     public static void registerTestFunctions(RegisterEvent event) {
         event.register(BuiltInRegistries.TEST_FUNCTION.key(), Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "registrations"), () -> MagicCarpetGameTests::registrations);
+        event.register(BuiltInRegistries.TEST_FUNCTION.key(), Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "sustained_movement"), () -> MagicCarpetGameTests::sustainedMovement);
+        event.register(BuiltInRegistries.TEST_FUNCTION.key(), Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "passengers_and_fall_damage"), () -> MagicCarpetGameTests::passengersAndFallDamage);
+        event.register(BuiltInRegistries.TEST_FUNCTION.key(), Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "collision"), () -> MagicCarpetGameTests::collision);
     }
 }

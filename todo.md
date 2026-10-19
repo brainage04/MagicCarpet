@@ -4,6 +4,10 @@
 
 From running the release NeoForge jar on a real NeoForge 26.2.0.41-beta server and client. Items marked *both loaders* come from shared code.
 
-- [ ] Low, both loaders: entity types have no translations, so `/summon`, `/kill` and `/ride` feedback shows `entity.magic_carpet.*_magic_carpet`.
-- [ ] Low, both loaders: the legendary carpet tops out around 30 blocks/s (basic around 10.5) instead of the README's 48 (12); `getMaxSpeed()` and the README agree, the in-game speed doesn't.
-- Unconfirmed, both loaders: holding W or space without moving the mouse makes the carpet coast to a stop after about 3 s. Possibly an Xvfb/xdotool artefact; check by hand.
+- [x] Entity types now have English translations for `/summon`, `/kill` and `/ride` feedback.
+- [x] Carpets are server-authoritative on the controlling rider's client as well as the server. This prevents client vehicle-position packets from overwriting server movement and reducing speed.
+- [ ] Thomas: hold W and jump without moving the mouse on both loaders. The authority fix addresses the conflicting movement paths; the by-hand check is still needed.
+
+## Asset history decision
+
+- [ ] Thomas: decide whether to remove `texture-variants/original-resolution/variant-{a,b}/` and the old `magic-carpet-02-*` icon scenes. Recommendation: keep them, because the icon provenance records reference them.

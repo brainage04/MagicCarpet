@@ -8,4 +8,19 @@ public class MagicCarpetGameTest {
     public void registrations(GameTestHelper helper) {
         MagicCarpetGameTests.registrations(helper);
     }
+
+    @GameTest
+    public void sustainedMovement(GameTestHelper helper) {
+        MagicCarpetGameTests.sustainedMovement(helper);
+    }
+
+    @GameTest
+    public void passengersAndFallDamage(GameTestHelper helper) {
+        MagicCarpetGameTests.passengersAndFallDamage(helper);
+    }
+
+    @GameTest
+    public void collision(GameTestHelper helper) {
+        MagicCarpetGameTests.collision(helper);
+    }
 }
