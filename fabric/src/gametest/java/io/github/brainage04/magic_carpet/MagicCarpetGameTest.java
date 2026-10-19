@@ -18,4 +18,19 @@ public class MagicCarpetGameTest {
     public void collision(GameTestHelper helper) {
         MagicCarpetGameTests.collision(helper);
     }
+
+    @GameTest
+    public void crafting(GameTestHelper helper) {
+        MagicCarpetGameTests.crafting(helper);
+    }
+
+    @GameTest
+    public void placement(GameTestHelper helper) {
+        MagicCarpetGameTests.placement(helper);
+    }
+
+    @GameTest
+    public void persistenceAndDrops(GameTestHelper helper) {
+        MagicCarpetGameTests.persistenceAndDrops(helper);
+    }
 }

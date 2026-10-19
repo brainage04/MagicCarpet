@@ -4,13 +4,14 @@ import io.github.brainage04.fabricmoddingconventions.ClientGameTestRecorder;
 import io.github.brainage04.fabricmoddingconventions.ClientGameTestServers;
 import io.github.brainage04.magic_carpet.entity.ModEntities;
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
+import io.github.brainage04.magic_carpet.entity.model.MagicCarpetEntityModel;
+import io.github.brainage04.magic_carpet.entity.renderer.state.MagicCarpetEntityRenderState;
 import io.github.brainage04.magic_carpet.item.ModItems;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
@@ -32,6 +33,7 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                     minecraftServer.getPlayerList().getPlayers().getFirst()));
             ClientGameTestServers.assertClientWorldAndPlayerAvailable(context);
             context.waitTicks(30);
+            context.runOnClient(client -> verifyAnimationAndTranslations());
         
             ClientGameTestRecorder.startRecording(context);
             ClientGameTestRecorder.showStep(
@@ -43,6 +45,30 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
             context.waitTicks(80);
             verifyHeldMovement(context, server);
         });
+    }
+
+    private static void verifyAnimationAndTranslations() {
+        EntityType<?>[] types = {ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary()};
+        String[] names = {"Basic Magic Carpet", "Advanced Magic Carpet", "Legendary Magic Carpet"};
+        for (int tier = 0; tier < types.length; tier++) {
+            if (!names[tier].equals(types[tier].getDescription().getString())) {
+                throw new AssertionError("Missing translated entity name for " + types[tier]);
+            }
+            var root = MagicCarpetEntityModel.createBodyLayer(tier > 0, tier == 2).bakeRoot();
+            var model = new MagicCarpetEntityModel(root);
+            var state = new MagicCarpetEntityRenderState();
+            state.ageInTicks = 20;
+            model.setupAnim(state);
+            float idle = root.getChild("carpet").getChild("segment_7").y;
+            state.speed = 1;
+            model.setupAnim(state);
+            float flying = root.getChild("carpet").getChild("segment_7").y;
+            if (Math.abs(idle - flying) < 0.01) throw new AssertionError("Flight must change the carpet's ripple");
+            model.setupAnim(state);
+            if (root.getChild("carpet").getChild("segment_7").y != flying) {
+                throw new AssertionError("Animation must not accumulate offsets between frames");
+            }
+        }
     }
 
     private static void verifyHeldMovement(ClientGameTestContext context, TestDedicatedServerContext server) {
@@ -116,7 +142,6 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
 
     private static void prepareStage(ServerPlayer player) {
         ServerLevel level = player.level();
-        verifyRecipes(level);
 
         for (BlockPos position : BlockPos.betweenClosed(-7, 62, -8, 7, 66, 5)) {
             level.setBlock(
@@ -150,18 +175,4 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
         }
     }
 
-    private static void verifyRecipes(ServerLevel level) {
-        for (String path : new String[]{
-                "basic_magic_carpet",
-                "advanced_magic_carpet",
-                "legendary_magic_carpet"
-        }) {
-            Identifier expected = Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, path);
-            boolean loaded = level.getServer().getRecipeManager().getRecipes().stream()
-                    .anyMatch(recipe -> recipe.id().identifier().equals(expected));
-            if (!loaded) {
-                throw new AssertionError("Missing recipe " + expected);
-            }
-        }
-    }
 }

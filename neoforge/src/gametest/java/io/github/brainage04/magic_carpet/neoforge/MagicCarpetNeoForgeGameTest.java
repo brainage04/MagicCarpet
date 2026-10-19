@@ -22,5 +22,8 @@ public final class MagicCarpetNeoForgeGameTest {
         event.register(BuiltInRegistries.TEST_FUNCTION.key(), Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "sustained_movement"), () -> MagicCarpetGameTests::sustainedMovement);
         event.register(BuiltInRegistries.TEST_FUNCTION.key(), Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "passengers_and_fall_damage"), () -> MagicCarpetGameTests::passengersAndFallDamage);
         event.register(BuiltInRegistries.TEST_FUNCTION.key(), Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "collision"), () -> MagicCarpetGameTests::collision);
+        event.register(BuiltInRegistries.TEST_FUNCTION.key(), Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "crafting"), () -> MagicCarpetGameTests::crafting);
+        event.register(BuiltInRegistries.TEST_FUNCTION.key(), Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "placement"), () -> MagicCarpetGameTests::placement);
+        event.register(BuiltInRegistries.TEST_FUNCTION.key(), Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "persistence_and_drops"), () -> MagicCarpetGameTests::persistenceAndDrops);
     }
 }
