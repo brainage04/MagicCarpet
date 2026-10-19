@@ -33,4 +33,9 @@ public class MagicCarpetGameTest {
     public void persistenceAndDrops(GameTestHelper helper) {
         MagicCarpetGameTests.persistenceAndDrops(helper);
     }
+
+    @GameTest
+    public void playerTakesControl(GameTestHelper helper) {
+        MagicCarpetGameTests.playerTakesControl(helper);
+    }
 }

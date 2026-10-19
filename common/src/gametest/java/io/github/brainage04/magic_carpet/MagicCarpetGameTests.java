@@ -223,6 +223,34 @@ public final class MagicCarpetGameTests {
         helper.succeed();
     }
 
+    public static void playerTakesControl(GameTestHelper helper) {
+        ServerPlayer rider = helper.makeMockServerPlayerInLevel();
+        MagicCarpetEntity carpet = ModEntities.basic().create(helper.getLevel(), EntitySpawnReason.COMMAND);
+        Sheep sheep = EntityTypes.SHEEP.create(helper.getLevel(), EntitySpawnReason.COMMAND);
+        try {
+            Vec3 origin = helper.absoluteVec(new Vec3(3, 16, 3));
+            carpet.setPos(origin);
+            assertTrue(sheep.startRiding(carpet), "Mob must be able to board first");
+            assertTrue(rider.startRiding(carpet), "Player must be able to join a mob");
+            assertTrue(carpet.getControllingPassenger() == rider, "Player must steer even if a mob boarded first");
+            rider.setYRot(0);
+            rider.setLastClientInput(new Input(true, false, false, false, false, false, false));
+            carpet.tick();
+            assertTrue(carpet.getZ() > origin.z, "Player's input must move the carpet with a mob aboard");
+            assertTrue(sheep.getVehicle() == carpet, "Taking control must not eject the mob");
+            rider.stopRiding();
+            assertTrue(carpet.getControllingPassenger() == sheep, "Mob must remain aboard after the player leaves");
+        } finally {
+            rider.stopRiding();
+            carpet.ejectPassengers();
+            carpet.discard();
+            sheep.discard();
+            helper.getLevel().getServer().getPlayerList().remove(rider);
+            rider.discard();
+        }
+        helper.succeed();
+    }
+
     private static void assertTrue(boolean condition, String message) {
         if (!condition) throw new AssertionError(message);
     }

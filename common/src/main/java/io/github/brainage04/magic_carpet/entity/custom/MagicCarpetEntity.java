@@ -174,6 +174,12 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
 
     @Override
     public @Nullable LivingEntity getControllingPassenger() {
+        List<Entity> passengers = getPassengers();
+        for (int i = 0; i < passengers.size(); i++) {
+            if (passengers.get(i) instanceof Player player) {
+                return player;
+            }
+        }
         Entity passenger = getFirstPassenger();
         if (passenger instanceof LivingEntity livingEntity) {
             return livingEntity;
