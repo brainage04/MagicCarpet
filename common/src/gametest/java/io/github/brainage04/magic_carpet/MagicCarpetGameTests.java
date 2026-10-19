@@ -3,6 +3,8 @@ package io.github.brainage04.magic_carpet;
 import io.github.brainage04.magic_carpet.entity.ModEntities;
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import io.github.brainage04.magic_carpet.item.ModItems;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ProblemReporter;
@@ -132,7 +134,7 @@ public final class MagicCarpetGameTests {
     }
 
     public static void crafting(GameTestHelper helper) {
-        Item wool = Items.RED_WOOL;
+        Item wool = BuiltInRegistries.ITEM.getValue(Identifier.withDefaultNamespace("red_wool"));
         assertCrafts(helper, ModItems.basic(), wool, wool, wool,
                 Items.PHANTOM_MEMBRANE, Items.PHANTOM_MEMBRANE, Items.PHANTOM_MEMBRANE, wool, wool, wool);
         assertCrafts(helper, ModItems.advanced(), Items.BLAZE_ROD, Items.GOLD_BLOCK, Items.BREEZE_ROD,
@@ -165,6 +167,7 @@ public final class MagicCarpetGameTests {
         for (int tier = 0; tier < items.length; tier++) {
             for (GameType mode : new GameType[]{GameType.SURVIVAL, GameType.CREATIVE}) {
                 Player player = helper.makeMockPlayer(mode);
+                mode.updatePlayerAbilities(player.getAbilities());
                 player.setPos(helper.absoluteVec(new Vec3(3.5, 3, 3.5)));
                 player.setXRot(90);
                 ItemStack held = new ItemStack(items[tier], 2);
