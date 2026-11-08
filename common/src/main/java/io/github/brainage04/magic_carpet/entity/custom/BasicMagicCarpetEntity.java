@@ -25,7 +25,6 @@ public class BasicMagicCarpetEntity extends MagicCarpetEntity {
 
     @Override
     protected void spawnAmbientParticle(Vec3 position, Vec3 backward, float speed) {
-        // glyphs drift down into the weave, like an enchanting table
         level().addParticle(
                         ParticleTypes.ENCHANT,
                         position.x,

@@ -37,11 +37,6 @@ import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Loader-neutral server GameTest bodies. Both loaders compile this source set into their GameTest
- * mods: Fabric runs them through {@code @GameTest} methods, NeoForge through registered test
- * functions and {@code test_instance} data.
- */
 public final class MagicCarpetGameTests {
     private MagicCarpetGameTests() {}
 
@@ -64,7 +59,6 @@ public final class MagicCarpetGameTests {
                 rider.setLastClientInput(new Input(true, false, false, false, false, false, false));
                 double distance = 0;
                 for (int tick = 0; tick < 160; tick++) {
-                    // Keep the real collision/movement path inside an isolated, empty test column.
                     carpet.setPos(origin);
                     carpet.tick();
                     if (tick >= 140) distance += carpet.getZ() - origin.z;
@@ -383,9 +377,8 @@ public final class MagicCarpetGameTests {
     }
 
     /**
-     * A creative mock server player with a connection of its own. A riding ServerPlayer sends its
-     * passenger packets through that connection, which makeMockServerPlayer does not create; the
-     * mock stays out of the player list.
+     * A riding ServerPlayer sends its passenger packets through its connection, which
+     * makeMockServerPlayer does not create; the mock stays out of the player list.
      */
     private static ServerPlayer mockRider(GameTestHelper helper) {
         ServerPlayer rider = (ServerPlayer) helper.makeMockServerPlayer(GameType.CREATIVE);

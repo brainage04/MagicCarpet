@@ -89,8 +89,8 @@ public final class FabricPlatform implements Platform {
                 .register(
                         e -> {
                             // Tab contents are built only on the client, once per connection; a
-                            // server without
-                            // MagicCarpet gets none of its carpets offered (see ServerSupport).
+                            // server without MagicCarpet gets none of its carpets offered (see
+                            // ServerSupport).
                             if (!ServerSupport.serverHasMagicCarpet()) return;
                             e.accept(b);
                             e.accept(a);

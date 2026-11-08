@@ -26,11 +26,6 @@ public abstract class MagicCarpetEntityRenderer
     private final RenderType renderType;
     private final @Nullable RenderType emissiveRenderType;
 
-    /**
-     * @param carpetType the tier name, e.g. {@code basic}
-     * @param emissive whether {@code textures/entity/<tier>_magic_carpet_glow.png} is drawn at full
-     *     brightness on top
-     */
     protected MagicCarpetEntityRenderer(
             EntityRendererProvider.Context context, String carpetType, boolean emissive) {
         super(context);
@@ -60,11 +55,8 @@ public abstract class MagicCarpetEntityRenderer
         matrices.pushPose();
 
         // DO NOT CHANGE THE ORDER OF THESE STATEMENTS
-        // horizontal rotation (along controlling passenger's Y axis)
         matrices.rotateDegrees(Axis.YP, 180.0F - state.yaw);
-        // forward rotation (along controlling passenger's X axis)
         matrices.rotateDegrees(Axis.XP, state.pitch);
-        // sideways rotation (along controlling passenger's Z axis)
         matrices.rotateDegrees(Axis.ZP, state.roll);
 
         queue.submitModel(

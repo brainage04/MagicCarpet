@@ -64,11 +64,6 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                 });
     }
 
-    /**
-     * On a server with MagicCarpet nothing is hidden: the signal says so, the tools tab and the
-     * search hold every carpet, and a saved hotbar with a carpet loads it. The side that hides them
-     * is checked against a vanilla server by MagicCarpetVanillaServerClientGameTest.
-     */
     private static void verifyCreativeOnServerWithMagicCarpet(Minecraft client) {
         if (!ServerSupport.serverHasMagicCarpet()) {
             throw new AssertionError("The test server has MagicCarpet");
@@ -169,8 +164,6 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
             context.getInput().holdKey(options -> options.keyUp);
             context.getInput().holdKey(options -> options.keyJump);
             try {
-                // No mouse movement or repeat input: exercise the actual input packet path for
-                // eight seconds.
                 context.waitTicks(160);
                 double[] before =
                         server.computeOnServer(

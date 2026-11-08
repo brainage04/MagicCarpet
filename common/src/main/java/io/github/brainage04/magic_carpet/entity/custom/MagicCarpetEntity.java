@@ -25,21 +25,15 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class MagicCarpetEntity extends VehicleEntity {
-    /** Coasting to a stop takes this many times longer than accelerating to full speed. */
     private static final double DECELERATION_TIME_MULTIPLIER = 2.0;
 
     private static final double REST_SPEED_SQR = 1.0E-6;
 
-    /**
-     * Half the carpet's length (2 blocks) and width (1.5 blocks), used to place particles on its
-     * surface.
-     */
     private static final double HALF_LENGTH = 1.0;
 
     private static final double HALF_WIDTH = 0.75;
     private static final double SURFACE_HEIGHT = 0.1;
 
-    /** Lean at full speed, in degrees. */
     private static final double MAX_TILT_PITCH = 15.0;
 
     private static final double MAX_TILT_ROLL = 12.0;
@@ -53,10 +47,6 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     public float renderPitch;
     public float renderRoll;
 
-    /**
-     * Client-side, smoothed horizontal speed as a fraction of this tier's maximum speed; drives
-     * animations and particles.
-     */
     public float prevAnimationSpeed;
 
     public float animationSpeed;
@@ -69,17 +59,9 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
 
     protected abstract double getAccelerationTime();
 
-    /**
-     * Spawns one tier-specific ambient particle.
-     *
-     * @param position a point on or just above the carpet's surface
-     * @param backward a unit vector pointing out of the carpet's back edge
-     * @param speed the carpet's normalized speed, from 0 (idle) to 1 (maximum)
-     */
     protected abstract void spawnAmbientParticle(Vec3 position, Vec3 backward, float speed);
 
     private static double smoothingFactor(double seconds) {
-        // reach ~99% of the target in n ticks using lerp: f = 1 - 0.01^(1/n)
         return 1.0 - Math.pow(0.01, 1.0 / (seconds * 20.0));
     }
 
@@ -111,7 +93,6 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         double y = this.getDeltaMovement().y();
         double z = this.getDeltaMovement().z();
 
-        // lean relative to this tier's top speed, so faster tiers don't tip over
         double maxSpeed = getMaxSpeed();
         this.renderPitch =
                 (float)
@@ -235,10 +216,6 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         move(MoverType.PLAYER, this.getDeltaMovement());
     }
 
-    /**
-     * Moves the velocity towards the target, using the slower deceleration rate for any axis group
-     * (horizontal or vertical) whose target speed is lower than its current speed.
-     */
     private Vec3 smoothVelocity(Vec3 current, Vec3 target) {
         double acceleration = smoothingFactor(getAccelerationTime());
         double deceleration = smoothingFactor(getAccelerationTime() * DECELERATION_TIME_MULTIPLIER);
@@ -265,8 +242,6 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
                         pressingSpace ? getVerticalVelocity(player.getXRot()) : 0.0,
                         sin * movementSideways + cos * movementForward);
 
-        // scale all components: horizontal input is at most 1, vertical at most 0.5 (see
-        // getVerticalVelocity)
         return targetVelocity.scale(getMaxSpeed());
     }
 
@@ -308,7 +283,6 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         Vec3 forward = new Vec3(-Mth.sin(yaw), 0.0, Mth.cos(yaw));
         Vec3 sideways = new Vec3(Mth.cos(yaw), 0.0, Mth.sin(yaw));
 
-        // idle carpets shimmer all over; moving carpets leave a trail from the back edge
         double along =
                 random.nextFloat() < speed
                         ? -HALF_LENGTH

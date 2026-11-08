@@ -10,9 +10,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Whether the server the client is connected to has MagicCarpet.
- *
- * <p>Neither loader stops a client with MagicCarpet from joining a server without it: Fabric's
+ * Neither loader stops a client with MagicCarpet from joining a server without it: Fabric's
  * registry sync does nothing against a vanilla server and NeoForge accepts a vanilla server when no
  * mod needs a channel. The client then keeps its own item ids, and a creative-mode packet that
  * carries a carpet has an id the server does not know, which fails to decode and drops the
@@ -24,7 +22,6 @@ import net.minecraft.world.item.ItemStack;
  * shares the integrated server's registries, tags included.
  */
 public final class ServerSupport {
-    /** Every MagicCarpet item; shipped in the mod's data, so only servers with the mod have it. */
     public static final TagKey<Item> MAGIC_CARPETS =
             TagKey.create(
                     Registries.ITEM,
@@ -33,7 +30,6 @@ public final class ServerSupport {
     private ServerSupport() {}
 
     public static boolean serverHasMagicCarpet() {
-        // Without a connection there is no server to send an item to.
         if (Minecraft.getInstance().getConnection() == null) return true;
         return BuiltInRegistries.ITEM.get(MAGIC_CARPETS).isPresent();
     }
@@ -46,7 +42,6 @@ public final class ServerSupport {
                         .equals(MagicCarpet.MOD_ID);
     }
 
-    /** A MagicCarpet item the connected server cannot decode. */
     public static boolean isUnknownToServer(ItemStack stack) {
         return isMagicCarpetItem(stack) && !serverHasMagicCarpet();
     }
