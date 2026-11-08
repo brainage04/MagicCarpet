@@ -1,6 +1,7 @@
 package io.github.brainage04.magic_carpet.item.custom;
 
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
+import java.util.List;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
@@ -18,8 +19,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.List;
-
 public abstract class MagicCarpetItem extends Item {
     public MagicCarpetItem(Properties settings) {
         super(settings);
@@ -34,7 +33,11 @@ public abstract class MagicCarpetItem extends Item {
             return InteractionResult.PASS;
         } else {
             Vec3 vec3d = user.getViewVector(1.0F);
-            List<Entity> list = world.getEntities(user, user.getBoundingBox().expandTowards(vec3d.scale(5.0)).inflate(1.0), EntitySelector.CAN_BE_PICKED);
+            List<Entity> list =
+                    world.getEntities(
+                            user,
+                            user.getBoundingBox().expandTowards(vec3d.scale(5.0)).inflate(1.0),
+                            EntitySelector.CAN_BE_PICKED);
 
             if (!list.isEmpty()) {
                 Vec3 vec3d2 = user.getEyePosition();
@@ -71,7 +74,8 @@ public abstract class MagicCarpetItem extends Item {
 
     public abstract MagicCarpetEntity createEntity(Level world);
 
-    private MagicCarpetEntity createEntity(Level world, HitResult hitResult, ItemStack stack, Player player) {
+    private MagicCarpetEntity createEntity(
+            Level world, HitResult hitResult, ItemStack stack, Player player) {
         MagicCarpetEntity entity = createEntity(world);
         if (entity == null) return null;
         entity.setPos(hitResult.getLocation());

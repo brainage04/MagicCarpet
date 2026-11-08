@@ -20,16 +20,19 @@ import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
-public abstract class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarpetEntity, MagicCarpetEntityRenderState> {
+public abstract class MagicCarpetEntityRenderer
+        extends EntityRenderer<MagicCarpetEntity, MagicCarpetEntityRenderState> {
     private final MagicCarpetEntityModel model;
     private final RenderType renderType;
     private final @Nullable RenderType emissiveRenderType;
 
     /**
      * @param carpetType the tier name, e.g. {@code basic}
-     * @param emissive   whether {@code textures/entity/<tier>_magic_carpet_glow.png} is drawn at full brightness on top
+     * @param emissive whether {@code textures/entity/<tier>_magic_carpet_glow.png} is drawn at full
+     *     brightness on top
      */
-    protected MagicCarpetEntityRenderer(EntityRendererProvider.Context context, String carpetType, boolean emissive) {
+    protected MagicCarpetEntityRenderer(
+            EntityRendererProvider.Context context, String carpetType, boolean emissive) {
         super(context);
         this.model = new MagicCarpetEntityModel(context.bakeLayer(modelLayer(carpetType)));
         this.renderType = this.model.renderType(texture(carpetType, ""));
@@ -37,30 +40,50 @@ public abstract class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarp
     }
 
     protected static ModelLayerLocation modelLayer(String carpetType) {
-        return new ModelLayerLocation(Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, carpetType + "_magic_carpet"), "main");
+        return new ModelLayerLocation(
+                Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, carpetType + "_magic_carpet"),
+                "main");
     }
 
     private static Identifier texture(String carpetType, String suffix) {
-        return Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "textures/entity/%s_magic_carpet%s.png".formatted(carpetType, suffix));
+        return Identifier.fromNamespaceAndPath(
+                MagicCarpet.MOD_ID,
+                "textures/entity/%s_magic_carpet%s.png".formatted(carpetType, suffix));
     }
 
     @Override
-    public void submit(MagicCarpetEntityRenderState state, PoseStack matrices, SubmitNodeCollector queue, @NonNull CameraRenderState cameraState) {
+    public void submit(
+            MagicCarpetEntityRenderState state,
+            PoseStack matrices,
+            SubmitNodeCollector queue,
+            @NonNull CameraRenderState cameraState) {
         matrices.pushPose();
 
         // DO NOT CHANGE THE ORDER OF THESE STATEMENTS
         // horizontal rotation (along controlling passenger's Y axis)
-        matrices.mulPose(Axis.YP.rotationDegrees(180.0F - state.yaw));
+        matrices.rotateDegrees(Axis.YP, 180.0F - state.yaw);
         // forward rotation (along controlling passenger's X axis)
-        matrices.mulPose(Axis.XP.rotationDegrees(state.pitch));
+        matrices.rotateDegrees(Axis.XP, state.pitch);
         // sideways rotation (along controlling passenger's Z axis)
-        matrices.mulPose(Axis.ZP.rotationDegrees(state.roll));
+        matrices.rotateDegrees(Axis.ZP, state.roll);
 
-        queue.submitModel(this.model, state, matrices, this.renderType,
-                state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor, null);
+        queue.submitModel(
+                this.model,
+                state,
+                matrices,
+                this.renderType,
+                state.lightCoords,
+                OverlayTexture.NO_OVERLAY,
+                state.outlineColor);
         if (this.emissiveRenderType != null) {
-            queue.submitModel(this.model, state, matrices, this.emissiveRenderType,
-                    LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, state.outlineColor, null);
+            queue.submitModel(
+                    this.model,
+                    state,
+                    matrices,
+                    this.emissiveRenderType,
+                    LightCoordsUtil.FULL_BRIGHT,
+                    OverlayTexture.NO_OVERLAY,
+                    state.outlineColor);
         }
 
         matrices.popPose();
@@ -74,7 +97,8 @@ public abstract class MagicCarpetEntityRenderer extends EntityRenderer<MagicCarp
     }
 
     @Override
-    public void extractRenderState(MagicCarpetEntity entity, MagicCarpetEntityRenderState state, float tickDelta) {
+    public void extractRenderState(
+            MagicCarpetEntity entity, MagicCarpetEntityRenderState state, float tickDelta) {
         super.extractRenderState(entity, state, tickDelta);
 
         state.yaw = entity.getYRot(tickDelta);

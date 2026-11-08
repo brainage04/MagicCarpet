@@ -13,8 +13,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(LivingEntity.class)
 public class LivingEntityMixin {
     @Inject(at = @At("HEAD"), method = "isInvulnerableTo", cancellable = true)
-    public void magiccarpet$isInvulnerableTo(ServerLevel world, DamageSource source, CallbackInfoReturnable<Boolean> cir) {
-        if (source.is(DamageTypeTags.IS_FALL) && ((EntityAccessor) this).getVehicle() instanceof MagicCarpetEntity) {
+    public void magiccarpet$isInvulnerableTo(
+            ServerLevel world, DamageSource source, CallbackInfoReturnable<Boolean> cir) {
+        if (source.is(DamageTypeTags.IS_FALL)
+                && ((EntityAccessor) this).getVehicle() instanceof MagicCarpetEntity) {
             cir.setReturnValue(true);
         }
     }

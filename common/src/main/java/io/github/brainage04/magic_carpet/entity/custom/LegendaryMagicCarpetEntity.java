@@ -27,13 +27,23 @@ public class LegendaryMagicCarpetEntity extends MagicCarpetEntity {
     protected void spawnAmbientParticle(Vec3 position, Vec3 backward, float speed) {
         Vec3 drift = backward.scale(0.05 * speed);
         if (getRandom().nextFloat() < 0.3F) {
-            level().addParticle(ParticleTypes.PORTAL,
-                    position.x, position.y, position.z,
-                    (getRandom().nextDouble() - 0.5) * 0.6, getRandom().nextDouble() * 0.3, (getRandom().nextDouble() - 0.5) * 0.6);
+            level().addParticle(
+                            ParticleTypes.PORTAL,
+                            position.x,
+                            position.y,
+                            position.z,
+                            (getRandom().nextDouble() - 0.5) * 0.6,
+                            getRandom().nextDouble() * 0.3,
+                            (getRandom().nextDouble() - 0.5) * 0.6);
         } else {
-            level().addParticle(ParticleTypes.END_ROD,
-                    position.x, position.y, position.z,
-                    drift.x + (getRandom().nextDouble() - 0.5) * 0.02, 0.01, drift.z + (getRandom().nextDouble() - 0.5) * 0.02);
+            level().addParticle(
+                            ParticleTypes.END_ROD,
+                            position.x,
+                            position.y,
+                            position.z,
+                            drift.x + (getRandom().nextDouble() - 0.5) * 0.02,
+                            0.01,
+                            drift.z + (getRandom().nextDouble() - 0.5) * 0.02);
         }
     }
 

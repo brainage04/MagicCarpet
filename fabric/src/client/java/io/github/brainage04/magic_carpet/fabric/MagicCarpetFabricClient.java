@@ -9,12 +9,19 @@ import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 
 public final class MagicCarpetFabricClient implements ClientModInitializer {
-    @Override public void onInitializeClient() {
+    @Override
+    public void onInitializeClient() {
         EntityRenderers.register(ModEntities.basic(), BasicMagicCarpetEntityRenderer::new);
         EntityRenderers.register(ModEntities.advanced(), AdvancedMagicCarpetEntityRenderer::new);
         EntityRenderers.register(ModEntities.legendary(), LegendaryMagicCarpetEntityRenderer::new);
-        ModelLayerRegistry.registerModelLayer(BasicMagicCarpetEntityRenderer.MODEL_LAYER, BasicMagicCarpetEntityRenderer::createBodyLayer);
-        ModelLayerRegistry.registerModelLayer(AdvancedMagicCarpetEntityRenderer.MODEL_LAYER, AdvancedMagicCarpetEntityRenderer::createBodyLayer);
-        ModelLayerRegistry.registerModelLayer(LegendaryMagicCarpetEntityRenderer.MODEL_LAYER, LegendaryMagicCarpetEntityRenderer::createBodyLayer);
+        ModelLayerRegistry.registerModelLayer(
+                BasicMagicCarpetEntityRenderer.MODEL_LAYER,
+                BasicMagicCarpetEntityRenderer::createBodyLayer);
+        ModelLayerRegistry.registerModelLayer(
+                AdvancedMagicCarpetEntityRenderer.MODEL_LAYER,
+                AdvancedMagicCarpetEntityRenderer::createBodyLayer);
+        ModelLayerRegistry.registerModelLayer(
+                LegendaryMagicCarpetEntityRenderer.MODEL_LAYER,
+                LegendaryMagicCarpetEntityRenderer::createBodyLayer);
     }
 }

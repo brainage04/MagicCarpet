@@ -26,9 +26,14 @@ public class AdvancedMagicCarpetEntity extends MagicCarpetEntity {
     @Override
     protected void spawnAmbientParticle(Vec3 position, Vec3 backward, float speed) {
         Vec3 drift = backward.scale(0.04 * speed);
-        level().addParticle(ParticleTypes.SMALL_FLAME,
-                position.x, position.y, position.z,
-                drift.x, 0.005 + getRandom().nextDouble() * 0.01, drift.z);
+        level().addParticle(
+                        ParticleTypes.SMALL_FLAME,
+                        position.x,
+                        position.y,
+                        position.z,
+                        drift.x,
+                        0.005 + getRandom().nextDouble() * 0.01,
+                        drift.z);
     }
 
     @Override

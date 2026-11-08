@@ -6,7 +6,10 @@
     "EntityAccessor",
     "LivingEntityMixin"
   ],
-  "client": [],
+  "client": [
+    "HotbarMixin",
+    "MultiPlayerGameModeMixin"
+  ],
   "server": [
   ],
   "injectors": {

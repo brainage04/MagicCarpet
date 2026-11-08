@@ -1,6 +1,6 @@
 # MagicCarpet
 
-MagicCarpet is a Minecraft 26.2 mod for Fabric and NeoForge that adds three craftable, rideable flying carpets. Install it on both the client and server.
+MagicCarpet is a Minecraft 26.3 mod for Fabric and NeoForge that adds three craftable, rideable flying carpets. Install it on both the client and server.
 
 Carpet riders do not take fall damage while mounted. Each carpet can carry two passengers. A player steers when sharing a carpet with a mob.
 
@@ -24,9 +24,9 @@ Each tier looks different: basic carpets have a plain rolled edge, advanced carp
 
 ## Getting started
 
-- Minecraft 26.2
+- Minecraft 26.3
 - Java 25 or newer
-- Fabric Loader 0.19.3 or newer and Fabric API, or NeoForge 26.2.0.88 or newer
+- Fabric Loader 0.19.5 or newer and Fabric API, or NeoForge 26.3.0.99 or newer
 - Install it on both the client and server.
 - Right-click a block with a carpet item to place the carpet.
 - Right-click the placed carpet to ride it.

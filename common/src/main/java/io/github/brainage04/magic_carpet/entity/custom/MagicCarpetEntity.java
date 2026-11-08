@@ -1,11 +1,17 @@
 package io.github.brainage04.magic_carpet.entity.custom;
 
+import java.util.List;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.animal.fish.WaterAnimal;
 import net.minecraft.world.entity.monster.creaking.Creaking;
 import net.minecraft.world.entity.player.Input;
@@ -18,18 +24,24 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public abstract class MagicCarpetEntity extends VehicleEntity {
     /** Coasting to a stop takes this many times longer than accelerating to full speed. */
     private static final double DECELERATION_TIME_MULTIPLIER = 2.0;
+
     private static final double REST_SPEED_SQR = 1.0E-6;
-    /** Half the carpet's length (2 blocks) and width (1.5 blocks), used to place particles on its surface. */
+
+    /**
+     * Half the carpet's length (2 blocks) and width (1.5 blocks), used to place particles on its
+     * surface.
+     */
     private static final double HALF_LENGTH = 1.0;
+
     private static final double HALF_WIDTH = 0.75;
     private static final double SURFACE_HEIGHT = 0.1;
+
     /** Lean at full speed, in degrees. */
     private static final double MAX_TILT_PITCH = 15.0;
+
     private static final double MAX_TILT_ROLL = 12.0;
 
     private float movementForward = 0.0f;
@@ -41,8 +53,12 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     public float renderPitch;
     public float renderRoll;
 
-    /** Client-side, smoothed horizontal speed as a fraction of this tier's maximum speed; drives animations and particles. */
+    /**
+     * Client-side, smoothed horizontal speed as a fraction of this tier's maximum speed; drives
+     * animations and particles.
+     */
     public float prevAnimationSpeed;
+
     public float animationSpeed;
 
     public MagicCarpetEntity(EntityType<? extends VehicleEntity> entityType, Level world) {
@@ -58,7 +74,7 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
      *
      * @param position a point on or just above the carpet's surface
      * @param backward a unit vector pointing out of the carpet's back edge
-     * @param speed    the carpet's normalized speed, from 0 (idle) to 1 (maximum)
+     * @param speed the carpet's normalized speed, from 0 (idle) to 1 (maximum)
      */
     protected abstract void spawnAmbientParticle(Vec3 position, Vec3 backward, float speed);
 
@@ -97,17 +113,19 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
 
         // lean relative to this tier's top speed, so faster tiers don't tip over
         double maxSpeed = getMaxSpeed();
-        this.renderPitch = (float) Mth.clamp(
-                (y - (cos * z - sin * x)) / maxSpeed * MAX_TILT_PITCH,
-                -MAX_TILT_PITCH,
-                MAX_TILT_PITCH
-        );
+        this.renderPitch =
+                (float)
+                        Mth.clamp(
+                                (y - (cos * z - sin * x)) / maxSpeed * MAX_TILT_PITCH,
+                                -MAX_TILT_PITCH,
+                                MAX_TILT_PITCH);
 
-        this.renderRoll = (float) Mth.clamp(
-                (sin * z + cos * x) / maxSpeed * MAX_TILT_ROLL,
-                -MAX_TILT_ROLL,
-                MAX_TILT_ROLL
-        );
+        this.renderRoll =
+                (float)
+                        Mth.clamp(
+                                (sin * z + cos * x) / maxSpeed * MAX_TILT_ROLL,
+                                -MAX_TILT_ROLL,
+                                MAX_TILT_ROLL);
 
         if (isLocalInstanceAuthoritative()) {
             updateVelocity();
@@ -127,12 +145,10 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     }
 
     @Override
-    protected void readAdditionalSaveData(ValueInput view) {
-    }
+    protected void readAdditionalSaveData(ValueInput view) {}
 
     @Override
-    protected void addAdditionalSaveData(ValueOutput view) {
-    }
+    protected void addAdditionalSaveData(ValueOutput view) {}
 
     @Override
     public boolean isNoGravity() {
@@ -146,7 +162,8 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
 
     @Override
     protected boolean isLocalClientAuthoritative() {
-        // Entity checks this separately from isClientAuthoritative on the controlling rider's client.
+        // Entity checks this separately from isClientAuthoritative on the controlling rider's
+        // client.
         return false;
     }
 
@@ -156,7 +173,8 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         if (actionResult != InteractionResult.PASS) {
             return actionResult;
         } else {
-            return player.isSecondaryUseActive() || !level().isClientSide() && !player.startRiding(this)
+            return player.isSecondaryUseActive()
+                            || !level().isClientSide() && !player.startRiding(this)
                     ? InteractionResult.PASS
                     : InteractionResult.SUCCESS;
         }
@@ -170,7 +188,6 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     protected int getMaxPassengers() {
         return 2;
     }
-
 
     @Override
     public @Nullable LivingEntity getControllingPassenger() {
@@ -226,34 +243,38 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         double acceleration = smoothingFactor(getAccelerationTime());
         double deceleration = smoothingFactor(getAccelerationTime() * DECELERATION_TIME_MULTIPLIER);
 
-        double horizontal = target.horizontalDistanceSqr() < current.horizontalDistanceSqr() ? deceleration : acceleration;
+        double horizontal =
+                target.horizontalDistanceSqr() < current.horizontalDistanceSqr()
+                        ? deceleration
+                        : acceleration;
         double vertical = Math.abs(target.y) < Math.abs(current.y) ? deceleration : acceleration;
 
         return new Vec3(
                 Mth.lerp(horizontal, current.x, target.x),
                 Mth.lerp(vertical, current.y, target.y),
-                Mth.lerp(horizontal, current.z, target.z)
-        );
+                Mth.lerp(horizontal, current.z, target.z));
     }
 
     private Vec3 getTargetVelocity(Player player, float yaw) {
         float sin = Mth.sin(yaw);
         float cos = Mth.cos(yaw);
 
-        Vec3 targetVelocity = new Vec3(
-                cos * movementSideways - sin * movementForward,
-                pressingSpace ? getVerticalVelocity(player.getXRot()) : 0.0,
-                sin * movementSideways + cos * movementForward
-        );
+        Vec3 targetVelocity =
+                new Vec3(
+                        cos * movementSideways - sin * movementForward,
+                        pressingSpace ? getVerticalVelocity(player.getXRot()) : 0.0,
+                        sin * movementSideways + cos * movementForward);
 
-        // scale all components: horizontal input is at most 1, vertical at most 0.5 (see getVerticalVelocity)
+        // scale all components: horizontal input is at most 1, vertical at most 0.5 (see
+        // getVerticalVelocity)
         return targetVelocity.scale(getMaxSpeed());
     }
 
     private void updateInputs(Input input) {
         movementForward = impulse(input.forward(), input.backward());
         movementSideways = impulse(input.left(), input.right());
-        float length = Mth.sqrt(movementForward * movementForward + movementSideways * movementSideways);
+        float length =
+                Mth.sqrt(movementForward * movementForward + movementSideways * movementSideways);
         if (length > 1.0F) {
             movementForward /= length;
             movementSideways /= length;
@@ -270,7 +291,8 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
 
     private void updateAnimationSpeed() {
         this.prevAnimationSpeed = this.animationSpeed;
-        float target = (float) Math.min(getDeltaMovement().horizontalDistance() / getMaxSpeed(), 1.0);
+        float target =
+                (float) Math.min(getDeltaMovement().horizontalDistance() / getMaxSpeed(), 1.0);
         // velocity packets arrive in steps; ease towards them so animations don't twitch
         this.animationSpeed += (target - this.animationSpeed) * 0.25F;
     }
@@ -287,20 +309,23 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         Vec3 sideways = new Vec3(Mth.cos(yaw), 0.0, Mth.sin(yaw));
 
         // idle carpets shimmer all over; moving carpets leave a trail from the back edge
-        double along = random.nextFloat() < speed
-                ? -HALF_LENGTH
-                : (random.nextDouble() * 2.0 - 1.0) * HALF_LENGTH;
+        double along =
+                random.nextFloat() < speed
+                        ? -HALF_LENGTH
+                        : (random.nextDouble() * 2.0 - 1.0) * HALF_LENGTH;
         double across = (random.nextDouble() * 2.0 - 1.0) * HALF_WIDTH;
 
-        Vec3 position = position()
-                .add(forward.scale(along))
-                .add(sideways.scale(across))
-                .add(0.0, SURFACE_HEIGHT, 0.0);
+        Vec3 position =
+                position()
+                        .add(forward.scale(along))
+                        .add(sideways.scale(across))
+                        .add(0.0, SURFACE_HEIGHT, 0.0);
         spawnAmbientParticle(position, forward.reverse(), speed);
     }
 
     @Override
-    protected Vec3 getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float scaleFactor) {
+    protected Vec3 getPassengerAttachmentPoint(
+            Entity passenger, EntityDimensions dimensions, float scaleFactor) {
         float offset = 0.0F;
         if (this.getPassengers().size() > 1) {
             int i = this.getPassengers().indexOf(passenger);
@@ -310,21 +335,26 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
                 offset = -0.4F;
             }
         }
-        return new Vec3(0.0, dimensions.height() / 3.0F, offset).yRot(-this.getYRot() * 0.017453292F);
+        return new Vec3(0.0, dimensions.height() / 3.0F, offset)
+                .yRot(-this.getYRot() * 0.017453292F);
     }
 
     private void collectAdditionalPassengers() {
-        List<Entity> list = this.level().getEntities(
-                this,
-                this.getBoundingBox().inflate(0.2, -0.01, 0.2),
-                EntitySelector.pushableBy(this)
-        );
+        List<Entity> list =
+                this.level()
+                        .getEntities(
+                                this,
+                                this.getBoundingBox().inflate(0.2, -0.01, 0.2),
+                                EntitySelector.pushableBy(this));
 
         if (!list.isEmpty()) {
-            boolean bl = !this.level().isClientSide() && !(this.getControllingPassenger() instanceof Player);
+            boolean bl =
+                    !this.level().isClientSide()
+                            && !(this.getControllingPassenger() instanceof Player);
 
             for (Entity entity : list) {
-                if (bl && this.getPassengers().size() < this.getMaxPassengers()
+                if (bl
+                        && this.getPassengers().size() < this.getMaxPassengers()
                         && !entity.isPassenger()
                         && entity.getBbWidth() < this.getBbWidth()
                         && entity instanceof LivingEntity

@@ -6,8 +6,10 @@ public interface Platform {
     void register();
 
     static void initialize() {
-        ServiceLoader.load(Platform.class).findFirst()
-                .orElseThrow(() -> new IllegalStateException("No MagicCarpet platform adapter found"))
+        ServiceLoader.load(Platform.class)
+                .findFirst()
+                .orElseThrow(
+                        () -> new IllegalStateException("No MagicCarpet platform adapter found"))
                 .register();
     }
 }
