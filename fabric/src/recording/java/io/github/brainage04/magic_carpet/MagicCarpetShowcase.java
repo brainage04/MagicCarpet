@@ -86,10 +86,16 @@ public final class MagicCarpetShowcase {
     /** How close the player stops to the carpet before the right click. */
     private static final double MOUNT_REACH = 2.0D;
 
+    /** The hotbar slot the player holds when no carpet should be in the hand. */
+    private static final int EMPTY_SLOT = 8;
+
+    /** How long the first-person view keeps the crosshair on the carpet after the right click. */
+    private static final long CROSSHAIR_MILLIS = 250L;
+
     /** The runway's near and far end: the flight stays over it for its whole length. */
     private static final int RUNWAY_NEAR_Z = 8;
 
-    private static final int RUNWAY_FAR_Z = -200;
+    private static final int RUNWAY_FAR_Z = -280;
 
     private static final long BEFORE_MILLIS = 250L;
     private static final long MOUNT_MILLIS = 150L;
@@ -213,6 +219,8 @@ public final class MagicCarpetShowcase {
                     player.getInventory().setItem(0, new ItemStack(ModItems.basic()));
                     player.getInventory().setItem(1, new ItemStack(ModItems.advanced()));
                     player.getInventory().setItem(2, new ItemStack(ModItems.legendary()));
+                    // An empty hand for this stage: the held carpet covered the lower right.
+                    player.getInventory().setSelectedSlot(EMPTY_SLOT);
                     player.teleportTo(
                             level, stand.x, stand.y, stand.z, Set.of(), NORTH, 8.0F, true);
                     double[] xs = {-TIER_SPACING, 0.0D, TIER_SPACING};
@@ -237,7 +245,7 @@ public final class MagicCarpetShowcase {
                 client -> {
                     client.options.setCameraType(CameraType.FIRST_PERSON);
                     client.gui.hud.getChat().clearMessages(false);
-                    client.player.getInventory().setSelectedSlot(0);
+                    client.player.getInventory().setSelectedSlot(EMPTY_SLOT);
                 });
         ClientGameTestWaits.waitForChunkWindow(context, RENDER_DISTANCE - 2, LOAD_TIMEOUT_TICKS);
         ClientGameTestWaits.waitForRenderSettled(context, 15, LOAD_TIMEOUT_TICKS);
@@ -329,9 +337,9 @@ public final class MagicCarpetShowcase {
                 LOAD_TIMEOUT_TICKS);
         context.runOnClient(
                 client -> {
-                    // Third person is what F5 shows a rider: the carpet under them, not only the
-                    // horizon.
-                    client.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+                    // First person to walk up and click, so the crosshair on the carpet is on
+                    // screen; the flight then switches to the chase camera.
+                    client.options.setCameraType(CameraType.FIRST_PERSON);
                     client.options.fov().set(NORMAL_FOV);
                     client.gui.hud.getChat().clearMessages(false);
                     client.player.getInventory().setSelectedSlot(0);
@@ -365,6 +373,15 @@ public final class MagicCarpetShowcase {
                         check(
                                 !client.player.getVehicle().isLocalInstanceAuthoritative(),
                                 "A carpet must be server-authoritative on its rider's client"));
+        // The crosshair is on the carpet in first person, and stays there for a moment after the
+        // mount, so the film shows what the player clicked.
+        ClientGameTestWaits.holdFor(context, CROSSHAIR_MILLIS);
+        context.runOnClient(
+                client -> {
+                    // Third person is what F5 shows a rider: the carpet under them, not only the
+                    // horizon.
+                    client.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+                });
         ClientGameTestWaits.holdFor(context, MOUNT_MILLIS);
 
         // Aim north and a little down, so the carpet sits in the lower frame and the ground shows
