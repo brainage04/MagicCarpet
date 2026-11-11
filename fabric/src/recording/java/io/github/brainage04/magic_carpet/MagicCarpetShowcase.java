@@ -95,7 +95,7 @@ public final class MagicCarpetShowcase {
     /** The runway's near and far end: the flight stays over it for its whole length. */
     private static final int RUNWAY_NEAR_Z = 8;
 
-    private static final int RUNWAY_FAR_Z = -280;
+    private static final int RUNWAY_FAR_Z = -400;
 
     private static final long BEFORE_MILLIS = 250L;
     private static final long MOUNT_MILLIS = 150L;
