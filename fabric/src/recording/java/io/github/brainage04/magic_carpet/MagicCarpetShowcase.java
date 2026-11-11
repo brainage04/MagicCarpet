@@ -91,16 +91,16 @@ public final class MagicCarpetShowcase {
 
     private static final int RUNWAY_FAR_Z = -200;
 
-    private static final long BEFORE_MILLIS = 400L;
-    private static final long MOUNT_MILLIS = 300L;
-    private static final long FLY_MILLIS = 1600L;
+    private static final long BEFORE_MILLIS = 250L;
+    private static final long MOUNT_MILLIS = 150L;
+    private static final long FLY_MILLIS = 1500L;
 
     /** The climb after the level run, short enough to keep the runway in frame. */
-    private static final long CLIMB_MILLIS = 500L;
+    private static final long CLIMB_MILLIS = 400L;
 
-    private static final long LEVEL_MILLIS = 500L;
-    private static final long COAST_MILLIS = 700L;
-    private static final long AFTER_MILLIS = 400L;
+    private static final long LEVEL_MILLIS = 250L;
+    private static final long COAST_MILLIS = 500L;
+    private static final long AFTER_MILLIS = 250L;
 
     /** Ticks the flight speed is measured over, once the carpet has reached its top speed. */
     private static final int SPEED_WINDOW_TICKS = 20;
@@ -108,7 +108,7 @@ public final class MagicCarpetShowcase {
     /** The most the measured top speed may differ from the tier's, as a share of that speed. */
     private static final double SPEED_TOLERANCE = 0.05D;
 
-    private static final int CAPTION_LEAD_TICKS = 6;
+    private static final int CAPTION_LEAD_TICKS = 4;
     private static final int HOLD_AFTER_END_TICKS = 6;
     private static final int LOAD_TIMEOUT_TICKS = 2400;
     private static final int MOUNT_TIMEOUT_TICKS = 100;
@@ -133,7 +133,7 @@ public final class MagicCarpetShowcase {
                 BlockState stripe =
                         (Math.floorDiv(z, 4) & 1) == 0
                                 ? Blocks.SMOOTH_QUARTZ.defaultBlockState()
-                                : Blocks.POLISHED_DIORITE.defaultBlockState();
+                                : Blocks.CONCRETE.black().defaultBlockState();
                 for (int x = site - 8; x <= site + 8; x++) {
                     level.setBlock(cursor.set(x, FLOOR_Y, z), stripe, Block.UPDATE_CLIENTS);
                 }
@@ -247,11 +247,11 @@ public final class MagicCarpetShowcase {
         ClientGameTestPlayerActions.walkTo(context, tierPoint(0.0D), 3.0D);
         // A mouse turn across the row, holding each tier at the middle of the frame.
         ClientGameTestPlayerActions.lookAt(context, tierPoint(-TIER_SPACING));
-        ClientGameTestWaits.holdFor(context, 900L);
+        ClientGameTestWaits.holdFor(context, 850L);
         ClientGameTestPlayerActions.lookAt(context, tierPoint(0.0D));
-        ClientGameTestWaits.holdFor(context, 900L);
+        ClientGameTestWaits.holdFor(context, 850L);
         ClientGameTestPlayerActions.lookAt(context, tierPoint(TIER_SPACING));
-        ClientGameTestWaits.holdFor(context, 900L);
+        ClientGameTestWaits.holdFor(context, 850L);
         ClientGameTestPlayerActions.lookAt(context, tierPoint(0.0D));
         ClientGameTestWaits.holdFor(context, AFTER_MILLIS);
         server.runOnServer(
