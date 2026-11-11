@@ -46,5 +46,14 @@ public final class MagicCarpetNeoForgeGameTest {
                 BuiltInRegistries.TEST_FUNCTION.key(),
                 Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "player_takes_control"),
                 () -> MagicCarpetGameTests::playerTakesControl);
+        event.register(
+                BuiltInRegistries.TEST_FUNCTION.key(),
+                Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "mount_requires_a_plain_use"),
+                () -> MagicCarpetGameTests::mountRequiresAPlainUse);
+        event.register(
+                BuiltInRegistries.TEST_FUNCTION.key(),
+                Identifier.fromNamespaceAndPath(
+                        MagicCarpet.MOD_ID, "released_keys_coast_to_a_stop"),
+                () -> MagicCarpetGameTests::releasedKeysCoastToAStop);
     }
 }

@@ -38,4 +38,14 @@ public class MagicCarpetGameTest {
     public void playerTakesControl(GameTestHelper helper) {
         MagicCarpetGameTests.playerTakesControl(helper);
     }
+
+    @GameTest
+    public void mountRequiresAPlainUse(GameTestHelper helper) {
+        MagicCarpetGameTests.mountRequiresAPlainUse(helper);
+    }
+
+    @GameTest
+    public void releasedKeysCoastToAStop(GameTestHelper helper) {
+        MagicCarpetGameTests.releasedKeysCoastToAStop(helper);
+    }
 }

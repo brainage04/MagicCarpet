@@ -377,6 +377,93 @@ public final class MagicCarpetGameTests {
     }
 
     /**
+     * A plain right click mounts a carpet, and the same right click while sneaking does not: the
+     * carpet reads a sneaking player's click as "use what is in my hand", its own interaction
+     * passes, and nothing is boarded.
+     */
+    public static void mountRequiresAPlainUse(GameTestHelper helper) {
+        MagicCarpetEntity carpet =
+                ModEntities.basic().create(helper.getLevel(), EntitySpawnReason.COMMAND);
+        carpet.setPos(helper.absoluteVec(new Vec3(3, 2, 3)));
+        assertTrue(helper.getLevel().addFreshEntity(carpet), "The carpet must be in the level");
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setPos(carpet.position());
+        try {
+            player.setShiftKeyDown(true);
+            assertTrue(
+                    carpet.interact(player, InteractionHand.MAIN_HAND, carpet.position())
+                            == InteractionResult.PASS,
+                    "Sneaking and using must pass the carpet's interaction");
+            assertTrue(!player.isPassenger(), "A sneaking player must stay off the carpet");
+            player.setShiftKeyDown(false);
+            assertTrue(
+                    carpet.interact(player, InteractionHand.MAIN_HAND, carpet.position())
+                            == InteractionResult.SUCCESS,
+                    "A plain right click must board the carpet");
+            assertTrue(player.getVehicle() == carpet, "The clicking player must be riding");
+        } finally {
+            player.stopRiding();
+            player.discard();
+            carpet.discard();
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Letting go of the movement keys does not stop the carpet: it keeps its speed for a moment,
+     * slows tick by tick, and comes to rest. Being slower to stop is what he asked for; stopping is
+     * what keeps it from drifting forever.
+     */
+    public static void releasedKeysCoastToAStop(GameTestHelper helper) {
+        ServerPlayer rider = mockRider(helper);
+        MagicCarpetEntity carpet =
+                ModEntities.advanced().create(helper.getLevel(), EntitySpawnReason.COMMAND);
+        try {
+            Vec3 origin = helper.absoluteVec(new Vec3(3, 16, 3));
+            carpet.setPos(origin);
+            assertTrue(rider.startRiding(carpet), "Rider must mount");
+            rider.setYRot(0);
+            rider.setXRot(0);
+            rider.setLastClientInput(new Input(true, false, false, false, false, false, false));
+            for (int tick = 0; tick < 40; tick++) {
+                carpet.setPos(origin);
+                carpet.tick();
+            }
+            double flying = carpet.getDeltaMovement().horizontalDistance();
+            assertNear(1.2, flying, 0.02, "The forward key must reach the advanced top speed");
+
+            rider.setLastClientInput(new Input(false, false, false, false, false, false, false));
+            carpet.setPos(origin);
+            carpet.tick();
+            double justReleased = carpet.getDeltaMovement().horizontalDistance();
+            assertTrue(
+                    justReleased > flying * 0.85,
+                    "Letting go must not stop the carpet at once, found " + justReleased);
+            for (int tick = 0; tick < 5; tick++) {
+                carpet.setPos(origin);
+                carpet.tick();
+                assertTrue(
+                        carpet.getDeltaMovement().horizontalDistance() <= justReleased,
+                        "Coasting must slow the carpet, never speed it up");
+            }
+            for (int tick = 0; tick < 200; tick++) {
+                carpet.setPos(origin);
+                carpet.tick();
+            }
+            assertNear(
+                    0,
+                    carpet.getDeltaMovement().length(),
+                    0,
+                    "A carpet with no input must come to rest");
+        } finally {
+            rider.stopRiding();
+            carpet.discard();
+            rider.discard();
+        }
+        helper.succeed();
+    }
+
+    /**
      * A riding ServerPlayer sends its passenger packets through its connection, which
      * makeMockServerPlayer does not create; the mock stays out of the player list.
      */

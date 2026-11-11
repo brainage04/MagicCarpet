@@ -1,0 +1,18 @@
+{
+  "magic_carpet.tiers": {
+    "title": "Three tiers side by side",
+    "subtitle": "Basic, then advanced, then legendary"
+  },
+  "magic_carpet.basic": {
+    "title": "Basic: right click to ride",
+    "subtitle": "12 blocks/s, 2 s to top speed, and it coasts"
+  },
+  "magic_carpet.advanced": {
+    "title": "Advanced: gold cord and tassels",
+    "subtitle": "24 blocks/s, 1 s to top speed"
+  },
+  "magic_carpet.legendary": {
+    "title": "Legendary: curls and glowing threads",
+    "subtitle": "48 blocks/s, half a second to top speed"
+  }
+}
