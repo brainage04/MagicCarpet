@@ -89,6 +89,9 @@ public final class MagicCarpetShowcase {
     /** The hotbar slot the player holds when no carpet should be in the hand. */
     private static final int EMPTY_SLOT = 8;
 
+    /** How long the crosshair rests on the carpet before the right click, so it reads on screen. */
+    private static final long AIM_MILLIS = 400L;
+
     /** How long the first-person view keeps the crosshair on the carpet after the right click. */
     private static final long CROSSHAIR_MILLIS = 250L;
 
@@ -354,6 +357,7 @@ public final class MagicCarpetShowcase {
         ClientGameTestWaits.holdFor(context, BEFORE_MILLIS);
         ClientGameTestPlayerActions.walkTo(context, carpetPoint(site), MOUNT_REACH);
         ClientGameTestPlayerActions.lookAt(context, carpetPoint(site));
+        ClientGameTestWaits.holdFor(context, AIM_MILLIS);
 
         ClientGameTestPlayerActions.requireLookingAtEntity(context, carpetId[0]);
         context.getInput().pressKey(options -> options.keyUse);
