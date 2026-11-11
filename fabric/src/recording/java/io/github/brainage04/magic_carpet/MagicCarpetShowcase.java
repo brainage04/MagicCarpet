@@ -95,8 +95,11 @@ public final class MagicCarpetShowcase {
     private static final long MOUNT_MILLIS = 150L;
     private static final long FLY_MILLIS = 1500L;
 
-    /** The climb after the level run, short enough to keep the runway in frame. */
-    private static final long CLIMB_MILLIS = 400L;
+    /**
+     * The climb after the level run. Its vertical speed ramps up like the horizontal one, so the
+     * lift is about a fifth of the top speed for the first half second.
+     */
+    private static final long CLIMB_MILLIS = 900L;
 
     private static final long LEVEL_MILLIS = 250L;
     private static final long COAST_MILLIS = 500L;
@@ -388,10 +391,12 @@ public final class MagicCarpetShowcase {
             ClientGameTestWaits.holdFor(context, CLIMB_MILLIS);
             context.getInput().releaseKey(options -> options.keyJump);
             server.runOnServer(
-                    minecraftServer ->
-                            check(
-                                    player(minecraftServer).getVehicle().getY() > CARPET_Y + 1.0D,
-                                    "Held jump must lift " + type));
+                    minecraftServer -> {
+                        double height = player(minecraftServer).getVehicle().getY();
+                        check(
+                                height > CARPET_Y + 1.0D,
+                                "Held jump must lift " + type + ", held at " + height);
+                    });
         } finally {
             context.getInput().releaseKey(options -> options.keyJump);
         }
