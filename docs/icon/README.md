@@ -1,15 +1,15 @@
 # MagicCarpet icon
 
-## What this is
+## The icon
 
-`icon.png` — the MagicCarpet mod icon, 1024 x 1024 PNG, SHA-256
+`icon.png` – the MagicCarpet mod icon, 1024 x 1024 PNG, SHA-256
 `52f52a9ab6a20315c47b65fab1c5bd61760cb2287046af641b390fb59ba15a84` (`png_sha256` in
 `provenance/magic-carpet-03-segmented-stack-metadata.json`). The mod ships it downscaled to 128 x 128 (Lanczos) as
 `common/src/main/resources/assets/magic_carpet/icon.png`.
 
-## How it was made
+## Making the icon
 
-Blender render of the mod's own carpet models and textures — not a screenshot.
+Blender render of the mod's own carpet models and textures – not a screenshot.
 
 * `provenance/render-segmented.py` opens the approved tier-stack scene, `provenance/sources/approved-stack.blend`,
   and keeps its camera, lights, world, floor, 60 floating vanilla glyph particles, compositor and carpet material
@@ -25,7 +25,7 @@ Blender render of the mod's own carpet models and textures — not a screenshot.
 * Blender 5.1.1, headless, Cycles CPU, 96 samples, 1024 x 1024. Texture hashes, pose, bounds and timings are in the
   metadata; `magic-carpet-03-segmented-stack.blend` is the packed scene as rendered.
 
-## How to regenerate
+## Regenerating the icon
 
 After changing the model or textures, update the transcription at the top of `render-segmented.py` to match
 `MagicCarpetEntityModel`, then from `docs/icon/provenance`:
