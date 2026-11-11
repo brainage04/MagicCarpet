@@ -39,6 +39,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -66,7 +67,7 @@ public final class MagicCarpetShowcase {
     /** Where the three tiers hang for the first stage, and where the player stands to see them. */
     private static final double TIERS_Z = 0.5D;
 
-    private static final double TIERS_STAND_Z = 4.0D;
+    private static final double TIERS_STAND_Z = 4.8D;
     private static final double TIER_SPACING = 2.0D;
 
     /**
@@ -80,11 +81,23 @@ public final class MagicCarpetShowcase {
     /** The carpet's height above the platform, and where the player stands to mount it. */
     private static final double CARPET_Y = STAND_Y + 0.5D;
 
-    private static final double FLIGHT_STAND_Z = 2.5D;
+    private static final double FLIGHT_STAND_Z = 4.5D;
+
+    /** How close the player stops to the carpet before the right click. */
+    private static final double MOUNT_REACH = 2.0D;
+
+    /** The runway's near and far end: the flight stays over it for its whole length. */
+    private static final int RUNWAY_NEAR_Z = 8;
+
+    private static final int RUNWAY_FAR_Z = -200;
 
     private static final long BEFORE_MILLIS = 400L;
     private static final long MOUNT_MILLIS = 300L;
-    private static final long FLY_MILLIS = 1800L;
+    private static final long FLY_MILLIS = 1600L;
+
+    /** The climb after the level run, short enough to keep the runway in frame. */
+    private static final long CLIMB_MILLIS = 500L;
+
     private static final long LEVEL_MILLIS = 500L;
     private static final long COAST_MILLIS = 700L;
     private static final long AFTER_MILLIS = 400L;
@@ -115,10 +128,19 @@ public final class MagicCarpetShowcase {
         ServerLevel level = server.overworld();
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int site : List.of(BASIC_SITE, ADVANCED_SITE, LEGENDARY_SITE)) {
+            // A long striped floor under each flight: the stripes are what makes the speed read.
+            for (int z = RUNWAY_FAR_Z; z <= RUNWAY_NEAR_Z; z++) {
+                BlockState stripe =
+                        (Math.floorDiv(z, 4) & 1) == 0
+                                ? Blocks.SMOOTH_QUARTZ.defaultBlockState()
+                                : Blocks.POLISHED_DIORITE.defaultBlockState();
+                for (int x = site - 8; x <= site + 8; x++) {
+                    level.setBlock(cursor.set(x, FLOOR_Y, z), stripe, Block.UPDATE_CLIENTS);
+                }
+            }
+            // Clear the air where the player and the carpet stand, so nothing clips the mount.
             for (int x = site - 8; x <= site + 8; x++) {
                 for (int z = -8; z <= 8; z++) {
-                    level.setBlockAndUpdate(
-                            cursor.set(x, FLOOR_Y, z), Blocks.SMOOTH_QUARTZ.defaultBlockState());
                     for (int y = FLOOR_Y + 1; y <= FLOOR_Y + 6; y++) {
                         level.setBlock(
                                 cursor.set(x, y, z),
@@ -222,6 +244,7 @@ public final class MagicCarpetShowcase {
         caption(context, id);
         ClientGameTestStages.markStage(id);
         ClientGameTestWaits.holdFor(context, BEFORE_MILLIS);
+        ClientGameTestPlayerActions.walkTo(context, tierPoint(0.0D), 3.0D);
         // A mouse turn across the row, holding each tier at the middle of the frame.
         ClientGameTestPlayerActions.lookAt(context, tierPoint(-TIER_SPACING));
         ClientGameTestWaits.holdFor(context, 900L);
@@ -318,6 +341,8 @@ public final class MagicCarpetShowcase {
         caption(context, id);
         ClientGameTestStages.markStage(id);
         ClientGameTestWaits.holdFor(context, BEFORE_MILLIS);
+        ClientGameTestPlayerActions.walkTo(context, carpetPoint(site), MOUNT_REACH);
+        ClientGameTestPlayerActions.lookAt(context, carpetPoint(site));
 
         ClientGameTestPlayerActions.requireLookingAtEntity(context, carpetId[0]);
         context.getInput().pressKey(options -> options.keyUse);
@@ -343,7 +368,6 @@ public final class MagicCarpetShowcase {
         // the speed.
         ClientGameTestPlayerActions.lookAt(context, flightAim(site));
         context.getInput().holdKey(options -> options.keyUp);
-        context.getInput().holdKey(options -> options.keyJump);
         try {
             ClientGameTestWaits.holdFor(context, FLY_MILLIS);
             double before = alongZ(server);
@@ -360,6 +384,9 @@ public final class MagicCarpetShowcase {
                                             + " blocks/s, measured "
                                             + measured * 20
                                             + " blocks/s"));
+            context.getInput().holdKey(options -> options.keyJump);
+            ClientGameTestWaits.holdFor(context, CLIMB_MILLIS);
+            context.getInput().releaseKey(options -> options.keyJump);
             server.runOnServer(
                     minecraftServer ->
                             check(
