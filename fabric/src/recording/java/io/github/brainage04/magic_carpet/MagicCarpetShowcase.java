@@ -377,6 +377,21 @@ public final class MagicCarpetShowcase {
                         check(
                                 !client.player.getVehicle().isLocalInstanceAuthoritative(),
                                 "A carpet must be server-authoritative on its rider's client"));
+        // The click leaves slot 0 selected, so the rider would hold the carpet item for the whole
+        // flight; the empty slot's key press clears the hand before the chase camera.
+        context.getInput().pressKey(options -> options.keyHotbarSlots[EMPTY_SLOT]);
+        context.waitFor(
+                client ->
+                        client.player.getInventory().getSelectedSlot() == EMPTY_SLOT
+                                && client.player.getMainHandItem().isEmpty(),
+                MOUNT_TIMEOUT_TICKS);
+        ClientGameTestWaits.waitForServer(
+                context,
+                server,
+                minecraftServer ->
+                        player(minecraftServer).getInventory().getSelectedSlot() == EMPTY_SLOT,
+                MOUNT_TIMEOUT_TICKS,
+                "the hotbar key selects the empty slot on the server");
         // The crosshair is on the carpet in first person, and stays there for a moment after the
         // mount, so the film shows what the player clicked.
         ClientGameTestWaits.holdFor(context, CROSSHAIR_MILLIS);
