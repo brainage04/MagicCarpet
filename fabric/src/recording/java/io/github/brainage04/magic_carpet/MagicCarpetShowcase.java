@@ -75,8 +75,8 @@ public final class MagicCarpetShowcase {
      */
     private static final int BASIC_SITE = 0;
 
-    private static final int ADVANCED_SITE = 96;
-    private static final int LEGENDARY_SITE = 192;
+    private static final int ADVANCED_SITE = 200;
+    private static final int LEGENDARY_SITE = 400;
 
     /** The carpet's height above the platform, and where the player stands to mount it. */
     private static final double CARPET_Y = STAND_Y + 0.5D;
