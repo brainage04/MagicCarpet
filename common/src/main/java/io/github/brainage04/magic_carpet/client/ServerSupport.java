@@ -22,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
  * shares the integrated server's registries, tags included.
  */
 public final class ServerSupport {
+    // Released servers send this tag; renaming it makes newer clients treat them as vanilla.
     public static final TagKey<Item> MAGIC_CARPETS =
             TagKey.create(
                     Registries.ITEM,
