@@ -9,7 +9,7 @@
   },
   "magic_carpet.basic": {
     "title": "Basic: right click to ride",
-    "subtitle": "12 blocks/s, 2 s to top speed, and it coasts"
+    "subtitle": "12 blocks/s, 2 s to top speed, sneak to get off"
   },
   "magic_carpet.advanced.sneak": {
     "title": "Advanced: sneak and right click",

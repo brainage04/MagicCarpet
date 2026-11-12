@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Predicate;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
 import net.minecraft.client.CameraType;
@@ -41,6 +42,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -139,6 +141,17 @@ public final class MagicCarpetShowcase {
 
     private static final long LEVEL_MILLIS = 250L;
     private static final long COAST_MILLIS = 500L;
+
+    /** Ticks the rider takes to look down to the pitch that flies the carpet down. */
+    private static final int LOOK_DOWN_TICKS = 8;
+
+    private static final int LAND_TIMEOUT_TICKS = 200;
+
+    /** How long the landed carpet stays on screen before its rider gets off. */
+    private static final long LANDED_MILLIS = 300L;
+
+    /** How long the player stays on screen after getting off. */
+    private static final long STEPPED_OFF_MILLIS = 800L;
 
     /** Ticks the flight speed is measured over, once the carpet has reached its top speed. */
     private static final int SPEED_WINDOW_TICKS = 20;
@@ -336,8 +349,8 @@ public final class MagicCarpetShowcase {
     /**
      * One tier, in two stages from the same spot. First the player sneaks and right clicks the
      * carpet, which stays empty. Then it right clicks it, mounts it, flies it with the forward and
-     * jump keys, and lets go to watch it coast. The rider stays aboard, so the stage never films a
-     * fall from the carpet's height. The next stage teleports the player before its caption.
+     * jump keys, lets go to watch it coast, looks down and holds jump to land it on the runway, and
+     * gets off with the sneak key. The next stage teleports the player before its caption.
      */
     private static void flight(
             ClientGameTestContext context,
@@ -492,8 +505,6 @@ public final class MagicCarpetShowcase {
                         + coasted * 20
                         + " blocks/s");
         watch.holdFor(context, COAST_MILLIS);
-        watch.verify(type, topSpeed);
-
         server.runOnServer(
                 minecraftServer -> {
                     ServerPlayer player = player(minecraftServer);
@@ -502,10 +513,43 @@ public final class MagicCarpetShowcase {
                             "The rider must stay on " + type + " through the coast");
                     checkNoItemsAt(player.level(), site);
                 });
-        ClientGameTestStages.endStage(context, id, HOLD_AFTER_END_TICKS);
 
-        // Off camera: the rider gets off with the sneak key, which plays the dismount sound and
-        // stops the wind.
+        float fromPitch = context.computeOnClient(client -> client.player.getXRot());
+        for (int tick = 1; tick <= LOOK_DOWN_TICKS; tick++) {
+            float pitch =
+                    Mth.lerp(
+                            (float) tick / LOOK_DOWN_TICKS,
+                            fromPitch,
+                            MagicCarpetEntity.DIVE_PITCH);
+            context.runOnClient(client -> client.player.setXRot(pitch));
+            watch.tick(context);
+        }
+        context.getInput().holdKey(options -> options.keyJump);
+        try {
+            watch.untilServer(
+                    context,
+                    server,
+                    minecraftServer -> player(minecraftServer).getVehicle().onGround(),
+                    LAND_TIMEOUT_TICKS,
+                    type + " lands");
+        } finally {
+            context.getInput().releaseKey(options -> options.keyJump);
+        }
+        server.runOnServer(
+                minecraftServer -> {
+                    Entity carpet = player(minecraftServer).getVehicle();
+                    check(
+                            Math.abs(carpet.getY() - STAND_Y) < 1.0E-3D
+                                    && !carpet.level()
+                                            .getBlockState(carpet.blockPosition().below())
+                                            .isAir(),
+                            type + " must land on the runway, landed at " + carpet.position());
+                });
+        watch.holdFor(context, LANDED_MILLIS);
+        watch.verify(type, topSpeed);
+
+        // The rider gets off with the sneak key, which plays the dismount sound and stops the
+        // wind.
         context.getInput().holdKey(options -> options.keyShift);
         try {
             context.waitFor(client -> client.player.getVehicle() == null, MOUNT_TIMEOUT_TICKS);
@@ -517,6 +561,20 @@ public final class MagicCarpetShowcase {
                         SOUNDS.heard(SoundEvents.WOOL_STEP)
                                 && !client.getSoundManager().isActive(watch.sound),
                 MOUNT_TIMEOUT_TICKS);
+        ClientGameTestWaits.holdFor(context, STEPPED_OFF_MILLIS);
+        server.runOnServer(
+                minecraftServer -> {
+                    ServerPlayer player = player(minecraftServer);
+                    check(
+                            player.getVehicle() == null
+                                    && player.onGround()
+                                    && player.getY() >= STAND_Y - 1.0E-3D,
+                            "The rider must get off onto the landed "
+                                    + type
+                                    + " or the runway, stood at "
+                                    + player.position());
+                });
+        ClientGameTestStages.endStage(context, id, HOLD_AFTER_END_TICKS);
     }
 
     /**
@@ -546,6 +604,18 @@ public final class MagicCarpetShowcase {
 
         private void waitTicks(ClientGameTestContext context, int ticks) {
             for (int tick = 0; tick < ticks; tick++) {
+                tick(context);
+            }
+        }
+
+        private void untilServer(
+                ClientGameTestContext context,
+                TestDedicatedServerContext server,
+                Predicate<MinecraftServer> condition,
+                int timeoutTicks,
+                String description) {
+            for (int tick = 0; !server.computeOnServer(condition::test); tick++) {
+                check(tick < timeoutTicks, "Timed out waiting until " + description);
                 tick(context);
             }
         }

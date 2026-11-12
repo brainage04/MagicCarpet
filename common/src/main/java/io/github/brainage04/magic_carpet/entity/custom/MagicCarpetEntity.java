@@ -28,6 +28,9 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class MagicCarpetEntity extends VehicleEntity {
+    /** The rider's pitch from which the jump key flies the carpet down at full speed. */
+    public static final float DIVE_PITCH = 45.0F;
+
     private static final double DECELERATION_TIME_MULTIPLIER = 2.0;
 
     private static final double REST_SPEED_SQR = 1.0E-6;
@@ -237,7 +240,7 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     }
 
     private float getVerticalVelocity(float pitch) {
-        if (pitch >= 45.0f) {
+        if (pitch >= DIVE_PITCH) {
             return -0.50f;
         } else if (pitch > 15.0f) {
             return (-pitch + 30.0f) / 30.0f;
