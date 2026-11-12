@@ -25,11 +25,15 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerCon
 import net.minecraft.client.CameraType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.PermissionSet;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -39,21 +43,25 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The film of Magic Carpet's showcase: the three tiers side by side, then each tier mounted and
- * flown.
+ * The film of Magic Carpet's showcase: the three tiers side by side, then each tier twice, first
+ * sneaking and right clicking it, which leaves it empty, then right clicking it, mounting it and
+ * flying it.
  *
- * <p>Every stage plays like a person: the player turns to the carpet it rides, presses the use key
- * with that carpet under the crosshair and inside vanilla reach, and flies it with the forward and
- * jump keys. {@link ClientGameTestPlayerActions} fails the stage when the crosshair is not on the
- * carpet or the carpet is out of reach.
+ * <p>Every stage plays like a person: the player looks at the carpet it rides from the stage's
+ * first frame, presses the use key with that carpet under the crosshair and inside vanilla reach,
+ * and flies it with the forward and jump keys. {@link ClientGameTestPlayerActions} fails the stage
+ * when the crosshair is not on the carpet or the carpet is out of reach.
  *
- * <p>Server-side calls only build the scene, place the player between stages and assert what the
- * camera cannot prove, and each one happens before its stage is filmed.
+ * <p>The ground is a saved structure, {@code magic_carpet-runway.nbt} (written by {@code
+ * tools/generate_showcase_runway.py}), placed once before the client joins. Server-side calls only
+ * place it, put the player and a carpet in position before a stage's caption, and assert what the
+ * camera cannot prove.
  */
 @SuppressWarnings("UnstableApiUsage")
 public final class MagicCarpetShowcase {
@@ -64,43 +72,53 @@ public final class MagicCarpetShowcase {
     private static final float NORTH = 180.0F;
     private static final int NORMAL_FOV = 70;
 
+    private static final String RUNWAY = "/magic_carpet-runway.nbt";
+
+    /** The runway's north and south ends: every flight stays over it for its whole length. */
+    private static final int RUNWAY_FAR_Z = -400;
+
+    private static final int RUNWAY_NEAR_Z = 8;
+    private static final int RUNWAY_HALF_WIDTH = 8;
+
     /** Where the three tiers hang for the first stage, and where the player stands to see them. */
     private static final double TIERS_Z = 0.5D;
 
-    private static final double TIERS_STAND_Z = 4.8D;
     private static final double TIER_SPACING = 2.0D;
+    private static final Vec3 TIERS_STAND = new Vec3(0.0D, STAND_Y, 3.8D);
+    private static final long TIERS_MILLIS = 2500L;
 
     /**
-     * One site per flight stage, far enough apart that a stage never fights the last one's scene.
+     * One site per tier, far enough apart that a stage never fights the last one's scene. The tiers
+     * stage shares the basic site.
      */
     private static final int BASIC_SITE = 0;
 
     private static final int ADVANCED_SITE = 200;
     private static final int LEGENDARY_SITE = 400;
 
-    /** The carpet's height above the platform, and where the player stands to mount it. */
+    /** The carpet's height above the platform. */
     private static final double CARPET_Y = STAND_Y + 0.5D;
 
-    private static final double FLIGHT_STAND_Z = 4.5D;
+    private static final double CARPET_Z = 0.5D;
 
-    /** How close the player stops to the carpet before the right click. */
-    private static final double MOUNT_REACH = 2.0D;
+    /**
+     * How far south of the carpet the player stands: inside vanilla entity reach, and far enough
+     * that looking at the carpet is a shallow look down, so the jump key climbs (a pitch of 19
+     * degrees, against 45 for a dive).
+     */
+    private static final double MOUNT_DISTANCE = 2.8D;
 
-    /** The hotbar slot the player holds when no carpet should be in the hand. */
+    /** The hotbar slot the player holds: empty, so the hand stays out of the frame. */
     private static final int EMPTY_SLOT = 8;
 
-    /** How long the crosshair rests on the carpet before the right click, so it reads on screen. */
-    private static final long AIM_MILLIS = 400L;
+    private static final long BEFORE_MILLIS = 300L;
+
+    /** How long the sneaking click is held on screen after the press, the carpet still empty. */
+    private static final long SNEAK_CLICK_MILLIS = 1300L;
 
     /** How long the first-person view keeps the crosshair on the carpet after the right click. */
     private static final long CROSSHAIR_MILLIS = 250L;
 
-    /** The runway's near and far end: the flight stays over it for its whole length. */
-    private static final int RUNWAY_NEAR_Z = 8;
-
-    private static final int RUNWAY_FAR_Z = -400;
-
-    private static final long BEFORE_MILLIS = 250L;
     private static final long MOUNT_MILLIS = 150L;
     private static final long FLY_MILLIS = 1500L;
 
@@ -112,7 +130,6 @@ public final class MagicCarpetShowcase {
 
     private static final long LEVEL_MILLIS = 250L;
     private static final long COAST_MILLIS = 500L;
-    private static final long AFTER_MILLIS = 250L;
 
     /** Ticks the flight speed is measured over, once the carpet has reached its top speed. */
     private static final int SPEED_WINDOW_TICKS = 20;
@@ -120,10 +137,32 @@ public final class MagicCarpetShowcase {
     /** The most the measured top speed may differ from the tier's, as a share of that speed. */
     private static final double SPEED_TOLERANCE = 0.05D;
 
+    /**
+     * The widest gap, in blocks, between where a frame draws the carpet and where it draws the
+     * rider. The rider sits over the carpet's centre, so the gap is 0 when both move together.
+     * Without an interpolation handler the carpet is drawn three ticks of flight ahead: 1.8, 3.6
+     * and 7.2 blocks for the three tiers (measured 12 Nov 2026).
+     */
+    private static final double MAX_RIDER_GAP = 0.01D;
+
+    /**
+     * The most the carpet's pitch or roll may change in one tick, in degrees. A tilt read from the
+     * server's velocity updates turns by up to 4.4 degrees in one tick on the basic carpet and 7.1
+     * on the legendary one, and the eased tilt by at most 2.4 (measured 12 Nov 2026).
+     */
+    private static final float MAX_TILT_STEP = 4.0F;
+
+    /**
+     * The fewest ticks of a flight in which the carpet must move, so the checks are not empty: at
+     * least the speed window, the one part of the flight counted in ticks rather than by the clock.
+     */
+    private static final int MIN_MOVING_TICKS = SPEED_WINDOW_TICKS;
+
     private static final int CAPTION_LEAD_TICKS = 4;
     private static final int HOLD_AFTER_END_TICKS = 6;
     private static final int LOAD_TIMEOUT_TICKS = 2400;
     private static final int MOUNT_TIMEOUT_TICKS = 100;
+    private static final int SNEAK_TIMEOUT_TICKS = 40;
 
     private static final Map<String, String[]> CAPTIONS = loadCaptions();
 
@@ -135,32 +174,27 @@ public final class MagicCarpetShowcase {
         return properties;
     }
 
-    /** Builds the platforms the four stages stand on, before the client joins. */
+    /** Places the saved runway under each tier's site, before the client joins. */
     public static void buildStage(MinecraftServer server) {
         ServerLevel level = server.overworld();
-        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        StructureTemplate runway = loadRunway(server);
         for (int site : List.of(BASIC_SITE, ADVANCED_SITE, LEGENDARY_SITE)) {
-            // A long striped floor under each flight: the stripes are what makes the speed read.
-            for (int z = RUNWAY_FAR_Z; z <= RUNWAY_NEAR_Z; z++) {
-                BlockState stripe =
-                        (Math.floorDiv(z, 4) & 1) == 0
-                                ? Blocks.SMOOTH_QUARTZ.defaultBlockState()
-                                : Blocks.CONCRETE.black().defaultBlockState();
-                for (int x = site - 8; x <= site + 8; x++) {
-                    level.setBlock(cursor.set(x, FLOOR_Y, z), stripe, Block.UPDATE_CLIENTS);
-                }
-            }
-            // Clear the air where the player and the carpet stand, so nothing clips the mount.
-            for (int x = site - 8; x <= site + 8; x++) {
-                for (int z = -8; z <= 8; z++) {
-                    for (int y = FLOOR_Y + 1; y <= FLOOR_Y + 6; y++) {
-                        level.setBlock(
-                                cursor.set(x, y, z),
-                                Blocks.AIR.defaultBlockState(),
-                                Block.UPDATE_CLIENTS);
-                    }
-                }
-            }
+            BlockPos corner = new BlockPos(site - RUNWAY_HALF_WIDTH, FLOOR_Y, RUNWAY_FAR_Z);
+            check(
+                    runway.placeInWorld(
+                            level,
+                            corner,
+                            corner,
+                            new StructurePlaceSettings(),
+                            level.getRandom(),
+                            Block.UPDATE_CLIENTS),
+                    "The runway must place at site " + site);
+            check(
+                    level.getBlockState(new BlockPos(site, FLOOR_Y, RUNWAY_NEAR_Z))
+                                    .is(Blocks.SMOOTH_QUARTZ)
+                            && level.getBlockState(new BlockPos(site, FLOOR_Y, -4))
+                                    .is(Blocks.CONCRETE.black()),
+                    "The runway at site " + site + " must be striped quartz and black concrete");
         }
         command(server, "gamerule advance_time false");
         command(server, "gamerule advance_weather false");
@@ -169,7 +203,7 @@ public final class MagicCarpetShowcase {
         command(server, "time set noon");
     }
 
-    /** Films the four stages, in order. */
+    /** Films the stages, in order. */
     public static void film(ClientGameTestContext context, TestDedicatedServerContext server) {
         context.runOnClient(
                 client -> {
@@ -211,9 +245,11 @@ public final class MagicCarpetShowcase {
         context.runOnClient(client -> client.options.setCameraType(CameraType.FIRST_PERSON));
     }
 
-    /** The three tiers side by side, close enough that the shapes and the textures read. */
+    /**
+     * The three tiers side by side, close enough that the shapes and the textures read, all in
+     * frame from where the player stands.
+     */
     private static void tiers(ClientGameTestContext context, TestDedicatedServerContext server) {
-        Vec3 stand = new Vec3(0.5D, STAND_Y, TIERS_STAND_Z);
         server.runOnServer(
                 minecraftServer -> {
                     ServerPlayer player = player(minecraftServer);
@@ -222,10 +258,15 @@ public final class MagicCarpetShowcase {
                     player.getInventory().setItem(0, new ItemStack(ModItems.basic()));
                     player.getInventory().setItem(1, new ItemStack(ModItems.advanced()));
                     player.getInventory().setItem(2, new ItemStack(ModItems.legendary()));
-                    // An empty hand for this stage: the held carpet covered the lower right.
-                    player.getInventory().setSelectedSlot(EMPTY_SLOT);
                     player.teleportTo(
-                            level, stand.x, stand.y, stand.z, Set.of(), NORTH, 8.0F, true);
+                            level,
+                            TIERS_STAND.x,
+                            TIERS_STAND.y,
+                            TIERS_STAND.z,
+                            Set.of(),
+                            NORTH,
+                            8.0F,
+                            true);
                     double[] xs = {-TIER_SPACING, 0.0D, TIER_SPACING};
                     EntityType<?>[] types = {
                         ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary()
@@ -239,35 +280,13 @@ public final class MagicCarpetShowcase {
                         check(level.addFreshEntity(carpet), "Failed to spawn " + types[tier]);
                     }
                 });
-        context.waitFor(
-                client ->
-                        client.level.dimension() == Level.OVERWORLD
-                                && client.player.position().distanceTo(stand) < 0.01D,
-                LOAD_TIMEOUT_TICKS);
-        context.runOnClient(
-                client -> {
-                    client.options.setCameraType(CameraType.FIRST_PERSON);
-                    client.gui.hud.getChat().clearMessages(false);
-                    client.player.getInventory().setSelectedSlot(EMPTY_SLOT);
-                });
-        ClientGameTestWaits.waitForChunkWindow(context, RENDER_DISTANCE - 2, LOAD_TIMEOUT_TICKS);
-        ClientGameTestWaits.waitForRenderSettled(context, 15, LOAD_TIMEOUT_TICKS);
+        arrive(context, TIERS_STAND);
+        ClientGameTestPlayerActions.lookAt(context, tierPoint(0.0D));
 
         String id = "magic_carpet.tiers";
-        ClientGameTestPlayerActions.lookAt(context, tierPoint(-TIER_SPACING));
         caption(context, id);
         ClientGameTestStages.markStage(id);
-        ClientGameTestWaits.holdFor(context, BEFORE_MILLIS);
-        ClientGameTestPlayerActions.walkTo(context, tierPoint(0.0D), 3.0D);
-        // A mouse turn across the row, holding each tier at the middle of the frame.
-        ClientGameTestPlayerActions.lookAt(context, tierPoint(-TIER_SPACING));
-        ClientGameTestWaits.holdFor(context, 850L);
-        ClientGameTestPlayerActions.lookAt(context, tierPoint(0.0D));
-        ClientGameTestWaits.holdFor(context, 850L);
-        ClientGameTestPlayerActions.lookAt(context, tierPoint(TIER_SPACING));
-        ClientGameTestWaits.holdFor(context, 850L);
-        ClientGameTestPlayerActions.lookAt(context, tierPoint(0.0D));
-        ClientGameTestWaits.holdFor(context, AFTER_MILLIS);
+        ClientGameTestWaits.holdFor(context, TIERS_MILLIS);
         server.runOnServer(
                 minecraftServer -> {
                     List<MagicCarpetEntity> carpets =
@@ -299,9 +318,10 @@ public final class MagicCarpetShowcase {
     }
 
     /**
-     * One tier: the player mounts it with a right click, flies it with the forward and jump keys,
-     * and lets go to watch it coast. The rider stays aboard, so the stage never films a fall from
-     * the carpet's height; the next stage teleports the player before its caption.
+     * One tier, in two stages from the same spot. First the player sneaks and right clicks the
+     * carpet, which stays empty. Then it right clicks it, mounts it, flies it with the forward and
+     * jump keys, and lets go to watch it coast. The rider stays aboard, so the stage never films a
+     * fall from the carpet's height. The next stage teleports the player before its caption.
      */
     private static void flight(
             ClientGameTestContext context,
@@ -311,7 +331,7 @@ public final class MagicCarpetShowcase {
             EntityType<?> type,
             Item item,
             double topSpeed) {
-        Vec3 stand = new Vec3(site + 0.5D, STAND_Y, FLIGHT_STAND_Z);
+        Vec3 stand = new Vec3(site + 0.5D, STAND_Y, CARPET_Z + MOUNT_DISTANCE);
         int[] carpetId = new int[1];
         server.runOnServer(
                 minecraftServer -> {
@@ -328,37 +348,48 @@ public final class MagicCarpetShowcase {
                     MagicCarpetEntity carpet =
                             (MagicCarpetEntity) type.create(level, EntitySpawnReason.COMMAND);
                     check(carpet != null, "Expected a registered carpet for " + type);
-                    carpet.setPos(site + 0.5D, CARPET_Y, 0.5D);
+                    carpet.setPos(site + 0.5D, CARPET_Y, CARPET_Z);
                     check(level.addFreshEntity(carpet), "Failed to spawn " + type);
                     carpetId[0] = carpet.getId();
                 });
-        context.waitFor(
-                client ->
-                        client.level.dimension() == Level.OVERWORLD
-                                && client.player.position().distanceTo(stand) < 0.01D
-                                && client.player.getVehicle() == null,
-                LOAD_TIMEOUT_TICKS);
-        context.runOnClient(
-                client -> {
-                    // First person to walk up and click, so the crosshair on the carpet is on
-                    // screen; the flight then switches to the chase camera.
-                    client.options.setCameraType(CameraType.FIRST_PERSON);
-                    client.options.fov().set(NORMAL_FOV);
-                    client.gui.hud.getChat().clearMessages(false);
-                    client.player.getInventory().setSelectedSlot(0);
-                });
-        ClientGameTestWaits.waitForChunkWindow(context, RENDER_DISTANCE - 2, LOAD_TIMEOUT_TICKS);
-        ClientGameTestWaits.waitForRenderSettled(context, 15, LOAD_TIMEOUT_TICKS);
+        arrive(context, stand);
         ClientGameTestPlayerActions.lookAt(context, carpetPoint(site));
         ClientGameTestPlayerActions.requireVanillaInteractionRanges(context);
+
+        String sneakId = id + ".sneak";
+        caption(context, sneakId);
+        ClientGameTestStages.markStage(sneakId);
+        ClientGameTestWaits.holdFor(context, BEFORE_MILLIS);
+        context.getInput().holdKey(options -> options.keyShift);
+        try {
+            ClientGameTestWaits.waitForServer(
+                    context,
+                    server,
+                    minecraftServer -> player(minecraftServer).isShiftKeyDown(),
+                    SNEAK_TIMEOUT_TICKS,
+                    "the sneak key reaches the server");
+            ClientGameTestPlayerActions.requireLookingAtEntity(context, carpetId[0]);
+            context.getInput().pressKey(options -> options.keyUse);
+            ClientGameTestWaits.holdFor(context, SNEAK_CLICK_MILLIS);
+            server.runOnServer(
+                    minecraftServer ->
+                            check(
+                                    player(minecraftServer).getVehicle() == null,
+                                    "Sneaking and right clicking must leave " + type + " empty"));
+        } finally {
+            context.getInput().releaseKey(options -> options.keyShift);
+        }
+        ClientGameTestWaits.waitForServer(
+                context,
+                server,
+                minecraftServer -> !player(minecraftServer).isShiftKeyDown(),
+                SNEAK_TIMEOUT_TICKS,
+                "the released sneak key reaches the server");
+        ClientGameTestStages.endStage(context, sneakId, HOLD_AFTER_END_TICKS);
 
         caption(context, id);
         ClientGameTestStages.markStage(id);
         ClientGameTestWaits.holdFor(context, BEFORE_MILLIS);
-        ClientGameTestPlayerActions.walkTo(context, carpetPoint(site), MOUNT_REACH);
-        ClientGameTestPlayerActions.lookAt(context, carpetPoint(site));
-        ClientGameTestWaits.holdFor(context, AIM_MILLIS);
-
         ClientGameTestPlayerActions.requireLookingAtEntity(context, carpetId[0]);
         context.getInput().pressKey(options -> options.keyUse);
         ClientGameTestWaits.waitForServer(
@@ -377,21 +408,6 @@ public final class MagicCarpetShowcase {
                         check(
                                 !client.player.getVehicle().isLocalInstanceAuthoritative(),
                                 "A carpet must be server-authoritative on its rider's client"));
-        // The click leaves slot 0 selected, so the rider would hold the carpet item for the whole
-        // flight; the empty slot's key press clears the hand before the chase camera.
-        context.getInput().pressKey(options -> options.keyHotbarSlots[EMPTY_SLOT]);
-        context.waitFor(
-                client ->
-                        client.player.getInventory().getSelectedSlot() == EMPTY_SLOT
-                                && client.player.getMainHandItem().isEmpty(),
-                MOUNT_TIMEOUT_TICKS);
-        ClientGameTestWaits.waitForServer(
-                context,
-                server,
-                minecraftServer ->
-                        player(minecraftServer).getInventory().getSelectedSlot() == EMPTY_SLOT,
-                MOUNT_TIMEOUT_TICKS,
-                "the hotbar key selects the empty slot on the server");
         // The crosshair is on the carpet in first person, and stays there for a moment after the
         // mount, so the film shows what the player clicked.
         ClientGameTestWaits.holdFor(context, CROSSHAIR_MILLIS);
@@ -403,28 +419,26 @@ public final class MagicCarpetShowcase {
                 });
         ClientGameTestWaits.holdFor(context, MOUNT_MILLIS);
 
-        // Aim north and a little down, so the carpet sits in the lower frame and the ground shows
-        // the speed.
-        ClientGameTestPlayerActions.lookAt(context, flightAim(site));
+        // The player keeps the direction it clicked in: north, and a little down, so the carpet
+        // sits in the lower frame and the ground shows the speed.
+        RiderWatch watch = new RiderWatch(carpetId[0]);
         context.getInput().holdKey(options -> options.keyUp);
         try {
-            ClientGameTestWaits.holdFor(context, FLY_MILLIS);
+            watch.holdFor(context, FLY_MILLIS);
             double before = alongZ(server);
             double ticksBefore = gameTime(server);
-            context.waitTicks(SPEED_WINDOW_TICKS);
+            watch.waitTicks(context, SPEED_WINDOW_TICKS);
             double measured = Math.abs(alongZ(server) - before) / (gameTime(server) - ticksBefore);
-            server.runOnServer(
-                    minecraftServer ->
-                            check(
-                                    Math.abs(measured - topSpeed) <= topSpeed * SPEED_TOLERANCE,
-                                    type
-                                            + " must fly at "
-                                            + topSpeed * 20
-                                            + " blocks/s, measured "
-                                            + measured * 20
-                                            + " blocks/s"));
+            check(
+                    Math.abs(measured - topSpeed) <= topSpeed * SPEED_TOLERANCE,
+                    type
+                            + " must fly at "
+                            + topSpeed * 20
+                            + " blocks/s, measured "
+                            + measured * 20
+                            + " blocks/s");
             context.getInput().holdKey(options -> options.keyJump);
-            ClientGameTestWaits.holdFor(context, CLIMB_MILLIS);
+            watch.holdFor(context, CLIMB_MILLIS);
             context.getInput().releaseKey(options -> options.keyJump);
             server.runOnServer(
                     minecraftServer -> {
@@ -436,25 +450,23 @@ public final class MagicCarpetShowcase {
         } finally {
             context.getInput().releaseKey(options -> options.keyJump);
         }
-        ClientGameTestWaits.holdFor(context, LEVEL_MILLIS);
+        watch.holdFor(context, LEVEL_MILLIS);
         context.getInput().releaseKey(options -> options.keyUp);
         double movingOnRelease = alongZ(server);
         double releasedAt = gameTime(server);
-        ClientGameTestWaits.holdFor(context, 100L);
+        watch.holdFor(context, 100L);
         double coasted =
                 Math.abs(alongZ(server) - movingOnRelease) / (gameTime(server) - releasedAt);
-        server.runOnServer(
-                minecraftServer ->
-                        check(
-                                coasted > topSpeed * 0.2D,
-                                "Letting go must not stop "
-                                        + type
-                                        + " at once; it coasted at "
-                                        + coasted * 20
-                                        + " blocks/s"));
-        ClientGameTestWaits.holdFor(context, COAST_MILLIS);
+        check(
+                coasted > topSpeed * 0.2D,
+                "Letting go must not stop "
+                        + type
+                        + " at once; it coasted at "
+                        + coasted * 20
+                        + " blocks/s");
+        watch.holdFor(context, COAST_MILLIS);
+        watch.verify(type);
 
-        ClientGameTestWaits.holdFor(context, AFTER_MILLIS);
         server.runOnServer(
                 minecraftServer -> {
                     ServerPlayer player = player(minecraftServer);
@@ -466,20 +478,131 @@ public final class MagicCarpetShowcase {
         ClientGameTestStages.endStage(context, id, HOLD_AFTER_END_TICKS);
     }
 
+    /**
+     * Watches a flight each tick, as a frame would draw it: where the carpet is drawn against its
+     * rider at both ends of the tick, and how far the carpet's tilt turned in the tick.
+     */
+    private static final class RiderWatch {
+        private final int carpetId;
+        private double widestGap;
+        private float steepestTiltStep;
+        private int movingTicks;
+
+        private RiderWatch(int carpetId) {
+            this.carpetId = carpetId;
+        }
+
+        private void holdFor(ClientGameTestContext context, long millis) {
+            long end = System.currentTimeMillis() + millis;
+            while (System.currentTimeMillis() < end) {
+                tick(context);
+            }
+        }
+
+        private void waitTicks(ClientGameTestContext context, int ticks) {
+            for (int tick = 0; tick < ticks; tick++) {
+                tick(context);
+            }
+        }
+
+        private void tick(ClientGameTestContext context) {
+            context.waitTick();
+            context.runOnClient(
+                    client -> {
+                        Entity vehicle = client.player.getVehicle();
+                        check(
+                                vehicle instanceof MagicCarpetEntity
+                                        && vehicle.getId() == this.carpetId,
+                                "The player must ride the carpet through its flight");
+                        MagicCarpetEntity carpet = (MagicCarpetEntity) vehicle;
+                        // The frame draws both at a point between the start and the end of the
+                        // tick, and both move in a straight line, so the two ends bound the gap.
+                        for (float partialTick : new float[] {0.0F, 1.0F}) {
+                            double gap =
+                                    carpet.getPosition(partialTick)
+                                            .subtract(client.player.getPosition(partialTick))
+                                            .horizontalDistance();
+                            this.widestGap = Math.max(this.widestGap, gap);
+                        }
+                        if (carpet.getPosition(0.0F).distanceToSqr(carpet.position()) > 1.0E-6D) {
+                            this.movingTicks++;
+                        }
+                        float tiltStep =
+                                Math.max(
+                                        Math.abs(carpet.renderPitch - carpet.prevRenderPitch),
+                                        Math.abs(carpet.renderRoll - carpet.prevRenderRoll));
+                        this.steepestTiltStep = Math.max(this.steepestTiltStep, tiltStep);
+                    });
+        }
+
+        private void verify(EntityType<?> type) {
+            MagicCarpet.LOGGER.info(
+                    "Flight of {}: moved in {} ticks, widest carpet-to-rider gap {} blocks,"
+                            + " steepest tilt step {} degrees",
+                    type,
+                    this.movingTicks,
+                    this.widestGap,
+                    this.steepestTiltStep);
+            check(
+                    this.movingTicks >= MIN_MOVING_TICKS,
+                    type + " must move in at least " + MIN_MOVING_TICKS + " ticks of its flight");
+            check(
+                    this.widestGap <= MAX_RIDER_GAP,
+                    "Every frame must draw "
+                            + type
+                            + " under its rider; they were drawn "
+                            + this.widestGap
+                            + " blocks apart");
+            check(
+                    this.steepestTiltStep <= MAX_TILT_STEP,
+                    type
+                            + " must tilt by at most "
+                            + MAX_TILT_STEP
+                            + " degrees a tick; it tilted "
+                            + this.steepestTiltStep);
+        }
+    }
+
+    /** Waits until the client stands where the server put it, with the scene loaded and drawn. */
+    private static void arrive(ClientGameTestContext context, Vec3 stand) {
+        context.waitFor(
+                client ->
+                        client.level.dimension() == Level.OVERWORLD
+                                && client.player.position().distanceTo(stand) < 0.01D
+                                && client.player.getVehicle() == null,
+                LOAD_TIMEOUT_TICKS);
+        context.runOnClient(
+                client -> {
+                    // First person to click, so the crosshair on the carpet is on screen. A flight
+                    // then switches to the chase camera.
+                    client.options.setCameraType(CameraType.FIRST_PERSON);
+                    client.options.fov().set(NORMAL_FOV);
+                    client.gui.hud.getChat().clearMessages(false);
+                    client.player.getInventory().setSelectedSlot(EMPTY_SLOT);
+                });
+        ClientGameTestWaits.waitForChunkWindow(context, RENDER_DISTANCE - 2, LOAD_TIMEOUT_TICKS);
+        ClientGameTestWaits.waitForRenderSettled(context, 15, LOAD_TIMEOUT_TICKS);
+    }
+
+    private static StructureTemplate loadRunway(MinecraftServer server) {
+        try (InputStream stream = MagicCarpetShowcase.class.getResourceAsStream(RUNWAY)) {
+            check(stream != null, "The runway structure is missing: " + RUNWAY);
+            StructureTemplate template = new StructureTemplate();
+            template.load(
+                    server.registryAccess().lookupOrThrow(Registries.BLOCK),
+                    NbtIo.readCompressed(stream, NbtAccounter.unlimitedHeap()));
+            return template;
+        } catch (IOException failure) {
+            throw new UncheckedIOException(failure);
+        }
+    }
+
     private static Vec3 tierPoint(double x) {
         return new Vec3(x, CARPET_Y + 0.15D, TIERS_Z);
     }
 
     private static Vec3 carpetPoint(int site) {
-        return new Vec3(site + 0.5D, CARPET_Y + 0.15D, 0.5D);
-    }
-
-    /**
-     * Straight north from the carpet and level with it: the rider looks a little down, the carpet
-     * fills the lower frame, and the jump key climbs at half the tier's speed.
-     */
-    private static Vec3 flightAim(int site) {
-        return new Vec3(site + 0.5D, CARPET_Y, -7.5D);
+        return new Vec3(site + 0.5D, CARPET_Y + 0.15D, CARPET_Z);
     }
 
     private static double alongZ(TestDedicatedServerContext server) {
@@ -524,7 +647,7 @@ public final class MagicCarpetShowcase {
     private static void resetPlayer(ServerPlayer player) {
         player.stopRiding();
         player.getInventory().clearContent();
-        player.getInventory().setSelectedSlot(0);
+        player.getInventory().setSelectedSlot(EMPTY_SLOT);
         player.setGameMode(GameType.CREATIVE);
         player.setHealth(player.getMaxHealth());
         player.getFoodData().setFoodLevel(20);

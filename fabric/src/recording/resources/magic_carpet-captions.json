@@ -3,13 +3,25 @@
     "title": "Three tiers side by side",
     "subtitle": "Basic, then advanced, then legendary"
   },
+  "magic_carpet.basic.sneak": {
+    "title": "Basic: sneak and right click",
+    "subtitle": "The carpet stays empty"
+  },
   "magic_carpet.basic": {
     "title": "Basic: right click to ride",
     "subtitle": "12 blocks/s, 2 s to top speed, and it coasts"
   },
+  "magic_carpet.advanced.sneak": {
+    "title": "Advanced: sneak and right click",
+    "subtitle": "The carpet stays empty"
+  },
   "magic_carpet.advanced": {
     "title": "Advanced: gold cord and tassels",
     "subtitle": "24 blocks/s, 1 s to top speed"
+  },
+  "magic_carpet.legendary.sneak": {
+    "title": "Legendary: sneak and right click",
+    "subtitle": "The carpet stays empty"
   },
   "magic_carpet.legendary": {
     "title": "Legendary: curls and glowing threads",
