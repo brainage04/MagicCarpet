@@ -10,8 +10,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.InterpolationHandler;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.SteppedInterpolationHandler;
 import net.minecraft.world.entity.animal.fish.WaterAnimal;
 import net.minecraft.world.entity.monster.creaking.Creaking;
 import net.minecraft.world.entity.player.Input;
@@ -37,6 +39,15 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     private static final double MAX_TILT_PITCH = 15.0;
 
     private static final double MAX_TILT_ROLL = 12.0;
+
+    /**
+     * The share of the way the tilt and the ripple move towards the carpet's drawn movement each
+     * tick. That movement changes in steps, once per position update from the server, because the
+     * interpolation handler moves the carpet along a straight line from one update to the next
+     * (SteppedInterpolationHandler.java:177-193 in 26.3). Easing keeps the tilt from snapping at
+     * each step.
+     */
+    private static final float MOTION_EASING = 0.25F;
 
     private float movementForward = 0.0f;
     private float movementSideways = 0.0f;
@@ -79,41 +90,26 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     }
 
     @Override
+    protected InterpolationHandler createInterpolationHandler() {
+        // The rider's client does not simulate the carpet, so the carpet only moves when a move
+        // packet arrives. Without a handler the packet sets its position at once, between client
+        // ticks (26.3 Entity.java:2618, ClientPacketListener.java:735-743), while the rider follows
+        // on its next tick: the carpet is drawn up to three ticks of flight ahead of its rider.
+        return SteppedInterpolationHandler.create(this);
+    }
+
+    @Override
     public void tick() {
         super.tick();
-
-        this.prevRenderPitch = this.renderPitch;
-        this.prevRenderRoll = this.renderRoll;
-
-        float yaw = (float) Math.toRadians(this.getYRot());
-        float sin = Mth.sin(yaw);
-        float cos = Mth.cos(yaw);
-
-        double x = this.getDeltaMovement().x();
-        double y = this.getDeltaMovement().y();
-        double z = this.getDeltaMovement().z();
-
-        double maxSpeed = getMaxSpeed();
-        this.renderPitch =
-                (float)
-                        Mth.clamp(
-                                (y - (cos * z - sin * x)) / maxSpeed * MAX_TILT_PITCH,
-                                -MAX_TILT_PITCH,
-                                MAX_TILT_PITCH);
-
-        this.renderRoll =
-                (float)
-                        Mth.clamp(
-                                (sin * z + cos * x) / maxSpeed * MAX_TILT_ROLL,
-                                -MAX_TILT_ROLL,
-                                MAX_TILT_ROLL);
 
         if (isLocalInstanceAuthoritative()) {
             updateVelocity();
         }
 
         if (level().isClientSide()) {
-            updateAnimationSpeed();
+            Vec3 drawnMovement = position().subtract(this.xo, this.yo, this.zo);
+            updateTilt(drawnMovement);
+            updateAnimationSpeed(drawnMovement);
             spawnAmbientParticles();
         }
 
@@ -123,6 +119,34 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
             //noinspection DataFlowIssue - should be obvious why
             setYRot(getControllingPassenger().getYRot());
         }
+    }
+
+    private void updateTilt(Vec3 movement) {
+        this.prevRenderPitch = this.renderPitch;
+        this.prevRenderRoll = this.renderRoll;
+
+        float yaw = (float) Math.toRadians(this.getYRot());
+        float sin = Mth.sin(yaw);
+        float cos = Mth.cos(yaw);
+
+        double maxSpeed = getMaxSpeed();
+        float pitch =
+                (float)
+                        Mth.clamp(
+                                (movement.y - (cos * movement.z - sin * movement.x))
+                                        / maxSpeed
+                                        * MAX_TILT_PITCH,
+                                -MAX_TILT_PITCH,
+                                MAX_TILT_PITCH);
+        float roll =
+                (float)
+                        Mth.clamp(
+                                (sin * movement.z + cos * movement.x) / maxSpeed * MAX_TILT_ROLL,
+                                -MAX_TILT_ROLL,
+                                MAX_TILT_ROLL);
+
+        this.renderPitch += (pitch - this.renderPitch) * MOTION_EASING;
+        this.renderRoll += (roll - this.renderRoll) * MOTION_EASING;
     }
 
     @Override
@@ -264,12 +288,10 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         return positive ? 1.0F : -1.0F;
     }
 
-    private void updateAnimationSpeed() {
+    private void updateAnimationSpeed(Vec3 movement) {
         this.prevAnimationSpeed = this.animationSpeed;
-        float target =
-                (float) Math.min(getDeltaMovement().horizontalDistance() / getMaxSpeed(), 1.0);
-        // velocity packets arrive in steps; ease towards them so animations don't twitch
-        this.animationSpeed += (target - this.animationSpeed) * 0.25F;
+        float target = (float) Math.min(movement.horizontalDistance() / getMaxSpeed(), 1.0);
+        this.animationSpeed += (target - this.animationSpeed) * MOTION_EASING;
     }
 
     private void spawnAmbientParticles() {
