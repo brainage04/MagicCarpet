@@ -3,6 +3,7 @@ package io.github.brainage04.magic_carpet;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.github.brainage04.magic_carpet.client.MagicCarpetFlightSound;
 import io.github.brainage04.magic_carpet.entity.ModEntities;
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import io.github.brainage04.magic_carpet.item.ModItems;
@@ -15,6 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,16 +25,22 @@ import java.util.Set;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
 import net.minecraft.client.CameraType;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.sounds.SoundEventListener;
+import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.PermissionSet;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -47,6 +55,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The film of Magic Carpet's showcase: the three tiers side by side, then each tier twice, first
@@ -166,6 +175,8 @@ public final class MagicCarpetShowcase {
 
     private static final Map<String, String[]> CAPTIONS = loadCaptions();
 
+    private static final SoundLog SOUNDS = new SoundLog();
+
     private MagicCarpetShowcase() {}
 
     /** Server properties the film wants: chunks out to its horizon. */
@@ -217,6 +228,7 @@ public final class MagicCarpetShowcase {
                     client.options.notificationDisplayTime().set(0.5D);
                     client.options.fov().set(NORMAL_FOV);
                 });
+        context.runOnClient(client -> client.getSoundManager().addListener(SOUNDS));
         tiers(context, server);
         flight(
                 context,
@@ -242,7 +254,11 @@ public final class MagicCarpetShowcase {
                 ModEntities.legendary(),
                 ModItems.legendary(),
                 2.4D);
-        context.runOnClient(client -> client.options.setCameraType(CameraType.FIRST_PERSON));
+        context.runOnClient(
+                client -> {
+                    client.options.setCameraType(CameraType.FIRST_PERSON);
+                    client.getSoundManager().removeListener(SOUNDS);
+                });
     }
 
     /**
@@ -356,6 +372,7 @@ public final class MagicCarpetShowcase {
         ClientGameTestPlayerActions.lookAt(context, carpetPoint(site));
         ClientGameTestPlayerActions.requireVanillaInteractionRanges(context);
 
+        context.runOnClient(client -> SOUNDS.clear());
         String sneakId = id + ".sneak";
         caption(context, sneakId);
         ClientGameTestStages.markStage(sneakId);
@@ -376,6 +393,12 @@ public final class MagicCarpetShowcase {
                             check(
                                     player(minecraftServer).getVehicle() == null,
                                     "Sneaking and right clicking must leave " + type + " empty"));
+            context.runOnClient(
+                    client ->
+                            check(
+                                    !SOUNDS.heard(SoundEvents.WOOL_PLACE) && SOUNDS.flight == null,
+                                    "A carpet left empty must play neither the mount sound nor"
+                                            + " the wind"));
         } finally {
             context.getInput().releaseKey(options -> options.keyShift);
         }
@@ -408,6 +431,9 @@ public final class MagicCarpetShowcase {
                         check(
                                 !client.player.getVehicle().isLocalInstanceAuthoritative(),
                                 "A carpet must be server-authoritative on its rider's client"));
+        context.waitFor(
+                client -> SOUNDS.heard(SoundEvents.WOOL_PLACE) && SOUNDS.flight != null,
+                MOUNT_TIMEOUT_TICKS);
         // The crosshair is on the carpet in first person, and stays there for a moment after the
         // mount, so the film shows what the player clicked.
         ClientGameTestWaits.holdFor(context, CROSSHAIR_MILLIS);
@@ -421,7 +447,8 @@ public final class MagicCarpetShowcase {
 
         // The player keeps the direction it clicked in: north, and a little down, so the carpet
         // sits in the lower frame and the ground shows the speed.
-        RiderWatch watch = new RiderWatch(carpetId[0]);
+        RiderWatch watch =
+                new RiderWatch(carpetId[0], context.computeOnClient(client -> SOUNDS.flight));
         context.getInput().holdKey(options -> options.keyUp);
         try {
             watch.holdFor(context, FLY_MILLIS);
@@ -465,7 +492,7 @@ public final class MagicCarpetShowcase {
                         + coasted * 20
                         + " blocks/s");
         watch.holdFor(context, COAST_MILLIS);
-        watch.verify(type);
+        watch.verify(type, topSpeed);
 
         server.runOnServer(
                 minecraftServer -> {
@@ -476,6 +503,20 @@ public final class MagicCarpetShowcase {
                     checkNoItemsAt(player.level(), site);
                 });
         ClientGameTestStages.endStage(context, id, HOLD_AFTER_END_TICKS);
+
+        // Off camera: the rider gets off with the sneak key, which plays the dismount sound and
+        // stops the wind.
+        context.getInput().holdKey(options -> options.keyShift);
+        try {
+            context.waitFor(client -> client.player.getVehicle() == null, MOUNT_TIMEOUT_TICKS);
+        } finally {
+            context.getInput().releaseKey(options -> options.keyShift);
+        }
+        context.waitFor(
+                client ->
+                        SOUNDS.heard(SoundEvents.WOOL_STEP)
+                                && !client.getSoundManager().isActive(watch.sound),
+                MOUNT_TIMEOUT_TICKS);
     }
 
     /**
@@ -484,12 +525,16 @@ public final class MagicCarpetShowcase {
      */
     private static final class RiderWatch {
         private final int carpetId;
+        private final MagicCarpetFlightSound sound;
         private double widestGap;
         private float steepestTiltStep;
         private int movingTicks;
+        private float loudest;
+        private float volumeError;
 
-        private RiderWatch(int carpetId) {
+        private RiderWatch(int carpetId, MagicCarpetFlightSound sound) {
             this.carpetId = carpetId;
+            this.sound = sound;
         }
 
         private void holdFor(ClientGameTestContext context, long millis) {
@@ -532,17 +577,33 @@ public final class MagicCarpetShowcase {
                                         Math.abs(carpet.renderPitch - carpet.prevRenderPitch),
                                         Math.abs(carpet.renderRoll - carpet.prevRenderRoll));
                         this.steepestTiltStep = Math.max(this.steepestTiltStep, tiltStep);
+                        check(
+                                client.getSoundManager().isActive(this.sound),
+                                "The wind must play through the flight");
+                        float volume = this.sound.speedVolume();
+                        this.loudest = Math.max(this.loudest, volume);
+                        this.volumeError =
+                                Math.max(
+                                        this.volumeError,
+                                        Math.abs(
+                                                volume
+                                                        - MagicCarpetFlightSound.volumeFor(
+                                                                carpet.getDrawnMovement()
+                                                                        .lengthSqr())));
                     });
         }
 
-        private void verify(EntityType<?> type) {
+        private void verify(EntityType<?> type, double topSpeed) {
             MagicCarpet.LOGGER.info(
                     "Flight of {}: moved in {} ticks, widest carpet-to-rider gap {} blocks,"
-                            + " steepest tilt step {} degrees",
+                            + " steepest tilt step {} degrees, loudest wind {}, wind volume off by"
+                            + " up to {}",
                     type,
                     this.movingTicks,
                     this.widestGap,
-                    this.steepestTiltStep);
+                    this.steepestTiltStep,
+                    this.loudest,
+                    this.volumeError);
             check(
                     this.movingTicks >= MIN_MOVING_TICKS,
                     type + " must move in at least " + MIN_MOVING_TICKS + " ticks of its flight");
@@ -560,6 +621,47 @@ public final class MagicCarpetShowcase {
                             + MAX_TILT_STEP
                             + " degrees a tick; it tilted "
                             + this.steepestTiltStep);
+            check(
+                    this.volumeError < 1.0E-4F,
+                    "The wind's volume must follow the carpet's drawn speed; it was off by "
+                            + this.volumeError);
+            // The speed check above holds top speed to within 5 %, so the wind must reach at
+            // least the volume of 90 % of that speed.
+            float expected = MagicCarpetFlightSound.volumeFor(Math.pow(topSpeed * 0.9D, 2.0D));
+            check(
+                    this.loudest >= expected,
+                    type
+                            + "'s wind must reach "
+                            + expected
+                            + " at top speed, reached "
+                            + this.loudest);
+        }
+    }
+
+    /**
+     * The sounds the client starts, in order, and the last carpet wind among them. The sound engine
+     * tells its listeners before it applies the volume (SoundEngine.java:400-402 in 26.3), so the
+     * log also works in test runs whose sound categories are at volume 0.
+     */
+    private static final class SoundLog implements SoundEventListener {
+        private final List<Identifier> started = new ArrayList<>();
+        private @Nullable MagicCarpetFlightSound flight;
+
+        @Override
+        public void onPlaySound(SoundInstance sound, WeighedSoundEvents events, float range) {
+            this.started.add(sound.getIdentifier());
+            if (sound instanceof MagicCarpetFlightSound wind) {
+                this.flight = wind;
+            }
+        }
+
+        private boolean heard(SoundEvent event) {
+            return this.started.contains(event.location());
+        }
+
+        private void clear() {
+            this.started.clear();
+            this.flight = null;
         }
     }
 

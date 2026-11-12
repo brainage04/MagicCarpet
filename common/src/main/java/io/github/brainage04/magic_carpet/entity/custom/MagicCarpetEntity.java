@@ -2,6 +2,7 @@ package io.github.brainage04.magic_carpet.entity.custom;
 
 import java.util.List;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -62,6 +63,8 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
 
     public float animationSpeed;
 
+    private Vec3 drawnMovement = Vec3.ZERO;
+
     public MagicCarpetEntity(EntityType<? extends VehicleEntity> entityType, Level world) {
         super(entityType, world);
     }
@@ -98,6 +101,30 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         return SteppedInterpolationHandler.create(this);
     }
 
+    /** How far the client drew the carpet in its last tick, in blocks. Zero on the server. */
+    public Vec3 getDrawnMovement() {
+        return this.drawnMovement;
+    }
+
+    // The first rider sitting down and the last one getting off play a vanilla sound from the
+    // server, as the happy ghast's harness does (HappyGhast.java:309-334 in 26.3), so every player
+    // nearby hears it.
+    @Override
+    protected void addPassenger(Entity passenger) {
+        if (!this.isVehicle()) {
+            this.playSound(SoundEvents.WOOL_PLACE);
+        }
+        super.addPassenger(passenger);
+    }
+
+    @Override
+    protected void removePassenger(Entity passenger) {
+        super.removePassenger(passenger);
+        if (!this.isVehicle()) {
+            this.playSound(SoundEvents.WOOL_STEP);
+        }
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -107,9 +134,9 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         }
 
         if (level().isClientSide()) {
-            Vec3 drawnMovement = position().subtract(this.xo, this.yo, this.zo);
-            updateTilt(drawnMovement);
-            updateAnimationSpeed(drawnMovement);
+            this.drawnMovement = position().subtract(this.xo, this.yo, this.zo);
+            updateTilt(this.drawnMovement);
+            updateAnimationSpeed(this.drawnMovement);
             spawnAmbientParticles();
         }
 

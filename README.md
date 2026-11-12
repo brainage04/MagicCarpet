@@ -22,6 +22,10 @@ Collecting wool unlocks the basic carpet recipe. Each crafted carpet unlocks the
 
 Each tier looks different: basic carpets have a plain rolled edge, advanced carpets add a gold cord and tassels, and legendary carpets add curled front corners and threads that glow in the dark. Carpets ripple, bob, and sway while hovering, stream their tassels behind them in flight, and shed tier-specific particles.
 
+### Sound
+
+Sitting down on a carpet and getting off it play the wool place and step sounds, which every player nearby hears. In flight the rider hears the elytra's wind, louder and higher the faster the carpet flies, as an elytra sounds at the same speed.
+
 ## Getting started
 
 - Minecraft 26.3
