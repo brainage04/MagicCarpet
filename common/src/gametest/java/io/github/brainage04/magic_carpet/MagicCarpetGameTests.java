@@ -12,16 +12,19 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.game.ServerboundPlayerLoadedPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.util.Mth;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Input;
@@ -464,11 +467,159 @@ public final class MagicCarpetGameTests {
     }
 
     /**
+     * A survival rider lands every tier after flying down 10 and 30 blocks and takes no damage,
+     * both when the carpet comes straight down and when it dives into the ground at full speed. The
+     * carpet itself is not damaged either, as with a happy ghast flown into the ground. Needs sky
+     * access: otherwise the test gets a barrier ceiling 8 blocks above its floor
+     * (TestInstanceBlockEntity.java:379-393 in 26.3).
+     */
+    public static void survivalRiderLandsWithoutFallDamage(GameTestHelper helper) {
+        BlockPos floor = new BlockPos(3, 1, 3);
+        placeFloor(helper, floor);
+        double floorTop = helper.absolutePos(floor).getY() + 1.0;
+        ServerPlayer rider = survivalRider(helper);
+        try {
+            EntityType<?>[] types = {
+                ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary()
+            };
+            for (EntityType<?> type : types) {
+                for (int drop : new int[] {10, 30}) {
+                    for (boolean dive : new boolean[] {false, true}) {
+                        landRider(helper, rider, type, floor, floorTop, drop, dive);
+                    }
+                }
+            }
+        } finally {
+            rider.stopRiding();
+            rider.discard();
+        }
+        helper.succeed();
+    }
+
+    private static void landRider(
+            GameTestHelper helper,
+            ServerPlayer rider,
+            EntityType<?> type,
+            BlockPos floor,
+            double floorTop,
+            int drop,
+            boolean dive) {
+        String landing = type + (dive ? " diving " : " descending ") + drop + " blocks";
+        MagicCarpetEntity carpet =
+                (MagicCarpetEntity) type.create(helper.getLevel(), EntitySpawnReason.COMMAND);
+        Vec3 start = helper.absoluteVec(Vec3.atBottomCenterOf(floor).add(0, 1 + drop, 0));
+        carpet.setPos(start);
+        try {
+            rider.setHealth(rider.getMaxHealth());
+            assertTrue(rider.startRiding(carpet), "Rider could not mount " + type);
+            rider.setYRot(0);
+            rider.setXRot(MagicCarpetEntity.DIVE_PITCH + 15);
+            rider.setLastClientInput(new Input(dive, false, false, false, true, false, false));
+            if (dive) {
+                double speed = carpet.getMaxSpeed();
+                carpet.setDeltaMovement(0, -speed / 2, speed);
+            }
+            double impactSpeed = 0;
+            for (int tick = 0; tick < 1000 && !carpet.onGround(); tick++) {
+                // Keeps the dive over the floor; only the height and the velocity carry over.
+                carpet.setPos(start.x, carpet.getY(), start.z);
+                impactSpeed = carpet.getDeltaMovement().horizontalDistance();
+                carpet.tick();
+            }
+            assertTrue(carpet.onGround(), landing + ": the carpet must reach the ground");
+            assertNear(floorTop, carpet.getY(), 1.0E-6, landing + ": landing height");
+            if (dive) {
+                assertNear(
+                        carpet.getMaxSpeed(),
+                        impactSpeed,
+                        0.01,
+                        landing + ": the carpet must hit the ground at full speed");
+            }
+            assertNear(
+                    rider.getMaxHealth(),
+                    rider.getHealth(),
+                    0,
+                    landing + ": the rider must not take damage");
+            assertTrue(rider.getVehicle() == carpet, landing + ": the rider must stay aboard");
+            assertTrue(
+                    !carpet.isRemoved() && carpet.getDamage() == 0,
+                    landing + ": the carpet must not be damaged");
+        } finally {
+            rider.stopRiding();
+            carpet.discard();
+        }
+    }
+
+    /**
+     * A rider who gets off in mid-air falls from there like any player and takes vanilla fall
+     * damage for the height between the dismount point and the ground. Needs sky access, like
+     * {@link #survivalRiderLandsWithoutFallDamage}.
+     */
+    public static void midAirDismountTakesFallDamage(GameTestHelper helper) {
+        BlockPos floor = new BlockPos(3, 1, 3);
+        placeFloor(helper, floor);
+        double floorTop = helper.absolutePos(floor).getY() + 1.0;
+        ServerPlayer rider = survivalRider(helper);
+        MagicCarpetEntity carpet =
+                ModEntities.basic().create(helper.getLevel(), EntitySpawnReason.COMMAND);
+        try {
+            carpet.setPos(helper.absoluteVec(Vec3.atBottomCenterOf(floor).add(0, 11, 0)));
+            assertTrue(rider.startRiding(carpet), "Rider must mount");
+            rider.stopRiding();
+            double fallHeight = rider.getY() - floorTop;
+            int expectedDamage =
+                    Mth.floor(
+                            fallHeight
+                                    + 1.0E-6
+                                    - rider.getAttributeValue(Attributes.SAFE_FALL_DISTANCE));
+            assertTrue(
+                    expectedDamage > 0,
+                    "The dismount point must be high enough to hurt, found " + fallHeight);
+            for (int tick = 0; tick < 200 && !rider.onGround(); tick++) {
+                rider.doTick();
+            }
+            assertTrue(rider.onGround(), "The dismounted rider must fall to the ground");
+            assertNear(
+                    rider.getMaxHealth() - expectedDamage,
+                    rider.getHealth(),
+                    0,
+                    "Falling " + fallHeight + " blocks after dismounting must hurt as in vanilla");
+        } finally {
+            rider.stopRiding();
+            carpet.discard();
+            rider.discard();
+        }
+        helper.succeed();
+    }
+
+    private static void placeFloor(GameTestHelper helper, BlockPos centre) {
+        for (int x = -2; x <= 2; x++) {
+            for (int z = -2; z <= 2; z++) {
+                helper.setBlock(centre.offset(x, 0, z), Blocks.STONE);
+            }
+        }
+    }
+
+    /**
+     * ServerPlayer ignores all damage until its client reports that it has loaded the level
+     * (ServerPlayer.java:1334, ServerGamePacketListenerImpl.java:2290 in 26.3).
+     */
+    private static ServerPlayer survivalRider(GameTestHelper helper) {
+        ServerPlayer rider = mockRider(helper, GameType.SURVIVAL);
+        rider.connection.handleAcceptPlayerLoad(new ServerboundPlayerLoadedPacket());
+        return rider;
+    }
+
+    private static ServerPlayer mockRider(GameTestHelper helper) {
+        return mockRider(helper, GameType.CREATIVE);
+    }
+
+    /**
      * A riding ServerPlayer sends its passenger packets through its connection, which
      * makeMockServerPlayer does not create; the mock stays out of the player list.
      */
-    private static ServerPlayer mockRider(GameTestHelper helper) {
-        ServerPlayer rider = (ServerPlayer) helper.makeMockServerPlayer(GameType.CREATIVE);
+    private static ServerPlayer mockRider(GameTestHelper helper, GameType gameType) {
+        ServerPlayer rider = (ServerPlayer) helper.makeMockServerPlayer(gameType);
         Connection connection = new Connection(PacketFlow.SERVERBOUND);
         new EmbeddedChannel(connection);
         new ServerGamePacketListenerImpl(

@@ -55,5 +55,15 @@ public final class MagicCarpetNeoForgeGameTest {
                 Identifier.fromNamespaceAndPath(
                         MagicCarpet.MOD_ID, "released_keys_coast_to_a_stop"),
                 () -> MagicCarpetGameTests::releasedKeysCoastToAStop);
+        event.register(
+                BuiltInRegistries.TEST_FUNCTION.key(),
+                Identifier.fromNamespaceAndPath(
+                        MagicCarpet.MOD_ID, "survival_rider_lands_without_fall_damage"),
+                () -> MagicCarpetGameTests::survivalRiderLandsWithoutFallDamage);
+        event.register(
+                BuiltInRegistries.TEST_FUNCTION.key(),
+                Identifier.fromNamespaceAndPath(
+                        MagicCarpet.MOD_ID, "mid_air_dismount_takes_fall_damage"),
+                () -> MagicCarpetGameTests::midAirDismountTakesFallDamage);
     }
 }

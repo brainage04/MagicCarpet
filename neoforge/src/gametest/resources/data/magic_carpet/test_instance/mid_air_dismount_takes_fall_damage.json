@@ -1,0 +1,8 @@
+{
+  "environment": "minecraft:default",
+  "structure": "minecraftmodconventions:empty",
+  "max_ticks": 20,
+  "sky_access": true,
+  "type": "minecraft:function",
+  "function": "magic_carpet:mid_air_dismount_takes_fall_damage"
+}
