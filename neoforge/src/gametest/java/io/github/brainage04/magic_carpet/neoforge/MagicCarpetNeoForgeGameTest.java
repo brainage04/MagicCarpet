@@ -72,8 +72,7 @@ public final class MagicCarpetNeoForgeGameTest {
                 () -> MagicCarpetGameTests::landingAddsNoDistanceFallenStatistic);
         event.register(
                 BuiltInRegistries.TEST_FUNCTION.key(),
-                Identifier.fromNamespaceAndPath(
-                        MagicCarpet.MOD_ID, "landing_plays_no_fall_sound"),
+                Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "landing_plays_no_fall_sound"),
                 () -> MagicCarpetGameTests::landingPlaysNoFallSound);
     }
 }

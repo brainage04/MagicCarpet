@@ -201,8 +201,7 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
      * ghast leaves it empty for the same reason (HappyGhast.java:167).
      */
     @Override
-    protected void checkFallDamage(
-            double ya, boolean onGround, BlockState onState, BlockPos pos) {}
+    protected void checkFallDamage(double ya, boolean onGround, BlockState onState, BlockPos pos) {}
 
     @Override
     public boolean isClientAuthoritative() {

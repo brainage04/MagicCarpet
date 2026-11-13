@@ -614,8 +614,8 @@ public final class MagicCarpetGameTests {
      * fall is paid out to the player (Player.java:1444 in 26.3), and a carpet pays nothing out: its
      * checkFallDamage is empty, so no block's fallOn passes the fall to the riders
      * (HappyGhast.java:167, Entity.java:1584-1620). The last step is the control: the same rider
-     * falling with no carpet under it does pay the statistic. Needs sky access, like
-     * {@link #survivalRiderLandsWithoutFallDamage}.
+     * falling with no carpet under it does pay the statistic. Needs sky access, like {@link
+     * #survivalRiderLandsWithoutFallDamage}.
      */
     public static void landingAddsNoDistanceFallenStatistic(GameTestHelper helper) {
         BlockPos floor = new BlockPos(3, 1, 3);
