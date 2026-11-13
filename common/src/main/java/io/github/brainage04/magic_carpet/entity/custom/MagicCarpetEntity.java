@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -27,12 +28,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class MagicCarpetEntity extends VehicleEntity {
-    /** The rider's pitch from which the jump key flies the carpet down at full speed. */
-    public static final float DIVE_PITCH = 45.0F;
-
-    private static final double DECELERATION_TIME_MULTIPLIER = 2.0;
-
+public class MagicCarpetEntity extends VehicleEntity {
     private static final double REST_SPEED_SQR = 1.0E-6;
 
     private static final double HALF_LENGTH = 1.0;
@@ -68,22 +64,31 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
 
     private Vec3 drawnMovement = Vec3.ZERO;
 
+    private @Nullable CarpetTier tier;
+
     public MagicCarpetEntity(EntityType<? extends VehicleEntity> entityType, Level world) {
         super(entityType, world);
     }
 
-    public abstract double getMaxSpeed();
-
-    protected abstract double getAccelerationTime();
-
-    protected abstract void spawnAmbientParticle(Vec3 position, Vec3 backward, float speed);
-
-    private static double smoothingFactor(double seconds) {
-        return 1.0 - Math.pow(0.01, 1.0 / (seconds * 20.0));
+    /**
+     * This carpet's tier, the {@code magic_carpet:tier} entry named like its entity type. The
+     * registry is loaded once when the server starts and sent to each client as it joins, so the
+     * entry never changes while the entity exists.
+     */
+    public CarpetTier tier() {
+        if (this.tier == null) {
+            this.tier =
+                    level().registryAccess()
+                            .lookupOrThrow(CarpetTier.REGISTRY)
+                            .getValueOrThrow(CarpetTier.key(EntityType.getKey(getType())));
+        }
+        return this.tier;
     }
 
     @Override
-    protected abstract Item getDropItem();
+    protected Item getDropItem() {
+        return tier().dropItem();
+    }
 
     @Override
     public boolean canBeCollidedWith(@Nullable Entity entity) {
@@ -159,7 +164,7 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         float sin = Mth.sin(yaw);
         float cos = Mth.cos(yaw);
 
-        double maxSpeed = getMaxSpeed();
+        double maxSpeed = tier().maxSpeed();
         float pitch =
                 (float)
                         Mth.clamp(
@@ -239,16 +244,6 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         return super.getControllingPassenger();
     }
 
-    private float getVerticalVelocity(float pitch) {
-        if (pitch >= DIVE_PITCH) {
-            return -0.50f;
-        } else if (pitch > 15.0f) {
-            return (-pitch + 30.0f) / 30.0f;
-        } else {
-            return 0.50f;
-        }
-    }
-
     private void updateVelocity() {
         Vec3 targetVelocity = Vec3.ZERO;
         if (getControllingPassenger() instanceof Player player) {
@@ -266,24 +261,10 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
             return;
         }
 
-        setDeltaMovement(smoothVelocity(currentVelocity, targetVelocity));
+        setDeltaMovement(
+                CarpetMotion.smoothVelocity(
+                        currentVelocity, targetVelocity, tier().accelerationTime()));
         move(MoverType.PLAYER, this.getDeltaMovement());
-    }
-
-    private Vec3 smoothVelocity(Vec3 current, Vec3 target) {
-        double acceleration = smoothingFactor(getAccelerationTime());
-        double deceleration = smoothingFactor(getAccelerationTime() * DECELERATION_TIME_MULTIPLIER);
-
-        double horizontal =
-                target.horizontalDistanceSqr() < current.horizontalDistanceSqr()
-                        ? deceleration
-                        : acceleration;
-        double vertical = Math.abs(target.y) < Math.abs(current.y) ? deceleration : acceleration;
-
-        return new Vec3(
-                Mth.lerp(horizontal, current.x, target.x),
-                Mth.lerp(vertical, current.y, target.y),
-                Mth.lerp(horizontal, current.z, target.z));
     }
 
     private Vec3 getTargetVelocity(Player player, float yaw) {
@@ -293,15 +274,15 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         Vec3 targetVelocity =
                 new Vec3(
                         cos * movementSideways - sin * movementForward,
-                        pressingSpace ? getVerticalVelocity(player.getXRot()) : 0.0,
+                        pressingSpace ? CarpetMotion.verticalShare(player.getXRot()) : 0.0,
                         sin * movementSideways + cos * movementForward);
 
-        return targetVelocity.scale(getMaxSpeed());
+        return targetVelocity.scale(tier().maxSpeed());
     }
 
     private void updateInputs(Input input) {
-        movementForward = impulse(input.forward(), input.backward());
-        movementSideways = impulse(input.left(), input.right());
+        movementForward = CarpetMotion.impulse(input.forward(), input.backward());
+        movementSideways = CarpetMotion.impulse(input.left(), input.right());
         float length =
                 Mth.sqrt(movementForward * movementForward + movementSideways * movementSideways);
         if (length > 1.0F) {
@@ -311,16 +292,9 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         pressingSpace = input.jump();
     }
 
-    private static float impulse(boolean positive, boolean negative) {
-        if (positive == negative) {
-            return 0.0F;
-        }
-        return positive ? 1.0F : -1.0F;
-    }
-
     private void updateAnimationSpeed(Vec3 movement) {
         this.prevAnimationSpeed = this.animationSpeed;
-        float target = (float) Math.min(movement.horizontalDistance() / getMaxSpeed(), 1.0);
+        float target = (float) Math.min(movement.horizontalDistance() / tier().maxSpeed(), 1.0);
         this.animationSpeed += (target - this.animationSpeed) * MOTION_EASING;
     }
 
@@ -346,7 +320,27 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
                         .add(forward.scale(along))
                         .add(sideways.scale(across))
                         .add(0.0, SURFACE_HEIGHT, 0.0);
-        spawnAmbientParticle(position, forward.reverse(), speed);
+        spawnAmbientParticle(random, position, forward.reverse(), speed);
+    }
+
+    private void spawnAmbientParticle(
+            RandomSource random, Vec3 position, Vec3 backward, float speed) {
+        WeightedList<CarpetTier.Particle> particles = tier().particles();
+        if (particles.isEmpty()) {
+            return;
+        }
+        CarpetTier.Particle particle = particles.getRandomOrThrow(random);
+        double trail = particle.trail() * speed;
+        Vec3 velocity = particle.velocity();
+        Vec3 spread = particle.velocitySpread();
+        level().addParticle(
+                        particle.options(),
+                        position.x,
+                        position.y,
+                        position.z,
+                        backward.x * trail + velocity.x + random.nextDouble() * spread.x,
+                        backward.y * trail + velocity.y + random.nextDouble() * spread.y,
+                        backward.z * trail + velocity.z + random.nextDouble() * spread.z);
     }
 
     @Override

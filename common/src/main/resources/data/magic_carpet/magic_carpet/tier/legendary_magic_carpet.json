@@ -1,0 +1,21 @@
+{
+  "max_speed": 2.4,
+  "acceleration_time": 0.5,
+  "drop_item": "magic_carpet:legendary_magic_carpet",
+  "particles": [
+    {
+      "weight": 3,
+      "particle": { "type": "minecraft:portal" },
+      "velocity": [-0.3, 0.0, -0.3],
+      "velocity_spread": [0.6, 0.3, 0.6]
+    },
+    {
+      "weight": 7,
+      "particle": { "type": "minecraft:end_rod" },
+      "velocity": [-0.01, 0.01, -0.01],
+      "velocity_spread": [0.02, 0.0, 0.02],
+      "trail": 0.05
+    }
+  ],
+  "model": { "tassels": true, "curls": true, "glow": true }
+}

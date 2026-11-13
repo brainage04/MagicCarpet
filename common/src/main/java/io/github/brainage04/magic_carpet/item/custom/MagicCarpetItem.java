@@ -2,12 +2,14 @@ package io.github.brainage04.magic_carpet.item.custom;
 
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import java.util.List;
+import java.util.function.Supplier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -19,9 +21,13 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-public abstract class MagicCarpetItem extends Item {
-    public MagicCarpetItem(Properties settings) {
+public class MagicCarpetItem extends Item {
+    private final Supplier<? extends EntityType<MagicCarpetEntity>> entityType;
+
+    public MagicCarpetItem(
+            Supplier<? extends EntityType<MagicCarpetEntity>> entityType, Properties settings) {
         super(settings);
+        this.entityType = entityType;
     }
 
     @Override
@@ -72,11 +78,10 @@ public abstract class MagicCarpetItem extends Item {
         }
     }
 
-    public abstract MagicCarpetEntity createEntity(Level world);
-
     private MagicCarpetEntity createEntity(
             Level world, HitResult hitResult, ItemStack stack, Player player) {
-        MagicCarpetEntity entity = createEntity(world);
+        MagicCarpetEntity entity =
+                this.entityType.get().create(world, EntitySpawnReason.SPAWN_ITEM_USE);
         if (entity == null) return null;
         entity.setPos(hitResult.getLocation());
 

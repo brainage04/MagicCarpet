@@ -2,9 +2,10 @@ package io.github.brainage04.magic_carpet.neoforge;
 
 import io.github.brainage04.magic_carpet.MagicCarpet;
 import io.github.brainage04.magic_carpet.entity.ModEntities;
-import io.github.brainage04.magic_carpet.entity.renderer.AdvancedMagicCarpetEntityRenderer;
-import io.github.brainage04.magic_carpet.entity.renderer.BasicMagicCarpetEntityRenderer;
-import io.github.brainage04.magic_carpet.entity.renderer.LegendaryMagicCarpetEntityRenderer;
+import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
+import io.github.brainage04.magic_carpet.entity.renderer.MagicCarpetEntityRenderer;
+import java.util.List;
+import net.minecraft.world.entity.EntityType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -18,22 +19,19 @@ public final class MagicCarpetNeoForgeClient {
     }
 
     private void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(ModEntities.basic(), BasicMagicCarpetEntityRenderer::new);
-        event.registerEntityRenderer(
-                ModEntities.advanced(), AdvancedMagicCarpetEntityRenderer::new);
-        event.registerEntityRenderer(
-                ModEntities.legendary(), LegendaryMagicCarpetEntityRenderer::new);
+        for (EntityType<MagicCarpetEntity> type :
+                List.of(ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary())) {
+            event.registerEntityRenderer(
+                    type, context -> new MagicCarpetEntityRenderer(context, type));
+        }
     }
 
     private void registerLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
-        event.registerLayerDefinition(
-                BasicMagicCarpetEntityRenderer.MODEL_LAYER,
-                BasicMagicCarpetEntityRenderer::createBodyLayer);
-        event.registerLayerDefinition(
-                AdvancedMagicCarpetEntityRenderer.MODEL_LAYER,
-                AdvancedMagicCarpetEntityRenderer::createBodyLayer);
-        event.registerLayerDefinition(
-                LegendaryMagicCarpetEntityRenderer.MODEL_LAYER,
-                LegendaryMagicCarpetEntityRenderer::createBodyLayer);
+        for (int shape = 0; shape < MagicCarpetEntityRenderer.MODEL_LAYERS.size(); shape++) {
+            int layerShape = shape;
+            event.registerLayerDefinition(
+                    MagicCarpetEntityRenderer.MODEL_LAYERS.get(shape),
+                    () -> MagicCarpetEntityRenderer.createBodyLayer(layerShape));
+        }
     }
 }

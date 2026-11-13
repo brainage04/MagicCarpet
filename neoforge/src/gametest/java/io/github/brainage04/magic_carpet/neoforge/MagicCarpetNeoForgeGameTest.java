@@ -32,6 +32,10 @@ public final class MagicCarpetNeoForgeGameTest {
                 () -> MagicCarpetGameTests::collision);
         event.register(
                 BuiltInRegistries.TEST_FUNCTION.key(),
+                Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "tier_data"),
+                () -> MagicCarpetGameTests::tierData);
+        event.register(
+                BuiltInRegistries.TEST_FUNCTION.key(),
                 Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "crafting"),
                 () -> MagicCarpetGameTests::crafting);
         event.register(

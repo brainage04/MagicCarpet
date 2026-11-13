@@ -20,6 +20,11 @@ public class MagicCarpetGameTest {
     }
 
     @GameTest
+    public void tierData(GameTestHelper helper) {
+        MagicCarpetGameTests.tierData(helper);
+    }
+
+    @GameTest
     public void crafting(GameTestHelper helper) {
         MagicCarpetGameTests.crafting(helper);
     }

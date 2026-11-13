@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.github.brainage04.magic_carpet.client.MagicCarpetFlightSound;
 import io.github.brainage04.magic_carpet.entity.ModEntities;
+import io.github.brainage04.magic_carpet.entity.custom.CarpetMotion;
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import io.github.brainage04.magic_carpet.item.ModItems;
 import io.github.brainage04.minecraftmodconventions.ClientGameTestPlayerActions;
@@ -517,10 +518,7 @@ public final class MagicCarpetShowcase {
         float fromPitch = context.computeOnClient(client -> client.player.getXRot());
         for (int tick = 1; tick <= LOOK_DOWN_TICKS; tick++) {
             float pitch =
-                    Mth.lerp(
-                            (float) tick / LOOK_DOWN_TICKS,
-                            fromPitch,
-                            MagicCarpetEntity.DIVE_PITCH);
+                    Mth.lerp((float) tick / LOOK_DOWN_TICKS, fromPitch, CarpetMotion.DIVE_PITCH);
             context.runOnClient(client -> client.player.setXRot(pitch));
             watch.tick(context);
         }

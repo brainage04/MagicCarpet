@@ -2,10 +2,10 @@ package io.github.brainage04.magic_carpet;
 
 import io.github.brainage04.magic_carpet.client.ServerSupport;
 import io.github.brainage04.magic_carpet.entity.ModEntities;
+import io.github.brainage04.magic_carpet.entity.custom.CarpetTier;
+import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import io.github.brainage04.magic_carpet.entity.model.MagicCarpetEntityModel;
-import io.github.brainage04.magic_carpet.entity.renderer.AdvancedMagicCarpetEntityRenderer;
-import io.github.brainage04.magic_carpet.entity.renderer.BasicMagicCarpetEntityRenderer;
-import io.github.brainage04.magic_carpet.entity.renderer.LegendaryMagicCarpetEntityRenderer;
+import io.github.brainage04.magic_carpet.entity.renderer.MagicCarpetEntityRenderer;
 import io.github.brainage04.magic_carpet.entity.renderer.state.MagicCarpetEntityRenderState;
 import io.github.brainage04.magic_carpet.item.ModItems;
 import io.github.brainage04.minecraftmodconventions.ClientGameTestServers;
@@ -17,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.player.inventory.Hotbar;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.CreativeModeTab;
@@ -42,7 +43,7 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                     context.waitTicks(30);
                     context.runOnClient(
                             MagicCarpetClientGameTest::verifyCreativeOnServerWithMagicCarpet);
-                    context.runOnClient(client -> verifyTierModels());
+                    context.runOnClient(MagicCarpetClientGameTest::verifyTierModels);
                     context.runOnClient(client -> verifyAnimation());
                     MagicCarpetShowcase.film(context, server);
                 });
@@ -80,25 +81,42 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
     }
 
     /**
-     * The entity names, and the parts each tier's model is built from: the basic carpet has neither
-     * tassels nor curls, the advanced carpet has tassels only, and the legendary carpet has both.
+     * The entity names, and each tier as the client received it from the dedicated server: the top
+     * speed, the glow, and the parts its model is built from. The basic carpet has neither tassels
+     * nor curls, the advanced carpet has tassels only, and the legendary carpet has both and glows.
      * This is the negative that keeps the three tiers from rendering as the same carpet.
      */
-    private static void verifyTierModels() {
-        EntityType<?>[] types = {
-            ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary()
-        };
+    private static void verifyTierModels(Minecraft client) {
+        List<EntityType<MagicCarpetEntity>> types =
+                List.of(ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary());
         String[] names = {"Basic Magic Carpet", "Advanced Magic Carpet", "Legendary Magic Carpet"};
-        for (int tier = 0; tier < types.length; tier++) {
-            if (!names[tier].equals(types[tier].getDescription().getString())) {
-                throw new AssertionError("Missing translated entity name for " + types[tier]);
+        double[] speeds = {0.6, 1.2, 2.4};
+        boolean[] tassels = {false, true, true};
+        boolean[] curls = {false, false, true};
+        boolean[] glows = {false, false, true};
+        Registry<CarpetTier> tiers =
+                client.level.registryAccess().lookupOrThrow(CarpetTier.REGISTRY);
+        for (int index = 0; index < types.size(); index++) {
+            EntityType<MagicCarpetEntity> type = types.get(index);
+            if (!names[index].equals(type.getDescription().getString())) {
+                throw new AssertionError("Missing translated entity name for " + type);
             }
+            CarpetTier tier =
+                    tiers.getOptional(CarpetTier.key(EntityType.getKey(type)))
+                            .orElseThrow(
+                                    () ->
+                                            new AssertionError(
+                                                    "The server sent no tier for " + type));
+            if (tier.maxSpeed() != speeds[index] || tier.model().glow() != glows[index]) {
+                throw new AssertionError("The client received a changed tier: " + tier);
+            }
+            assertTierParts(
+                    MagicCarpetEntityRenderer.createBodyLayer(
+                            MagicCarpetEntityRenderer.shape(tier.model())),
+                    tassels[index],
+                    curls[index],
+                    names[index]);
         }
-        assertTierParts(BasicMagicCarpetEntityRenderer.createBodyLayer(), false, false, "basic");
-        assertTierParts(
-                AdvancedMagicCarpetEntityRenderer.createBodyLayer(), true, false, "advanced");
-        assertTierParts(
-                LegendaryMagicCarpetEntityRenderer.createBodyLayer(), true, true, "legendary");
     }
 
     private static void assertTierParts(
@@ -107,14 +125,14 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
         if (front.hasChild("front_tassel_0") != tassels) {
             throw new AssertionError(
                     tassels
-                            ? "The " + tier + " carpet must have tassels"
-                            : "The " + tier + " carpet must not have tassels");
+                            ? "The " + tier + " must have tassels"
+                            : "The " + tier + " must not have tassels");
         }
         if (front.hasChild("left_curl") != curls) {
             throw new AssertionError(
                     curls
-                            ? "The " + tier + " carpet must have curled corners"
-                            : "The " + tier + " carpet must not have curled corners");
+                            ? "The " + tier + " must have curled corners"
+                            : "The " + tier + " must not have curled corners");
         }
     }
 
