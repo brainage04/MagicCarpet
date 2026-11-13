@@ -36,6 +36,10 @@ public final class MagicCarpetNeoForgeGameTest {
                 () -> MagicCarpetGameTests::tierData);
         event.register(
                 BuiltInRegistries.TEST_FUNCTION.key(),
+                Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "tier_codec_round_trip"),
+                () -> MagicCarpetGameTests::tierCodecRoundTrip);
+        event.register(
+                BuiltInRegistries.TEST_FUNCTION.key(),
                 Identifier.fromNamespaceAndPath(MagicCarpet.MOD_ID, "crafting"),
                 () -> MagicCarpetGameTests::crafting);
         event.register(

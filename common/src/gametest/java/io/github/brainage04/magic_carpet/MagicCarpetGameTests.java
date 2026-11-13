@@ -11,14 +11,18 @@ import java.util.Arrays;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -269,6 +273,55 @@ public final class MagicCarpetGameTests {
                                         """))
                         .isError(),
                 "A top speed of 0 must be refused");
+        helper.succeed();
+    }
+
+    /**
+     * Each shipped tier must survive the registry packet. The server writes a tier with the world's
+     * registry context and the client reads it back with that context
+     * (RegistrySynchronization.java:59-62 in 26.3), and the same codec reads a world datapack's
+     * override, which is the path the sync exists for. The client GameTest cannot see this: with
+     * the same jar on both sides the client knows the mod's pack and reads its own copies of these
+     * files instead of the sent contents
+     * (RegistrySynchronization.java:51-56, canSkipContents).
+     */
+    public static void tierCodecRoundTrip(GameTestHelper helper) {
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        RegistryOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
+        Registry<CarpetTier> tiers = registries.lookupOrThrow(CarpetTier.REGISTRY);
+        for (EntityType<MagicCarpetEntity> type :
+                List.of(
+                        ModEntities.basic(),
+                        ModEntities.advanced(),
+                        ModEntities.legendary())) {
+            CarpetTier tier = tiers.getValueOrThrow(CarpetTier.key(EntityType.getKey(type)));
+            Tag encoded =
+                    CarpetTier.CODEC
+                            .encodeStart(ops, tier)
+                            .getOrThrow(
+                                    message ->
+                                            new AssertionError(
+                                                    "Encoding " + type + "'s tier: " + message));
+            CarpetTier decoded =
+                    CarpetTier.CODEC
+                            .parse(ops, encoded)
+                            .getOrThrow(
+                                    message ->
+                                            new AssertionError(
+                                                    "Decoding " + type + "'s tier: " + message));
+            assertTrue(
+                    decoded.maxSpeed() == tier.maxSpeed()
+                            && decoded.accelerationTime() == tier.accelerationTime()
+                            && decoded.dropItem() == tier.dropItem()
+                            && decoded.model().equals(tier.model())
+                            && decoded.particles().unwrap().equals(tier.particles().unwrap()),
+                    "The NBT round trip changed "
+                            + type
+                            + "'s tier: "
+                            + tier
+                            + " became "
+                            + decoded);
+        }
         helper.succeed();
     }
 
