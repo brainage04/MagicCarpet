@@ -45,3 +45,8 @@ replay_*.log
 .env
 
 .codex
+
+# test tooling
+
+.gametest.lock
+.jqwik-database
