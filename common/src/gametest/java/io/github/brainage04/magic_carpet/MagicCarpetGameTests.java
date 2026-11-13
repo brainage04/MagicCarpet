@@ -282,18 +282,14 @@ public final class MagicCarpetGameTests {
      * (RegistrySynchronization.java:59-62 in 26.3), and the same codec reads a world datapack's
      * override, which is the path the sync exists for. The client GameTest cannot see this: with
      * the same jar on both sides the client knows the mod's pack and reads its own copies of these
-     * files instead of the sent contents
-     * (RegistrySynchronization.java:51-56, canSkipContents).
+     * files instead of the sent contents (RegistrySynchronization.java:51-56, canSkipContents).
      */
     public static void tierCodecRoundTrip(GameTestHelper helper) {
         RegistryAccess registries = helper.getLevel().registryAccess();
         RegistryOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
         Registry<CarpetTier> tiers = registries.lookupOrThrow(CarpetTier.REGISTRY);
         for (EntityType<MagicCarpetEntity> type :
-                List.of(
-                        ModEntities.basic(),
-                        ModEntities.advanced(),
-                        ModEntities.legendary())) {
+                List.of(ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary())) {
             CarpetTier tier = tiers.getValueOrThrow(CarpetTier.key(EntityType.getKey(type)));
             Tag encoded =
                     CarpetTier.CODEC
