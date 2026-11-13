@@ -3,8 +3,6 @@
   "package": "io.github.brainage04.magic_carpet.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "EntityAccessor",
-    "LivingEntityMixin"
   ],
   "client": [
     "HotbarMixin",

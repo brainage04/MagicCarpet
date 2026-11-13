@@ -65,5 +65,15 @@ public final class MagicCarpetNeoForgeGameTest {
                 Identifier.fromNamespaceAndPath(
                         MagicCarpet.MOD_ID, "mid_air_dismount_takes_fall_damage"),
                 () -> MagicCarpetGameTests::midAirDismountTakesFallDamage);
+        event.register(
+                BuiltInRegistries.TEST_FUNCTION.key(),
+                Identifier.fromNamespaceAndPath(
+                        MagicCarpet.MOD_ID, "landing_adds_no_distance_fallen_statistic"),
+                () -> MagicCarpetGameTests::landingAddsNoDistanceFallenStatistic);
+        event.register(
+                BuiltInRegistries.TEST_FUNCTION.key(),
+                Identifier.fromNamespaceAndPath(
+                        MagicCarpet.MOD_ID, "landing_plays_no_fall_sound"),
+                () -> MagicCarpetGameTests::landingPlaysNoFallSound);
     }
 }

@@ -1,10 +1,14 @@
 package io.github.brainage04.magic_carpet;
 
+import com.mojang.authlib.GameProfile;
 import io.github.brainage04.magic_carpet.entity.ModEntities;
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import io.github.brainage04.magic_carpet.item.ModItems;
 import io.netty.channel.embedded.EmbeddedChannel;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -14,9 +18,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ServerboundPlayerLoadedPacket;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.stats.Stat;
+import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.InteractionHand;
@@ -121,10 +130,8 @@ public final class MagicCarpetGameTests {
                 carpet.getControllingPassenger() == first,
                 "First passenger must control the carpet");
         float health = first.getHealth();
-        first.hurtServer(helper.getLevel(), first.damageSources().fall(), 5);
-        assertNear(health, first.getHealth(), 0, "Mounted passenger must not take fall damage");
         first.hurtServer(helper.getLevel(), first.damageSources().generic(), 2);
-        assertNear(health - 2, first.getHealth(), 0, "Other damage must still apply");
+        assertNear(health - 2, first.getHealth(), 0, "Damage to a mounted passenger must apply");
         first.damageCooldownTime = 0;
         first.stopRiding();
         assertTrue(
@@ -512,20 +519,7 @@ public final class MagicCarpetGameTests {
         try {
             rider.setHealth(rider.getMaxHealth());
             assertTrue(rider.startRiding(carpet), "Rider could not mount " + type);
-            rider.setYRot(0);
-            rider.setXRot(MagicCarpetEntity.DIVE_PITCH + 15);
-            rider.setLastClientInput(new Input(dive, false, false, false, true, false, false));
-            if (dive) {
-                double speed = carpet.getMaxSpeed();
-                carpet.setDeltaMovement(0, -speed / 2, speed);
-            }
-            double impactSpeed = 0;
-            for (int tick = 0; tick < 1000 && !carpet.onGround(); tick++) {
-                // Keeps the dive over the floor; only the height and the velocity carry over.
-                carpet.setPos(start.x, carpet.getY(), start.z);
-                impactSpeed = carpet.getDeltaMovement().horizontalDistance();
-                carpet.tick();
-            }
+            double impactSpeed = descend(rider, carpet, start, dive);
             assertTrue(carpet.onGround(), landing + ": the carpet must reach the ground");
             assertNear(floorTop, carpet.getY(), 1.0E-6, landing + ": landing height");
             if (dive) {
@@ -548,6 +542,29 @@ public final class MagicCarpetGameTests {
             rider.stopRiding();
             carpet.discard();
         }
+    }
+
+    /**
+     * Flies a mounted carpet down at the rider's pitch until it touches the ground, keeping it over
+     * the start point so only the height and the velocity carry over. Returns the carpet's
+     * horizontal speed on the last airborne tick.
+     */
+    private static double descend(
+            ServerPlayer rider, MagicCarpetEntity carpet, Vec3 start, boolean dive) {
+        rider.setYRot(0);
+        rider.setXRot(MagicCarpetEntity.DIVE_PITCH + 15);
+        rider.setLastClientInput(new Input(dive, false, false, false, true, false, false));
+        if (dive) {
+            double speed = carpet.getMaxSpeed();
+            carpet.setDeltaMovement(0, -speed / 2, speed);
+        }
+        double impactSpeed = 0;
+        for (int tick = 0; tick < 1000 && !carpet.onGround(); tick++) {
+            carpet.setPos(start.x, carpet.getY(), start.z);
+            impactSpeed = carpet.getDeltaMovement().horizontalDistance();
+            carpet.tick();
+        }
+        return impactSpeed;
     }
 
     /**
@@ -592,6 +609,119 @@ public final class MagicCarpetGameTests {
         helper.succeed();
     }
 
+    /**
+     * A landing adds nothing to the rider's "distance fallen" statistic. Vanilla adds it where a
+     * fall is paid out to the player (Player.java:1444 in 26.3), and a carpet pays nothing out: its
+     * checkFallDamage is empty, so no block's fallOn passes the fall to the riders
+     * (HappyGhast.java:167, Entity.java:1584-1620). The last step is the control: the same rider
+     * falling with no carpet under it does pay the statistic. Needs sky access, like
+     * {@link #survivalRiderLandsWithoutFallDamage}.
+     */
+    public static void landingAddsNoDistanceFallenStatistic(GameTestHelper helper) {
+        BlockPos floor = new BlockPos(3, 1, 3);
+        placeFloor(helper, floor);
+        RecordingRider rider = survivalRider(helper);
+        Stat<?> fallStatistic = Stats.CUSTOM.get(Stats.FALL_ONE_CM);
+        try {
+            EntityType<?>[] types = {
+                ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary()
+            };
+            for (EntityType<?> type : types) {
+                MagicCarpetEntity carpet =
+                        (MagicCarpetEntity)
+                                type.create(helper.getLevel(), EntitySpawnReason.COMMAND);
+                Vec3 start = helper.absoluteVec(Vec3.atBottomCenterOf(floor).add(0, 21, 0));
+                carpet.setPos(start);
+                try {
+                    int before = rider.getStats().getValue(fallStatistic);
+                    assertTrue(rider.startRiding(carpet), "Rider could not mount " + type);
+                    descend(rider, carpet, start, false);
+                    assertTrue(carpet.onGround(), type + ": the carpet must reach the ground");
+                    int added = rider.getStats().getValue(fallStatistic) - before;
+                    assertTrue(
+                            added == 0,
+                            type
+                                    + ": a landing must add nothing to the distance fallen"
+                                    + " statistic, added "
+                                    + added
+                                    + " cm");
+                } finally {
+                    rider.stopRiding();
+                    carpet.discard();
+                }
+            }
+
+            int before = rider.getStats().getValue(fallStatistic);
+            rider.setHealth(rider.getMaxHealth());
+            rider.setPos(helper.absoluteVec(Vec3.atBottomCenterOf(floor).add(0, 11, 0)));
+            for (int tick = 0;
+                    tick < 200 && rider.getStats().getValue(fallStatistic) == before;
+                    tick++) {
+                rider.doTick();
+            }
+            int added = rider.getStats().getValue(fallStatistic) - before;
+            assertTrue(
+                    added > 0,
+                    "Control: falling 11 blocks with no carpet must pay the distance fallen"
+                            + " statistic, added "
+                            + added
+                            + " cm");
+        } finally {
+            rider.stopRiding();
+            rider.discard();
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A landing plays no fall sound for the players nearby to hear. The fall sounds are played by
+     * the rider itself, from the fall vanilla paid out to it (LivingEntity.java:1806-1812 in 26.3),
+     * so a carpet that pays nothing out plays nothing. The recorder is proved last with the big
+     * fall sound, the one a landing that hurts by more than four plays (LivingEntity.java:1683,
+     * Player.java:1492). Needs sky access, like {@link #survivalRiderLandsWithoutFallDamage}.
+     */
+    public static void landingPlaysNoFallSound(GameTestHelper helper) {
+        BlockPos floor = new BlockPos(3, 1, 3);
+        placeFloor(helper, floor);
+        RecordingRider rider = survivalRider(helper);
+        try {
+            EntityType<?>[] types = {
+                ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary()
+            };
+            for (EntityType<?> type : types) {
+                MagicCarpetEntity carpet =
+                        (MagicCarpetEntity)
+                                type.create(helper.getLevel(), EntitySpawnReason.COMMAND);
+                Vec3 start = helper.absoluteVec(Vec3.atBottomCenterOf(floor).add(0, 21, 0));
+                carpet.setPos(start);
+                try {
+                    rider.setHealth(rider.getMaxHealth());
+                    assertTrue(rider.startRiding(carpet), "Rider could not mount " + type);
+                    rider.sounds.clear();
+                    descend(rider, carpet, start, false);
+                    assertTrue(carpet.onGround(), type + ": the carpet must reach the ground");
+                    assertTrue(
+                            rider.sounds.isEmpty(),
+                            type + ": a landing must play no sound, played " + rider.sounds);
+                } finally {
+                    rider.stopRiding();
+                    carpet.discard();
+                }
+            }
+
+            rider.sounds.clear();
+            rider.playSound(SoundEvents.PLAYER_BIG_FALL, 1.0F, 1.0F);
+            assertTrue(
+                    rider.sounds.contains(SoundEvents.PLAYER_BIG_FALL),
+                    "The rider must record the fall sound a landing would play, recorded "
+                            + rider.sounds);
+        } finally {
+            rider.stopRiding();
+            rider.discard();
+        }
+        helper.succeed();
+    }
+
     private static void placeFloor(GameTestHelper helper, BlockPos centre) {
         for (int x = -2; x <= 2; x++) {
             for (int z = -2; z <= 2; z++) {
@@ -604,22 +734,23 @@ public final class MagicCarpetGameTests {
      * ServerPlayer ignores all damage until its client reports that it has loaded the level
      * (ServerPlayer.java:1334, ServerGamePacketListenerImpl.java:2290 in 26.3).
      */
-    private static ServerPlayer survivalRider(GameTestHelper helper) {
-        ServerPlayer rider = mockRider(helper, GameType.SURVIVAL);
+    private static RecordingRider survivalRider(GameTestHelper helper) {
+        RecordingRider rider = mockRider(helper, GameType.SURVIVAL);
         rider.connection.handleAcceptPlayerLoad(new ServerboundPlayerLoadedPacket());
         return rider;
     }
 
-    private static ServerPlayer mockRider(GameTestHelper helper) {
+    private static RecordingRider mockRider(GameTestHelper helper) {
         return mockRider(helper, GameType.CREATIVE);
     }
 
     /**
-     * A riding ServerPlayer sends its passenger packets through its connection, which
-     * makeMockServerPlayer does not create; the mock stays out of the player list.
+     * The mock player GameTestHelper.makeMockServerPlayer builds, with the sounds it plays kept,
+     * and a connection, which that mock does not create: a riding ServerPlayer sends its passenger
+     * packets through one. The mock stays out of the player list.
      */
-    private static ServerPlayer mockRider(GameTestHelper helper, GameType gameType) {
-        ServerPlayer rider = (ServerPlayer) helper.makeMockServerPlayer(gameType);
+    private static RecordingRider mockRider(GameTestHelper helper, GameType gameType) {
+        RecordingRider rider = new RecordingRider(helper, gameType);
         Connection connection = new Connection(PacketFlow.SERVERBOUND);
         new EmbeddedChannel(connection);
         new ServerGamePacketListenerImpl(
@@ -628,6 +759,42 @@ public final class MagicCarpetGameTests {
                 rider,
                 CommonListenerCookie.createInitial(rider.getGameProfile(), false));
         return rider;
+    }
+
+    /**
+     * Keeps the sounds its player plays. Entity.playSound is what hands a sound to the players
+     * nearby, once (Entity.java:1520-1524, ServerLevel.java:1040-1064 in 26.3), so a landing that
+     * plays no sound here played none anywhere.
+     */
+    private static final class RecordingRider extends ServerPlayer {
+        final List<SoundEvent> sounds = new ArrayList<>();
+        private final GameType gameType;
+
+        RecordingRider(GameTestHelper helper, GameType gameType) {
+            super(
+                    helper.getLevel().getServer(),
+                    helper.getLevel(),
+                    new GameProfile(UUID.randomUUID(), "test-mock-player"),
+                    ClientInformation.createDefault());
+            this.gameType = gameType;
+            gameType.updatePlayerAbilities(getAbilities());
+        }
+
+        @Override
+        public GameType gameMode() {
+            return gameType;
+        }
+
+        @Override
+        public boolean isClientAuthoritative() {
+            return false;
+        }
+
+        @Override
+        public void playSound(SoundEvent sound, float volume, float pitch) {
+            sounds.add(sound);
+            super.playSound(sound, volume, pitch);
+        }
     }
 
     private static void assertTrue(boolean condition, String message) {

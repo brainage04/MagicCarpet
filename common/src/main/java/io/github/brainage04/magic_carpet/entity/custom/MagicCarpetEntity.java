@@ -1,6 +1,7 @@
 package io.github.brainage04.magic_carpet.entity.custom;
 
 import java.util.List;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
@@ -22,6 +23,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.VehicleEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
@@ -189,6 +191,18 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     public boolean isNoGravity() {
         return true;
     }
+
+    /**
+     * A landing must cost the riders nothing and stay silent, as a happy ghast's does: vanilla's
+     * checkFallDamage accumulates the vehicle's fall distance and, on the ground, calls the block's
+     * fallOn, which passes the fall on to every passenger (Entity.java:1584-1620 in 26.3). That
+     * route is what adds to the rider's fall_one_cm statistic (Player.java:1444) and plays the fall
+     * sounds (LivingEntity.java:1806-1812), so leaving it empty is the whole protection. The happy
+     * ghast leaves it empty for the same reason (HappyGhast.java:167).
+     */
+    @Override
+    protected void checkFallDamage(
+            double ya, boolean onGround, BlockState onState, BlockPos pos) {}
 
     @Override
     public boolean isClientAuthoritative() {
