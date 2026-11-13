@@ -1,0 +1,8 @@
+{
+  "environment": "minecraft:default",
+  "structure": "minecraftmodconventions:empty",
+  "max_ticks": 20,
+  "sky_access": true,
+  "type": "minecraft:function",
+  "function": "magic_carpet:landing_plays_no_fall_sound"
+}
