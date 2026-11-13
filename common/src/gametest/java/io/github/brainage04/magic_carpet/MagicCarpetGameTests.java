@@ -279,7 +279,7 @@ public final class MagicCarpetGameTests {
     /**
      * Each shipped tier must survive the registry packet. The server writes a tier with the world's
      * registry context and the client reads it back with that context
-     * (RegistrySynchronization.java:59-62 in 26.3), and the same codec reads a world datapack's
+     * (RegistrySynchronization.java:59-61 in 26.3), and the same codec reads a world datapack's
      * override, which is the path the sync exists for. The client GameTest cannot see this: with
      * the same jar on both sides the client knows the mod's pack and reads its own copies of these
      * files instead of the sent contents (RegistrySynchronization.java:51-56, canSkipContents).
