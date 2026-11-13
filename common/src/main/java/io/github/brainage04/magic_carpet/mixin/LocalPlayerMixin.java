@@ -31,7 +31,7 @@ public abstract class LocalPlayerMixin {
         MagicCarpetFlightSound current = this.magic_carpet$flightSound;
         if (current != null
                 && !MagicCarpetFlightSound.shouldStartLoop(
-                        current.getCarpet(), carpet, sounds.isActive(current))) {
+                        current.getCarpet(), carpet, current.isPlaying(sounds))) {
             return;
         }
         MagicCarpetFlightSound wind =

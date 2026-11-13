@@ -4,6 +4,7 @@ import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
@@ -45,11 +46,21 @@ public class MagicCarpetFlightSound extends AbstractTickableSoundInstance {
      * one on top of it.
      *
      * @param playingCarpet the carpet the current loop plays for, compared by identity
-     * @param loopPlaying whether the sound engine still holds that loop
+     * @param loopPlaying whether {@link #isPlaying} holds for that loop
      */
     public static boolean shouldStartLoop(
             @Nullable Object playingCarpet, Object carpet, boolean loopPlaying) {
         return playingCarpet != carpet || !loopPlaying;
+    }
+
+    /**
+     * Whether this loop is still the rider's wind. A loop the sound engine has not dropped yet can
+     * already have been stopped by {@link #tick}, and the engine keeps its channel for up to 20
+     * ticks after a stop (SoundEngine.java:275-283, :430 in 26.3), so the stopped flag is what
+     * makes a quick dismount and re-mount play again.
+     */
+    public boolean isPlaying(SoundManager sounds) {
+        return !this.isStopped() && sounds.isActive(this);
     }
 
     public MagicCarpetEntity getCarpet() {
