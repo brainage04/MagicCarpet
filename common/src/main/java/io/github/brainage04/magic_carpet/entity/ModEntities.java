@@ -38,6 +38,4 @@ public final class ModEntities {
         return EntityType.Builder.of(factory, net.minecraft.world.entity.MobCategory.MISC)
                 .sized(1.5F, .25F);
     }
-
-    public static void initialize() {}
 }

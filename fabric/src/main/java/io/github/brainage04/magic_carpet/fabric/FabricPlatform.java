@@ -10,7 +10,6 @@ import io.github.brainage04.magic_carpet.item.ModItems;
 import io.github.brainage04.magic_carpet.item.custom.AdvancedMagicCarpetItem;
 import io.github.brainage04.magic_carpet.item.custom.BasicMagicCarpetItem;
 import io.github.brainage04.magic_carpet.item.custom.LegendaryMagicCarpetItem;
-import io.github.brainage04.magic_carpet.platform.Platform;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -19,7 +18,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 
-public final class FabricPlatform implements Platform {
+public final class FabricPlatform {
     public void register() {
         var basic =
                 Registry.register(
