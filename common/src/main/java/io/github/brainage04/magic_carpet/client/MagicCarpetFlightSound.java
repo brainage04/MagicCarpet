@@ -6,6 +6,7 @@ import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The wind the rider of a magic carpet hears: the elytra's flying loop, at the volume and pitch the
@@ -35,6 +36,24 @@ public class MagicCarpetFlightSound extends AbstractTickableSoundInstance {
     /** The elytra's volume for a movement of {@code speedSqr} squared blocks a tick. */
     public static float volumeFor(double speedSqr) {
         return speedSqr >= 1.0E-7 ? Mth.clamp((float) speedSqr / 4.0F, 0.0F, 1.0F) : 0.0F;
+    }
+
+    /**
+     * Whether a mount must start another loop. Vanilla's passenger update ejects and re-mounts
+     * every passenger inside one packet (ClientPacketListener.java:1140-1152 in 26.3), so a mount
+     * on the carpet a playing loop already covers must keep that loop instead of stacking a second
+     * one on top of it.
+     *
+     * @param playingCarpet the carpet the current loop plays for, compared by identity
+     * @param loopPlaying whether the sound engine still holds that loop
+     */
+    public static boolean shouldStartLoop(
+            @Nullable Object playingCarpet, Object carpet, boolean loopPlaying) {
+        return playingCarpet != carpet || !loopPlaying;
+    }
+
+    public MagicCarpetEntity getCarpet() {
+        return this.carpet;
     }
 
     /**
