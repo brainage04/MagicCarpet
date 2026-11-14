@@ -15,7 +15,7 @@ heavy --mem 6G -- ./gradlew --no-daemon runAllGameTests
 heavy --mem 6G -- ./gradlew --no-daemon :fabric:runVanillaServerClientGameTest
 ```
 
-`:fabric:test` runs the unit tests: `CarpetMotionTest` checks the flight arithmetic in `CarpetMotion` with examples and jqwik properties (no key or flight goes above the tier's top speed, and a held key reaches 99 % of it in the acceleration time), and `CarpetTierTest` checks that any tier survives a round trip through JSON and that a speed or time of zero or less is refused. `:fabric:pitest` runs mutation tests on `CarpetMotion` against them; it is not part of `check`, and the report is written to `fabric/build/reports/pitest`.
+`:fabric:test` runs the unit tests: `CarpetMotionTest` checks the flight arithmetic in `CarpetMotion` with examples and jqwik properties (no key or flight goes above the tier's top speed, and a held key reaches 99 % of it in the acceleration time), and `CarpetTierTest` checks that any tier survives a round trip through JSON and that a speed or time of zero or less is refused. The top speed can be exceeded by up to about 0.01 %: for a negative yaw `Mth.cos` reads the sine table one step away from `Mth.sin` (Mth.java:50-55 in 26.3), so the tests allow that much. `:fabric:pitest` runs mutation tests on `CarpetMotion` against them; it is not part of `check`, and the report is written to `fabric/build/reports/pitest`.
 
 The three tiers' flight and looks are data, in `common/src/main/resources/data/magic_carpet/magic_carpet/tier/` (the README's Configuration section describes the fields). The server GameTest `tierData` pins the shipped values, and the client GameTest checks the tiers a dedicated server sends.
 
