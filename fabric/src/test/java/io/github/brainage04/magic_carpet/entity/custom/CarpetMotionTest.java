@@ -21,8 +21,13 @@ import org.junit.jupiter.api.Test;
 class CarpetMotionTest {
     private static final double EPSILON = 1.0E-9;
 
-    /** Mth.sin and Mth.cos come from a float table, so a unit direction is one only to float precision. */
-    private static final double SPEED_TOLERANCE = 1.0E-6;
+    /**
+     * For a negative angle Mth.cos reads the sine table one step away from Mth.sin, because both
+     * truncate the scaled angle towards zero but only Mth.cos adds its quarter turn first
+     * (Mth.java:50-55 in 26.3). A step is 2 pi / 65536, so a direction built from them can be about
+     * 5e-5 longer or shorter than one.
+     */
+    private static final double SPEED_TOLERANCE = 1.0E-4;
 
     record Tick(Input input, float pitch, float yaw) {}
 

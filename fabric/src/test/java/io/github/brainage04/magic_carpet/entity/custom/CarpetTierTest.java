@@ -36,10 +36,11 @@ class CarpetTierTest {
 
     @Provide
     Arbitrary<CarpetTier> tiers() {
-        Arbitrary<Double> positive = Arbitraries.doubles().between(1.0E-6, 1.0E6);
+        Arbitrary<Double> positive = Arbitraries.doubles().between(1.0E-6, 1.0E6).ofScale(9);
         Arbitrary<Item> items = Arbitraries.of(BuiltInRegistries.ITEM.stream().toList());
         Arbitrary<Double> component = Arbitraries.doubles().between(-10.0, 10.0);
-        Arbitrary<Vec3> vectors = Combinators.combine(component, component, component).as(Vec3::new);
+        Arbitrary<Vec3> vectors =
+                Combinators.combine(component, component, component).as(Vec3::new);
         Arbitrary<ParticleOptions> particleOptions =
                 Arbitraries.of(
                         ParticleTypes.PORTAL,
@@ -87,8 +88,10 @@ class CarpetTierTest {
 
     @Example
     void anEndlessSpeedOrTimeIsRefused() {
-        CarpetTier tier = new CarpetTier(1.0, 1.0, Items.STICK, WeightedList.of(), CarpetTier.Model.PLAIN);
-        for (double value : new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
+        CarpetTier tier =
+                new CarpetTier(1.0, 1.0, Items.STICK, WeightedList.of(), CarpetTier.Model.PLAIN);
+        for (double value :
+                new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
             assertRefused(tier, "max_speed", value);
             assertRefused(tier, "acceleration_time", value);
         }
