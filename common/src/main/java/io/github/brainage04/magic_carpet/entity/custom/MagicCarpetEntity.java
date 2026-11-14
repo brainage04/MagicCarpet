@@ -2,16 +2,20 @@ package io.github.brainage04.magic_carpet.entity.custom;
 
 import java.util.List;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.InterpolationHandler;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.SteppedInterpolationHandler;
 import net.minecraft.world.entity.animal.fish.WaterAnimal;
 import net.minecraft.world.entity.monster.creaking.Creaking;
 import net.minecraft.world.entity.player.Input;
@@ -24,9 +28,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class MagicCarpetEntity extends VehicleEntity {
-    private static final double DECELERATION_TIME_MULTIPLIER = 2.0;
-
+public class MagicCarpetEntity extends VehicleEntity {
     private static final double REST_SPEED_SQR = 1.0E-6;
 
     private static final double HALF_LENGTH = 1.0;
@@ -37,6 +39,15 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     private static final double MAX_TILT_PITCH = 15.0;
 
     private static final double MAX_TILT_ROLL = 12.0;
+
+    /**
+     * The share of the way the tilt and the ripple move towards the carpet's drawn movement each
+     * tick. That movement changes in steps, once per position update from the server, because the
+     * interpolation handler moves the carpet along a straight line from one update to the next
+     * (SteppedInterpolationHandler.java:177-193 in 26.3). Easing keeps the tilt from snapping at
+     * each step.
+     */
+    private static final float MOTION_EASING = 0.25F;
 
     private float movementForward = 0.0f;
     private float movementSideways = 0.0f;
@@ -51,22 +62,33 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
 
     public float animationSpeed;
 
+    private Vec3 drawnMovement = Vec3.ZERO;
+
+    private @Nullable CarpetTier tier;
+
     public MagicCarpetEntity(EntityType<? extends VehicleEntity> entityType, Level world) {
         super(entityType, world);
     }
 
-    public abstract double getMaxSpeed();
-
-    protected abstract double getAccelerationTime();
-
-    protected abstract void spawnAmbientParticle(Vec3 position, Vec3 backward, float speed);
-
-    private static double smoothingFactor(double seconds) {
-        return 1.0 - Math.pow(0.01, 1.0 / (seconds * 20.0));
+    /**
+     * This carpet's tier, the {@code magic_carpet:tier} entry named like its entity type. The
+     * registry is loaded once when the server starts and sent to each client as it joins, so the
+     * entry never changes while the entity exists.
+     */
+    public CarpetTier tier() {
+        if (this.tier == null) {
+            this.tier =
+                    level().registryAccess()
+                            .lookupOrThrow(CarpetTier.REGISTRY)
+                            .getValueOrThrow(CarpetTier.key(EntityType.getKey(getType())));
+        }
+        return this.tier;
     }
 
     @Override
-    protected abstract Item getDropItem();
+    protected Item getDropItem() {
+        return tier().dropItem();
+    }
 
     @Override
     public boolean canBeCollidedWith(@Nullable Entity entity) {
@@ -79,41 +101,50 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
     }
 
     @Override
+    protected InterpolationHandler createInterpolationHandler() {
+        // The rider's client does not simulate the carpet, so the carpet only moves when a move
+        // packet arrives. Without a handler the packet sets its position at once, between client
+        // ticks (26.3 Entity.java:2618, ClientPacketListener.java:735-743), while the rider follows
+        // on its next tick: the carpet is drawn up to three ticks of flight ahead of its rider.
+        return SteppedInterpolationHandler.create(this);
+    }
+
+    /** How far the client drew the carpet in its last tick, in blocks. Zero on the server. */
+    public Vec3 getDrawnMovement() {
+        return this.drawnMovement;
+    }
+
+    // The first rider sitting down and the last one getting off play a vanilla sound from the
+    // server, as the happy ghast's harness does (HappyGhast.java:309-334 in 26.3), so every player
+    // nearby hears it.
+    @Override
+    protected void addPassenger(Entity passenger) {
+        if (!this.isVehicle()) {
+            this.playSound(SoundEvents.WOOL_PLACE);
+        }
+        super.addPassenger(passenger);
+    }
+
+    @Override
+    protected void removePassenger(Entity passenger) {
+        super.removePassenger(passenger);
+        if (!this.isVehicle()) {
+            this.playSound(SoundEvents.WOOL_STEP);
+        }
+    }
+
+    @Override
     public void tick() {
         super.tick();
-
-        this.prevRenderPitch = this.renderPitch;
-        this.prevRenderRoll = this.renderRoll;
-
-        float yaw = (float) Math.toRadians(this.getYRot());
-        float sin = Mth.sin(yaw);
-        float cos = Mth.cos(yaw);
-
-        double x = this.getDeltaMovement().x();
-        double y = this.getDeltaMovement().y();
-        double z = this.getDeltaMovement().z();
-
-        double maxSpeed = getMaxSpeed();
-        this.renderPitch =
-                (float)
-                        Mth.clamp(
-                                (y - (cos * z - sin * x)) / maxSpeed * MAX_TILT_PITCH,
-                                -MAX_TILT_PITCH,
-                                MAX_TILT_PITCH);
-
-        this.renderRoll =
-                (float)
-                        Mth.clamp(
-                                (sin * z + cos * x) / maxSpeed * MAX_TILT_ROLL,
-                                -MAX_TILT_ROLL,
-                                MAX_TILT_ROLL);
 
         if (isLocalInstanceAuthoritative()) {
             updateVelocity();
         }
 
         if (level().isClientSide()) {
-            updateAnimationSpeed();
+            this.drawnMovement = position().subtract(this.xo, this.yo, this.zo);
+            updateTilt(this.drawnMovement);
+            updateAnimationSpeed(this.drawnMovement);
             spawnAmbientParticles();
         }
 
@@ -123,6 +154,34 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
             //noinspection DataFlowIssue - should be obvious why
             setYRot(getControllingPassenger().getYRot());
         }
+    }
+
+    private void updateTilt(Vec3 movement) {
+        this.prevRenderPitch = this.renderPitch;
+        this.prevRenderRoll = this.renderRoll;
+
+        float yaw = (float) Math.toRadians(this.getYRot());
+        float sin = Mth.sin(yaw);
+        float cos = Mth.cos(yaw);
+
+        double maxSpeed = tier().maxSpeed();
+        float pitch =
+                (float)
+                        Mth.clamp(
+                                (movement.y - (cos * movement.z - sin * movement.x))
+                                        / maxSpeed
+                                        * MAX_TILT_PITCH,
+                                -MAX_TILT_PITCH,
+                                MAX_TILT_PITCH);
+        float roll =
+                (float)
+                        Mth.clamp(
+                                (sin * movement.z + cos * movement.x) / maxSpeed * MAX_TILT_ROLL,
+                                -MAX_TILT_ROLL,
+                                MAX_TILT_ROLL);
+
+        this.renderPitch += (pitch - this.renderPitch) * MOTION_EASING;
+        this.renderRoll += (roll - this.renderRoll) * MOTION_EASING;
     }
 
     @Override
@@ -185,16 +244,6 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         return super.getControllingPassenger();
     }
 
-    private float getVerticalVelocity(float pitch) {
-        if (pitch >= 45.0f) {
-            return -0.50f;
-        } else if (pitch > 15.0f) {
-            return (-pitch + 30.0f) / 30.0f;
-        } else {
-            return 0.50f;
-        }
-    }
-
     private void updateVelocity() {
         Vec3 targetVelocity = Vec3.ZERO;
         if (getControllingPassenger() instanceof Player player) {
@@ -212,24 +261,10 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
             return;
         }
 
-        setDeltaMovement(smoothVelocity(currentVelocity, targetVelocity));
+        setDeltaMovement(
+                CarpetMotion.smoothVelocity(
+                        currentVelocity, targetVelocity, tier().accelerationTime()));
         move(MoverType.PLAYER, this.getDeltaMovement());
-    }
-
-    private Vec3 smoothVelocity(Vec3 current, Vec3 target) {
-        double acceleration = smoothingFactor(getAccelerationTime());
-        double deceleration = smoothingFactor(getAccelerationTime() * DECELERATION_TIME_MULTIPLIER);
-
-        double horizontal =
-                target.horizontalDistanceSqr() < current.horizontalDistanceSqr()
-                        ? deceleration
-                        : acceleration;
-        double vertical = Math.abs(target.y) < Math.abs(current.y) ? deceleration : acceleration;
-
-        return new Vec3(
-                Mth.lerp(horizontal, current.x, target.x),
-                Mth.lerp(vertical, current.y, target.y),
-                Mth.lerp(horizontal, current.z, target.z));
     }
 
     private Vec3 getTargetVelocity(Player player, float yaw) {
@@ -239,15 +274,15 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         Vec3 targetVelocity =
                 new Vec3(
                         cos * movementSideways - sin * movementForward,
-                        pressingSpace ? getVerticalVelocity(player.getXRot()) : 0.0,
+                        pressingSpace ? CarpetMotion.verticalShare(player.getXRot()) : 0.0,
                         sin * movementSideways + cos * movementForward);
 
-        return targetVelocity.scale(getMaxSpeed());
+        return targetVelocity.scale(tier().maxSpeed());
     }
 
     private void updateInputs(Input input) {
-        movementForward = impulse(input.forward(), input.backward());
-        movementSideways = impulse(input.left(), input.right());
+        movementForward = CarpetMotion.impulse(input.forward(), input.backward());
+        movementSideways = CarpetMotion.impulse(input.left(), input.right());
         float length =
                 Mth.sqrt(movementForward * movementForward + movementSideways * movementSideways);
         if (length > 1.0F) {
@@ -257,19 +292,10 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
         pressingSpace = input.jump();
     }
 
-    private static float impulse(boolean positive, boolean negative) {
-        if (positive == negative) {
-            return 0.0F;
-        }
-        return positive ? 1.0F : -1.0F;
-    }
-
-    private void updateAnimationSpeed() {
+    private void updateAnimationSpeed(Vec3 movement) {
         this.prevAnimationSpeed = this.animationSpeed;
-        float target =
-                (float) Math.min(getDeltaMovement().horizontalDistance() / getMaxSpeed(), 1.0);
-        // velocity packets arrive in steps; ease towards them so animations don't twitch
-        this.animationSpeed += (target - this.animationSpeed) * 0.25F;
+        float target = (float) Math.min(movement.horizontalDistance() / tier().maxSpeed(), 1.0);
+        this.animationSpeed += (target - this.animationSpeed) * MOTION_EASING;
     }
 
     private void spawnAmbientParticles() {
@@ -294,7 +320,27 @@ public abstract class MagicCarpetEntity extends VehicleEntity {
                         .add(forward.scale(along))
                         .add(sideways.scale(across))
                         .add(0.0, SURFACE_HEIGHT, 0.0);
-        spawnAmbientParticle(position, forward.reverse(), speed);
+        spawnAmbientParticle(random, position, forward.reverse(), speed);
+    }
+
+    private void spawnAmbientParticle(
+            RandomSource random, Vec3 position, Vec3 backward, float speed) {
+        WeightedList<CarpetTier.Particle> particles = tier().particles();
+        if (particles.isEmpty()) {
+            return;
+        }
+        CarpetTier.Particle particle = particles.getRandomOrThrow(random);
+        double trail = particle.trail() * speed;
+        Vec3 velocity = particle.velocity();
+        Vec3 spread = particle.velocitySpread();
+        level().addParticle(
+                        particle.options(),
+                        position.x,
+                        position.y,
+                        position.z,
+                        backward.x * trail + velocity.x + random.nextDouble() * spread.x,
+                        backward.y * trail + velocity.y + random.nextDouble() * spread.y,
+                        backward.z * trail + velocity.z + random.nextDouble() * spread.z);
     }
 
     @Override

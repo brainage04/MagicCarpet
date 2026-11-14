@@ -10,4 +10,7 @@ public class MagicCarpetEntityRenderState extends EntityRenderState {
     public float speed;
 
     public float animationOffset;
+
+    public int shape;
+    public boolean glow;
 }

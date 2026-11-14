@@ -20,6 +20,11 @@ public class MagicCarpetGameTest {
     }
 
     @GameTest
+    public void tierData(GameTestHelper helper) {
+        MagicCarpetGameTests.tierData(helper);
+    }
+
+    @GameTest
     public void crafting(GameTestHelper helper) {
         MagicCarpetGameTests.crafting(helper);
     }
@@ -37,5 +42,15 @@ public class MagicCarpetGameTest {
     @GameTest
     public void playerTakesControl(GameTestHelper helper) {
         MagicCarpetGameTests.playerTakesControl(helper);
+    }
+
+    @GameTest
+    public void mountRequiresAPlainUse(GameTestHelper helper) {
+        MagicCarpetGameTests.mountRequiresAPlainUse(helper);
+    }
+
+    @GameTest
+    public void releasedKeysCoastToAStop(GameTestHelper helper) {
+        MagicCarpetGameTests.releasedKeysCoastToAStop(helper);
     }
 }

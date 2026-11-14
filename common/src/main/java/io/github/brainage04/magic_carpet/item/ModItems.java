@@ -28,6 +28,4 @@ public final class ModItems {
     public static Item legendary() {
         return legendary.get();
     }
-
-    public static void initialize() {}
 }

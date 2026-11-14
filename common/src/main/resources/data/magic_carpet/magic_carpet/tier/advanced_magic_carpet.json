@@ -1,0 +1,15 @@
+{
+  "max_speed": 1.2,
+  "acceleration_time": 1.0,
+  "drop_item": "magic_carpet:advanced_magic_carpet",
+  "particles": [
+    {
+      "weight": 1,
+      "particle": { "type": "minecraft:small_flame" },
+      "velocity": [0.0, 0.005, 0.0],
+      "velocity_spread": [0.0, 0.01, 0.0],
+      "trail": 0.04
+    }
+  ],
+  "model": { "tassels": true, "curls": false, "glow": false }
+}

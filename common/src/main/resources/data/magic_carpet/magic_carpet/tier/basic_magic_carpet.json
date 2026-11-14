@@ -1,0 +1,14 @@
+{
+  "max_speed": 0.6,
+  "acceleration_time": 2.0,
+  "drop_item": "magic_carpet:basic_magic_carpet",
+  "particles": [
+    {
+      "weight": 1,
+      "particle": { "type": "minecraft:enchant" },
+      "velocity": [-0.75, 0.2, -0.75],
+      "velocity_spread": [1.5, 0.8, 1.5]
+    }
+  ],
+  "model": { "tassels": false, "curls": false, "glow": false }
+}

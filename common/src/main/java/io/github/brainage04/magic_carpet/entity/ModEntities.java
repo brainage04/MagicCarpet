@@ -1,43 +1,37 @@
 package io.github.brainage04.magic_carpet.entity;
 
-import io.github.brainage04.magic_carpet.entity.custom.AdvancedMagicCarpetEntity;
-import io.github.brainage04.magic_carpet.entity.custom.BasicMagicCarpetEntity;
-import io.github.brainage04.magic_carpet.entity.custom.LegendaryMagicCarpetEntity;
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import java.util.function.Supplier;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
 
 public final class ModEntities {
-    private static Supplier<? extends EntityType<BasicMagicCarpetEntity>> basic;
-    private static Supplier<? extends EntityType<AdvancedMagicCarpetEntity>> advanced;
-    private static Supplier<? extends EntityType<LegendaryMagicCarpetEntity>> legendary;
+    private static Supplier<? extends EntityType<MagicCarpetEntity>> basic;
+    private static Supplier<? extends EntityType<MagicCarpetEntity>> advanced;
+    private static Supplier<? extends EntityType<MagicCarpetEntity>> legendary;
 
     public static void register(
-            Supplier<? extends EntityType<BasicMagicCarpetEntity>> basic,
-            Supplier<? extends EntityType<AdvancedMagicCarpetEntity>> advanced,
-            Supplier<? extends EntityType<LegendaryMagicCarpetEntity>> legendary) {
+            Supplier<? extends EntityType<MagicCarpetEntity>> basic,
+            Supplier<? extends EntityType<MagicCarpetEntity>> advanced,
+            Supplier<? extends EntityType<MagicCarpetEntity>> legendary) {
         ModEntities.basic = basic;
         ModEntities.advanced = advanced;
         ModEntities.legendary = legendary;
     }
 
-    public static EntityType<BasicMagicCarpetEntity> basic() {
+    public static EntityType<MagicCarpetEntity> basic() {
         return basic.get();
     }
 
-    public static EntityType<AdvancedMagicCarpetEntity> advanced() {
+    public static EntityType<MagicCarpetEntity> advanced() {
         return advanced.get();
     }
 
-    public static EntityType<LegendaryMagicCarpetEntity> legendary() {
+    public static EntityType<MagicCarpetEntity> legendary() {
         return legendary.get();
     }
 
-    public static <T extends MagicCarpetEntity> EntityType.Builder<T> builder(
-            EntityType.EntityFactory<T> factory) {
-        return EntityType.Builder.of(factory, net.minecraft.world.entity.MobCategory.MISC)
-                .sized(1.5F, .25F);
+    public static EntityType.Builder<MagicCarpetEntity> builder() {
+        return EntityType.Builder.of(MagicCarpetEntity::new, MobCategory.MISC).sized(1.5F, .25F);
     }
-
-    public static void initialize() {}
 }
