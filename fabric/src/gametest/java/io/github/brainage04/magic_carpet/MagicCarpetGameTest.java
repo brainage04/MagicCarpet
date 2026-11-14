@@ -25,6 +25,11 @@ public class MagicCarpetGameTest {
     }
 
     @GameTest
+    public void tierCodecRoundTrip(GameTestHelper helper) {
+        MagicCarpetGameTests.tierCodecRoundTrip(helper);
+    }
+
+    @GameTest
     public void crafting(GameTestHelper helper) {
         MagicCarpetGameTests.crafting(helper);
     }

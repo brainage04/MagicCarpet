@@ -35,6 +35,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ParticleStatus;
@@ -505,6 +506,7 @@ public final class MagicCarpetShowcase {
                         + " at once; it coasted at "
                         + coasted * 20
                         + " blocks/s");
+        assertAPassengerUpdateKeepsOneWind(context, watch);
         watch.holdFor(context, COAST_MILLIS);
         server.runOnServer(
                 minecraftServer -> {
@@ -573,6 +575,38 @@ public final class MagicCarpetShowcase {
                                     + player.position());
                 });
         ClientGameTestStages.endStage(context, id, HOLD_AFTER_END_TICKS);
+    }
+
+    /**
+     * A seat change - another player or a mob boarding or leaving, or a {@code /ride} - makes the
+     * server send the carpet's passengers again, and the client answers by ejecting and re-mounting
+     * every passenger in that one packet (ClientPacketListener.java:1140-1152 in 26.3). The rider
+     * must keep hearing one wind, not one per seat change. The handler runs here on the client
+     * thread, where packet processing runs it (PacketProcessor.java:22-24), so no second rider
+     * shows in the film.
+     */
+    private static void assertAPassengerUpdateKeepsOneWind(
+            ClientGameTestContext context, RiderWatch watch) {
+        int before = context.computeOnClient(client -> SOUNDS.flightStarts);
+        context.runOnClient(
+                client -> {
+                    Entity carpet = client.player.getVehicle();
+                    check(carpet != null, "The rider must hold a carpet at a passenger update");
+                    client.getConnection()
+                            .handleSetEntityPassengersPacket(
+                                    new ClientboundSetPassengersPacket(carpet));
+                    check(
+                            client.player.getVehicle() == carpet,
+                            "A passenger update must leave the rider on its carpet");
+                    check(
+                            SOUNDS.flightStarts == before,
+                            "A passenger update must keep one wind; it started "
+                                    + (SOUNDS.flightStarts - before)
+                                    + " more");
+                    check(
+                            client.getSoundManager().isActive(watch.sound),
+                            "The wind must keep playing through a passenger update");
+                });
     }
 
     /**
@@ -714,12 +748,14 @@ public final class MagicCarpetShowcase {
     private static final class SoundLog implements SoundEventListener {
         private final List<Identifier> started = new ArrayList<>();
         private @Nullable MagicCarpetFlightSound flight;
+        private int flightStarts;
 
         @Override
         public void onPlaySound(SoundInstance sound, WeighedSoundEvents events, float range) {
             this.started.add(sound.getIdentifier());
             if (sound instanceof MagicCarpetFlightSound wind) {
                 this.flight = wind;
+                this.flightStarts++;
             }
         }
 
@@ -730,6 +766,7 @@ public final class MagicCarpetShowcase {
         private void clear() {
             this.started.clear();
             this.flight = null;
+            this.flightStarts = 0;
         }
     }
 
