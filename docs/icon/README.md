@@ -40,7 +40,12 @@ count for quick previews. Downscale `icon.png` to 128 x 128 for the mod's `icon.
 
 ## Previous icon
 
-The other files in `provenance/` (`render-native.py`, `author-native-textures.py`, the `magic-carpet-02-*` scene and
-metadata, `textures/`, `original/`, the verification JSON files and `evidence/`) document the previous icon, rendered
-from the old flat 64 x 14 carpet art ("variant B"). They are kept for history; `sources/approved-stack.blend` is
-shared by both renders.
+The other files in `provenance/` (`render-native.py`, `author-native-textures.py`,
+`magic-carpet-02-native-b-ranked-stack.py`, `textures/`, `original/`, the verification JSON files and `evidence/`)
+document the previous icon, rendered from the old flat 64 x 14 carpet art ("variant B"). They are kept for history.
+`sources/approved-stack.blend` is shared by both renders.
+
+The repository does not keep the previous icon's rendered scene (`magic-carpet-02-native-b-ranked-stack.blend`, its
+PNG and its `-metadata.json`) or the 64 x 14 texture alternatives in `texture-variants/original-resolution/`, although
+the JSON records name them. `magic-carpet-02-native-b-ranked-stack.py` renders the scene again through
+`render-native.py`, from `sources/approved-stack.blend` and `textures/variant-b/`.
