@@ -2,7 +2,7 @@
 
 MagicCarpet is a Minecraft 26.3 mod for Fabric and NeoForge that adds three craftable, rideable flying carpets. Install it on both the client and server.
 
-Landing a carpet costs its riders nothing: it neither hurts them nor counts towards their distance fallen, and it stays silent, as a happy ghast's landing does. Getting off in mid-air is a normal fall, though, so step off close to the ground. Each carpet can carry two passengers. A player steers when sharing a carpet with a mob.
+A carpet's landing does not hurt its riders, does not add to their distance fallen and makes no sound, like a happy ghast's landing. A rider who gets off in mid-air falls as usual and can take fall damage, so get off close to the ground. Each carpet can carry two passengers. A player steers when sharing a carpet with a mob.
 
 ## Features
 
@@ -24,7 +24,7 @@ Each tier looks different: basic carpets have a plain rolled edge, advanced carp
 
 ### Sound
 
-Sitting down on a carpet and getting off it play the wool place and step sounds, which every player nearby hears. In flight the rider hears the elytra's wind, louder and higher the faster the carpet flies, as an elytra sounds at the same speed.
+The wool place sound plays when the first rider sits down on a carpet, and the wool step sound plays when the last rider gets off. Every player nearby hears both. In flight the rider hears the elytra's wind at the volume and pitch an elytra has at the same speed, so a faster carpet sounds louder.
 
 ## Getting started
 
@@ -46,17 +46,17 @@ No commands yet.
 
 ## Configuration
 
-Each tier's flight and looks come from a data file, so a datapack can change them. A tier's file is `data/magic_carpet/magic_carpet/tier/<carpet>.json`, where `<carpet>` is `basic_magic_carpet`, `advanced_magic_carpet` or `legendary_magic_carpet`. A datapack file at the same path replaces the mod's; copy the mod's own file from the jar as a starting point. The server reads the files when the world starts (not on `/reload`) and sends them to every player who joins.
+A data file sets each tier's flight and looks, so a datapack can change them. The file for a tier is `data/magic_carpet/magic_carpet/tier/<carpet>.json`, where `<carpet>` is `basic_magic_carpet`, `advanced_magic_carpet` or `legendary_magic_carpet`. A datapack file at the same path replaces the mod's file. The mod's own files in the jar are a good starting point. The server reads the files when the world starts, not on `/reload`, and sends them to every player who joins. The speeds under Carpet tiers are the values in the mod's own files.
 
 | Field | Meaning |
 |---|---|
-| `max_speed` | Top speed in blocks per tick (20 ticks a second), above 0. Climbing and descending go at half of it. |
+| `max_speed` | Top speed in blocks per tick (20 ticks a second), above 0. Climbing and descending go at half this speed. |
 | `acceleration_time` | Seconds to reach 99 % of a new speed, above 0. Coasting to a stop takes twice as long. |
 | `drop_item` | The item a broken carpet drops, such as `magic_carpet:basic_magic_carpet`. |
-| `particles` | Optional. The particles the carpet sheds, one picked by `weight` each time. Each has a `particle` (`{"type": "minecraft:end_rod"}`), a `velocity` and a `velocity_spread` (`[x, y, z]` in blocks per tick, a random share of the spread is added on each axis), and a `trail`, the extra speed towards the carpet's back at full speed. An empty list sheds none. |
-| `model` | Optional. `tassels`, `curls` (curled front corners) and `glow` (draws `textures/entity/<carpet>_glow.png` at full brightness; only the legendary carpet ships one, so a resource pack has to add it for the others). Each is `true` or `false`, and missing ones are `false`. |
+| `particles` | Optional. A list of the particles the carpet sheds. Each spawn picks one entry, weighted by its `weight`. `particle` names the particle, such as `{"type": "minecraft:end_rod"}`. `velocity` is its speed as `[x, y, z]` in blocks per tick. `velocity_spread` is also `[x, y, z]`, and a random part of it is added on each axis. `trail` is the extra speed towards the carpet's back when the carpet flies at full speed. `velocity`, `velocity_spread` and `trail` are optional and default to 0. An empty list sheds no particles. |
+| `model` | Optional. `tassels` adds tassels, `curls` adds curled front corners, and `glow` draws `textures/entity/<carpet>_glow.png` at full brightness. Each is `true` or `false`, and a missing one is `false`. Only the legendary carpet ships a glow texture, so a resource pack has to add one before another tier can glow. |
 
-The three carpets, their recipes and their textures stay as they are; the files change only how each one flies and looks.
+The files cannot add a carpet or change a carpet's recipe or texture.
 
 ## Compatibility
 
