@@ -53,4 +53,24 @@ public class MagicCarpetGameTest {
     public void releasedKeysCoastToAStop(GameTestHelper helper) {
         MagicCarpetGameTests.releasedKeysCoastToAStop(helper);
     }
+
+    @GameTest(skyAccess = true)
+    public void survivalRiderLandsWithoutFallDamage(GameTestHelper helper) {
+        MagicCarpetGameTests.survivalRiderLandsWithoutFallDamage(helper);
+    }
+
+    @GameTest(skyAccess = true)
+    public void midAirDismountTakesFallDamage(GameTestHelper helper) {
+        MagicCarpetGameTests.midAirDismountTakesFallDamage(helper);
+    }
+
+    @GameTest(skyAccess = true)
+    public void landingAddsNoDistanceFallenStatistic(GameTestHelper helper) {
+        MagicCarpetGameTests.landingAddsNoDistanceFallenStatistic(helper);
+    }
+
+    @GameTest(skyAccess = true)
+    public void landingPlaysNoFallSound(GameTestHelper helper) {
+        MagicCarpetGameTests.landingPlaysNoFallSound(helper);
+    }
 }
