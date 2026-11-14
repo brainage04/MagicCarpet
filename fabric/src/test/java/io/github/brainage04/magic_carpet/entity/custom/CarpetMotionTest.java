@@ -3,15 +3,133 @@ package io.github.brainage04.magic_carpet.entity.custom;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
+import net.jqwik.api.Arbitraries;
+import net.jqwik.api.Arbitrary;
+import net.jqwik.api.Combinators;
 import net.jqwik.api.ForAll;
+import net.jqwik.api.From;
 import net.jqwik.api.Property;
+import net.jqwik.api.Provide;
 import net.jqwik.api.constraints.DoubleRange;
 import net.jqwik.api.constraints.FloatRange;
+import net.jqwik.api.constraints.Size;
+import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 
 class CarpetMotionTest {
     private static final double EPSILON = 1.0E-9;
+
+    /**
+     * For a negative angle Mth.cos reads the sine table one step away from Mth.sin, because both
+     * truncate the scaled angle towards zero but only Mth.cos adds its quarter turn first
+     * (Mth.java:50-55 in 26.3). A step is 2 pi / 65536, so a direction built from them can be about
+     * 5e-5 longer or shorter than one.
+     */
+    private static final double SPEED_TOLERANCE = 1.0E-4;
+
+    record Tick(Input input, float pitch, float yaw) {}
+
+    @Provide
+    Arbitrary<Input> inputs() {
+        Arbitrary<Boolean> key = Arbitraries.of(true, false);
+        return Combinators.combine(key, key, key, key, key, key, key).as(Input::new);
+    }
+
+    @Provide
+    Arbitrary<Tick> ticks() {
+        return Combinators.combine(
+                        inputs(),
+                        Arbitraries.floats().between(-90.0F, 90.0F),
+                        Arbitraries.floats().between(-10.0F, 10.0F))
+                .as(Tick::new);
+    }
+
+    @Property
+    void theKeysNeverAskForMoreThanTheTopSpeed(
+            @ForAll("ticks") Tick tick,
+            @ForAll @DoubleRange(min = 0.01, max = 10.0) double maxSpeed) {
+        Vec3 target = CarpetMotion.targetVelocity(tick.input(), tick.pitch(), tick.yaw(), maxSpeed);
+        assertTrue(
+                target.horizontalDistance() <= maxSpeed * (1.0 + SPEED_TOLERANCE),
+                "horizontal " + target.horizontalDistance() + " above " + maxSpeed);
+        assertTrue(Math.abs(target.y) <= maxSpeed / 2.0, "vertical " + target.y);
+    }
+
+    @Property
+    void anyMovementKeyAsksForTheTopSpeedAndOpposingKeysForNone(
+            @ForAll("ticks") Tick tick,
+            @ForAll @DoubleRange(min = 0.01, max = 10.0) double maxSpeed) {
+        Input input = tick.input();
+        boolean moving = input.forward() != input.backward() || input.left() != input.right();
+        Vec3 target = CarpetMotion.targetVelocity(input, tick.pitch(), tick.yaw(), maxSpeed);
+        assertEquals(
+                moving ? maxSpeed : 0.0,
+                target.horizontalDistance(),
+                maxSpeed * SPEED_TOLERANCE,
+                "horizontal speed for " + input);
+    }
+
+    @Property
+    void onlyTheJumpKeyMovesTheCarpetUpOrDown(
+            @ForAll("ticks") Tick tick,
+            @ForAll @DoubleRange(min = 0.01, max = 10.0) double maxSpeed) {
+        Vec3 target = CarpetMotion.targetVelocity(tick.input(), tick.pitch(), tick.yaw(), maxSpeed);
+        double expected =
+                tick.input().jump() ? CarpetMotion.verticalShare(tick.pitch()) * maxSpeed : 0.0;
+        assertEquals(expected, target.y, EPSILON);
+    }
+
+    @Test
+    void theKeysFollowTheRidersYaw() {
+        Input forward = new Input(true, false, false, false, false, false, false);
+        Vec3 south = CarpetMotion.targetVelocity(forward, 0.0F, 0.0F, 2.0);
+        assertEquals(0.0, south.x, 1.0E-6);
+        assertEquals(2.0, south.z, 1.0E-6);
+        Vec3 west = CarpetMotion.targetVelocity(forward, 0.0F, (float) (Math.PI / 2.0), 2.0);
+        assertEquals(-2.0, west.x, 1.0E-6);
+        assertEquals(0.0, west.z, 1.0E-6);
+        Input left = new Input(false, false, true, false, false, false, false);
+        Vec3 east = CarpetMotion.targetVelocity(left, 0.0F, 0.0F, 2.0);
+        assertEquals(2.0, east.x, 1.0E-6);
+        assertEquals(0.0, east.z, 1.0E-6);
+    }
+
+    @Property
+    void aFlightNeverExceedsTheTopSpeed(
+            @ForAll @Size(max = 200) List<@From("ticks") Tick> flight,
+            @ForAll @DoubleRange(min = 0.01, max = 10.0) double maxSpeed,
+            @ForAll @DoubleRange(min = 0.05, max = 5.0) double accelerationTime) {
+        Vec3 velocity = Vec3.ZERO;
+        for (Tick tick : flight) {
+            Vec3 target =
+                    CarpetMotion.targetVelocity(tick.input(), tick.pitch(), tick.yaw(), maxSpeed);
+            velocity = CarpetMotion.smoothVelocity(velocity, target, accelerationTime);
+            assertTrue(
+                    velocity.horizontalDistance() <= maxSpeed * (1.0 + SPEED_TOLERANCE),
+                    "horizontal " + velocity.horizontalDistance() + " above " + maxSpeed);
+            assertTrue(
+                    Math.abs(velocity.y) <= maxSpeed / 2.0 * (1.0 + SPEED_TOLERANCE),
+                    "vertical " + velocity.y);
+        }
+    }
+
+    @Property
+    void holdingAKeyReaches99PercentOfTheTopSpeedInTheAccelerationTime(
+            @ForAll @DoubleRange(min = 0.01, max = 10.0) double maxSpeed,
+            @ForAll @DoubleRange(min = 0.05, max = 5.0) double accelerationTime) {
+        Input forward = new Input(true, false, false, false, false, false, false);
+        Vec3 target = CarpetMotion.targetVelocity(forward, 0.0F, 0.0F, maxSpeed);
+        Vec3 velocity = Vec3.ZERO;
+        int ticks = (int) Math.ceil(accelerationTime * 20.0 - EPSILON);
+        for (int tick = 0; tick < ticks; tick++) {
+            velocity = CarpetMotion.smoothVelocity(velocity, target, accelerationTime);
+        }
+        assertTrue(
+                velocity.horizontalDistance() >= 0.99 * maxSpeed * (1.0 - SPEED_TOLERANCE),
+                velocity.horizontalDistance() + " after " + ticks + " ticks");
+    }
 
     @Test
     void theShippedAccelerationTimesReach99PercentOnTime() {
