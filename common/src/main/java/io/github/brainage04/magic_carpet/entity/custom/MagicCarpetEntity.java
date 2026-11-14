@@ -49,9 +49,7 @@ public class MagicCarpetEntity extends VehicleEntity {
      */
     private static final float MOTION_EASING = 0.25F;
 
-    private float movementForward = 0.0f;
-    private float movementSideways = 0.0f;
-    private boolean pressingSpace = false;
+    private Input input = Input.EMPTY;
 
     public float prevRenderPitch;
     public float prevRenderRoll;
@@ -248,9 +246,14 @@ public class MagicCarpetEntity extends VehicleEntity {
         Vec3 targetVelocity = Vec3.ZERO;
         if (getControllingPassenger() instanceof Player player) {
             if (player instanceof ServerPlayer serverPlayer) {
-                updateInputs(serverPlayer.getLastClientInput());
+                input = serverPlayer.getLastClientInput();
             }
-            targetVelocity = getTargetVelocity(player, (float) Math.toRadians(player.getYRot()));
+            targetVelocity =
+                    CarpetMotion.targetVelocity(
+                            input,
+                            player.getXRot(),
+                            (float) Math.toRadians(player.getYRot()),
+                            tier().maxSpeed());
         }
 
         Vec3 currentVelocity = getDeltaMovement();
@@ -265,31 +268,6 @@ public class MagicCarpetEntity extends VehicleEntity {
                 CarpetMotion.smoothVelocity(
                         currentVelocity, targetVelocity, tier().accelerationTime()));
         move(MoverType.PLAYER, this.getDeltaMovement());
-    }
-
-    private Vec3 getTargetVelocity(Player player, float yaw) {
-        float sin = Mth.sin(yaw);
-        float cos = Mth.cos(yaw);
-
-        Vec3 targetVelocity =
-                new Vec3(
-                        cos * movementSideways - sin * movementForward,
-                        pressingSpace ? CarpetMotion.verticalShare(player.getXRot()) : 0.0,
-                        sin * movementSideways + cos * movementForward);
-
-        return targetVelocity.scale(tier().maxSpeed());
-    }
-
-    private void updateInputs(Input input) {
-        movementForward = CarpetMotion.impulse(input.forward(), input.backward());
-        movementSideways = CarpetMotion.impulse(input.left(), input.right());
-        float length =
-                Mth.sqrt(movementForward * movementForward + movementSideways * movementSideways);
-        if (length > 1.0F) {
-            movementForward /= length;
-            movementSideways /= length;
-        }
-        pressingSpace = input.jump();
     }
 
     private void updateAnimationSpeed(Vec3 movement) {

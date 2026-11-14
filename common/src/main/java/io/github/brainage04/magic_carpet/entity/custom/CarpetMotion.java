@@ -1,6 +1,7 @@
 package io.github.brainage04.magic_carpet.entity.custom;
 
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.phys.Vec3;
 
 /** The carpet's flight arithmetic, apart from the entity so that unit tests can reach it. */
@@ -38,6 +39,29 @@ public final class CarpetMotion {
                 Mth.lerp(horizontal, current.x, target.x),
                 Mth.lerp(vertical, current.y, target.y),
                 Mth.lerp(horizontal, current.z, target.z));
+    }
+
+    /**
+     * The velocity the rider's keys ask for when the rider looks at {@code pitch} and faces {@code
+     * yaw} radians: {@code maxSpeed} along the movement keys, with a diagonal no faster than a
+     * straight line, and {@link #verticalShare} of it up or down while the jump key is held.
+     */
+    public static Vec3 targetVelocity(Input input, float pitch, float yaw, double maxSpeed) {
+        float forward = impulse(input.forward(), input.backward());
+        float sideways = impulse(input.left(), input.right());
+        float length = Mth.sqrt(forward * forward + sideways * sideways);
+        if (length > 1.0F) {
+            forward /= length;
+            sideways /= length;
+        }
+
+        float sin = Mth.sin(yaw);
+        float cos = Mth.cos(yaw);
+        return new Vec3(
+                        cos * sideways - sin * forward,
+                        input.jump() ? verticalShare(pitch) : 0.0,
+                        sin * sideways + cos * forward)
+                .scale(maxSpeed);
     }
 
     /**
