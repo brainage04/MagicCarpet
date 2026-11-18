@@ -318,7 +318,7 @@ def item_model(tier):
             elements.append(element("front_edge", [-8 + ox, oy + 1, z0], [8 + ox, oy + 2, z0 + 2], 0, 43, 16, 1, 2))
             for side, x0 in (("left", -12), ("right", 8)):
                 rotation = {"angle": 22.5, "axis": "x", "origin": [(-8 if side == "left" else 8) + ox, oy, z0 + 4]}
-                elements.append(element(f"{side}_curl", [x0 + ox, oy, z0], [x0 + 4 + ox, oy + 1, z0 + 3],
+                elements.append(element(f"{side}_curl", [x0 + ox, oy, z0 + 1], [x0 + 4 + ox, oy + 1, z0 + 4],
                                         68, 0, 4, 1, 3, mirror=side == "right", rotation=rotation))
                 elements.append(element(f"{side}_curl_roll", [x0 + ox, oy, z0 - 1], [x0 + 4 + ox, oy + 2, z0 + 1],
                                         68, 5, 4, 2, 2, mirror=side == "right", rotation=rotation))

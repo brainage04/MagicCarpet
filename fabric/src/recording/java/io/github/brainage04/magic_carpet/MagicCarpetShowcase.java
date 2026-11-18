@@ -7,6 +7,8 @@ import io.github.brainage04.magic_carpet.client.MagicCarpetFlightSound;
 import io.github.brainage04.magic_carpet.entity.ModEntities;
 import io.github.brainage04.magic_carpet.entity.custom.CarpetMotion;
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
+import io.github.brainage04.magic_carpet.entity.renderer.MagicCarpetEntityRenderer;
+import io.github.brainage04.magic_carpet.entity.renderer.state.MagicCarpetEntityRenderState;
 import io.github.brainage04.magic_carpet.item.ModItems;
 import io.github.brainage04.minecraftmodconventions.ClientGameTestPlayerActions;
 import io.github.brainage04.minecraftmodconventions.ClientGameTestRecorder;
@@ -543,12 +545,12 @@ public final class MagicCarpetShowcase {
                 });
 
         // A rider that turns while flying: the carpet faces where its rider looks, and the frame
-        // draws it at the rider's own interpolated yaw, so the two must never be drawn apart.
-        float fromYaw = context.computeOnClient(client -> client.player.getYRot());
+        // draws it at the rider's own interpolated yaw, so the two must never be drawn apart. The
+        // turn is applied between ticks, as the mouse applies it, so the carpet's own tick never
+        // sees the yaw the frame is drawn at.
         for (int tick = 1; tick <= TURN_TICKS; tick++) {
-            float yaw = fromYaw + TURN_DEGREES * tick / TURN_TICKS;
-            context.runOnClient(client -> client.player.setYRot(yaw));
             watch.tick(context);
+            context.runOnClient(client -> client.player.turn(TURN_DEGREES / TURN_TICKS, 0.0D));
         }
         float fromPitch = context.computeOnClient(client -> client.player.getXRot());
         for (int tick = 1; tick <= LOOK_DOWN_TICKS; tick++) {
@@ -766,13 +768,20 @@ public final class MagicCarpetShowcase {
                                                                             - this.lastRipplePhase)
                                                                     * Mth.RAD_TO_DEG)));
                         }
+                        // The render state's yaw is what the frame draws, so this compares the
+                        // drawn carpet with the drawn rider, not two entity fields that
+                        // positionRider keeps equal by construction.
+                        MagicCarpetEntityRenderer renderer =
+                                (MagicCarpetEntityRenderer)
+                                        client.getEntityRenderDispatcher().getRenderer(carpet);
+                        MagicCarpetEntityRenderState drawn =
+                                renderer.createRenderState(carpet, 0.5F);
                         this.widestYawGap =
                                 Math.max(
                                         this.widestYawGap,
                                         Math.abs(
                                                 Mth.wrapDegrees(
-                                                        carpet.getYRot(0.5F)
-                                                                - client.player.getYRot(0.5F))));
+                                                        drawn.yaw - client.player.getYRot(0.5F))));
                         this.lastCameraYaw = camera.yRot();
                         this.lastCameraPitch = camera.xRot();
                         this.lastAnimationSpeed = carpet.animationSpeed;

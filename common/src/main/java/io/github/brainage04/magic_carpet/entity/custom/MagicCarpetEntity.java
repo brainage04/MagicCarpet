@@ -76,7 +76,8 @@ public class MagicCarpetEntity extends VehicleEntity {
     public MagicCarpetEntity(EntityType<? extends VehicleEntity> entityType, Level world) {
         super(entityType, world);
         // A random start, so carpets spawned together do not ripple in lockstep. The entity's id
-        // cannot be used: it is assigned after the constructor runs (Entity.java:386-393 in 26.3).
+        // cannot be used: on the client the level hands out 0 (Level.java:157-159 in 26.3) and the
+        // spawn packet sets the real id after the constructor runs (Entity.java:3973-3980).
         this.ripplePhase = this.random.nextFloat() * Mth.TWO_PI;
         this.prevRipplePhase = this.ripplePhase;
         this.flutterPhase = this.random.nextFloat() * Mth.TWO_PI;
@@ -378,6 +379,13 @@ public class MagicCarpetEntity extends VehicleEntity {
                         backward.z * trail + velocity.z + random.nextDouble() * spread.z);
     }
 
+    /**
+     * The seat sits along the carpet's facing, which {@link #positionRider} takes from the rider,
+     * so the seat is placed from the yaw the rider had when it ticked. The frame draws the carpet
+     * at the rider's yaw as of the frame, so with two riders a seat can sit up to 0.4 blocks times
+     * the turn since the tick off the drawn carpet. One rider has no sideways offset, so it never
+     * shows.
+     */
     @Override
     protected Vec3 getPassengerAttachmentPoint(
             Entity passenger, EntityDimensions dimensions, float scaleFactor) {

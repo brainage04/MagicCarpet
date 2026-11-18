@@ -89,16 +89,10 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
     }
 
     /**
-     * The entity names, and each tier as the client received it from the dedicated server: the top
-     * speed, the glow, and the parts its model is built from. The basic carpet has neither tassels
-     * nor curls, the advanced carpet has tassels only, and the legendary carpet has both and glows.
-     * This is the negative that keeps the three tiers from rendering as the same carpet.
-     */
-    /**
      * The carpet must be drawn facing where its rider looks, every frame. The mouse turns the rider
      * between ticks (Entity.java:495-503 in 26.3), so a carpet drawn from its own yaw fields, which
-     * are set once a tick, snaps round behind the player. This turns the rider a quarter turn over
-     * 20 ticks and fails if any frame draws the two apart.
+     * are set once a tick, snaps round behind the player. This turns the rider a quarter turn
+     * between ticks and fails if any frame draws the two apart.
      */
     private static void verifyRiderYaw(
             ClientGameTestContext context, TestDedicatedServerContext server) {
@@ -122,11 +116,12 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                                 && client.player.getVehicle().getId() == carpetId[0],
                 200);
         context.waitTicks(10);
-        float from = context.computeOnClient(client -> client.player.getYRot());
         for (int tick = 1; tick <= 20; tick++) {
-            float yaw = from + 90.0F * tick / 20;
-            context.runOnClient(client -> client.player.setYRot(yaw));
             context.waitTick();
+            // The mouse turns the rider between ticks, moving both of its yaw fields
+            // (Entity.turn, Entity.java:495-503 in 26.3), so the frame is drawn at a yaw the
+            // carpet's own tick never saw.
+            context.runOnClient(client -> client.player.turn(4.5D, 0.0D));
             float gap =
                     context.computeOnClient(
                             client -> {
@@ -155,6 +150,12 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                         minecraftServer.getPlayerList().getPlayers().getFirst().stopRiding());
     }
 
+    /**
+     * The entity names, and each tier as the client received it from the dedicated server: the top
+     * speed, the glow, and the parts its model is built from. The basic carpet has neither tassels
+     * nor curls, the advanced carpet has tassels only, and the legendary carpet has both and glows.
+     * This is the negative that keeps the three tiers from rendering as the same carpet.
+     */
     private static void verifyTierModels(Minecraft client) {
         List<EntityType<MagicCarpetEntity>> types =
                 List.of(ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary());
