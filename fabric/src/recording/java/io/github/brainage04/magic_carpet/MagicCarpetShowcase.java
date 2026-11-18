@@ -184,9 +184,22 @@ public final class MagicCarpetShowcase {
 
     /**
      * The most, in degrees, that a frame may draw the carpet's facing away from its rider's. The
-     * seat is offset along the carpet's facing, so a gap swings the rider round the carpet.
+     * carpet faces where its rider looks, so a gap is the carpet turning behind the player.
      */
     private static final float MAX_YAW_GAP = 0.01F;
+
+    /**
+     * The most the ripple's phase may advance in one tick, in degrees: the fastest frequency the
+     * animation reaches, 0.5 radians a tick (CarpetAnimation.rippleFrequency(1)), with room for the
+     * float rounding of the wrap.
+     */
+    private static final float MAX_RIPPLE_STEP = 30.0F;
+
+    /**
+     * The most the animation speed may change in one tick. It eases a quarter of the way to its
+     * target each tick, so the largest step is a quarter of the largest gap, 0.25.
+     */
+    private static final float MAX_SPEED_STEP = 0.25F;
 
     /**
      * The fewest ticks of a flight in which the carpet must move, so the checks are not empty: at
@@ -529,9 +542,8 @@ public final class MagicCarpetShowcase {
                     checkNoItemsAt(player.level(), site);
                 });
 
-        // A rider that turns while flying: the carpet's yaw follows the rider's every tick
-        // (MagicCarpetEntity.java:161-164), and the seat offset is rotated by that yaw, so a carpet
-        // that turns in steps swings its rider round in steps.
+        // A rider that turns while flying: the carpet faces where its rider looks, and the frame
+        // draws it at the rider's own interpolated yaw, so the two must never be drawn apart.
         float fromYaw = context.computeOnClient(client -> client.player.getYRot());
         for (int tick = 1; tick <= TURN_TICKS; tick++) {
             float yaw = fromYaw + TURN_DEGREES * tick / TURN_TICKS;
@@ -834,6 +846,20 @@ public final class MagicCarpetShowcase {
                             + " facing where it draws its rider; they were drawn "
                             + this.widestYawGap
                             + " degrees apart");
+            check(
+                    this.steepestRippleStep <= MAX_RIPPLE_STEP,
+                    type
+                            + "'s ripple must advance by at most one tick's frequency, "
+                            + MAX_RIPPLE_STEP
+                            + " degrees; it advanced "
+                            + this.steepestRippleStep);
+            check(
+                    this.steepestSpeedStep <= MAX_SPEED_STEP,
+                    type
+                            + "'s animation speed must ease, by at most "
+                            + MAX_SPEED_STEP
+                            + " a tick; it stepped "
+                            + this.steepestSpeedStep);
             check(
                     this.steepestTiltStep <= MAX_TILT_STEP,
                     type

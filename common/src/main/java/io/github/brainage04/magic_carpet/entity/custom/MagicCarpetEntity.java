@@ -75,6 +75,12 @@ public class MagicCarpetEntity extends VehicleEntity {
 
     public MagicCarpetEntity(EntityType<? extends VehicleEntity> entityType, Level world) {
         super(entityType, world);
+        // A random start, so carpets spawned together do not ripple in lockstep. The entity's id
+        // cannot be used: it is assigned after the constructor runs (Entity.java:386-393 in 26.3).
+        this.ripplePhase = this.random.nextFloat() * Mth.TWO_PI;
+        this.prevRipplePhase = this.ripplePhase;
+        this.flutterPhase = this.random.nextFloat() * Mth.TWO_PI;
+        this.prevFlutterPhase = this.flutterPhase;
     }
 
     /**
@@ -159,14 +165,11 @@ public class MagicCarpetEntity extends VehicleEntity {
     }
 
     /**
-     * The carpet faces where its rider looks, and the rider's seat is offset along that facing, so
-     * the yaw has to be current when the seat is placed. A vehicle ticks before its passengers
-     * (ClientLevel.java:468-486 in 26.3), so setting the yaw in {@link #tick()} would use the
-     * rider's yaw from the tick before and draw the carpet, and swing the seat, one tick late.
-     *
-     * <p>Both yaw fields come from the rider, so the frame draws the carpet at the same yaw it
-     * draws the rider: the carpet's own {@code yRotO} is a tick older than the rider's, and a
-     * carpet drawn between the two would sit half a tick behind its rider.
+     * The carpet faces where its rider looks. A vehicle ticks before its passengers
+     * (ClientLevel.java:468-486 in 26.3), so setting the yaw in {@link #tick()} used the rider's
+     * yaw from the tick before: the carpet was drawn, and its two-rider seat offset placed, one
+     * tick behind the rider. Both yaw fields come from the rider here, so the carpet's own
+     * {@code yRotO} is not a tick older than the rider's.
      */
     @Override
     protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
@@ -305,11 +308,12 @@ public class MagicCarpetEntity extends VehicleEntity {
     }
 
     /**
-     * The animation follows the carpet's own velocity, not the distance the client drew it: the
-     * client only moves the carpet when a move packet lands, every third tick, so the drawn
-     * distance is zero on two ticks and three times the real speed on the third
-     * (SteppedInterpolationHandler.java:177-193 in 26.3, EntityType.java:479 for the interval). The
-     * phases are accumulated, so a change of speed never jumps the wave.
+     * The animation follows the carpet's own velocity, not the distance the client drew it. The
+     * client only moves the carpet when a move packet lands, every third tick
+     * (EntityType.java:479 in 26.3), and the interpolation handler then walks it along a straight
+     * line (SteppedInterpolationHandler.java:177-193), so the drawn distance changes in runs of
+     * three equal steps rather than following the carpet's speed. The phases are accumulated, so a
+     * change of speed never jumps the wave.
      */
     private void updateAnimation() {
         this.prevAnimationSpeed = this.animationSpeed;

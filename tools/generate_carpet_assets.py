@@ -250,14 +250,12 @@ def paint(tier):
         tex.box(44, 40, 1, 1, 3, up=lambda x, z: p["tassel"][(z // 2) % 2], sides=tassel_side)
 
     if CURLS[tier]:
-        # corner flap 4x1x4 at (68, 0) shows the left front corner of the design; the right flap is mirrored
-        def flap(x, z):
-            # the raised border continues round the lifted corner as a flat cord
-            if x < 4 or z < 4:
-                return cord(p, z if x < 4 else x, min(x, z), 4)
-            return design(p, x, z)
-
-        tex.box(68, 0, 4, 1, 4, up=flap, sides=lambda col, row: p["edge"][0])
+        # corner flap 4x1x3 at (68, 0) shows the left front corner of the design; the right flap is
+        # mirrored. It stops where the roll starts, so the two never share a plane: the roll covers
+        # the flap's last pixel of depth with the same width and a taller box.
+        tex.box(68, 0, 4, 1, 3,
+                up=lambda x, z: cord(p, z, min(x, z), 4),
+                sides=lambda col, row: p["edge"][0])
         # roll 4x2x2 at (68, 5): the rolled-up tip, banded with the glowing thread
         tex.box(68, 5, 4, 2, 2,
                 up=lambda x, z: p["edge_line"] if x % 4 < 2 else p["edge"][0],
@@ -320,8 +318,8 @@ def item_model(tier):
             elements.append(element("front_edge", [-8 + ox, oy + 1, z0], [8 + ox, oy + 2, z0 + 2], 0, 43, 16, 1, 2))
             for side, x0 in (("left", -12), ("right", 8)):
                 rotation = {"angle": 22.5, "axis": "x", "origin": [(-8 if side == "left" else 8) + ox, oy, z0 + 4]}
-                elements.append(element(f"{side}_curl", [x0 + ox, oy, z0], [x0 + 4 + ox, oy + 1, z0 + 4],
-                                        68, 0, 4, 1, 4, mirror=side == "right", rotation=rotation))
+                elements.append(element(f"{side}_curl", [x0 + ox, oy, z0], [x0 + 4 + ox, oy + 1, z0 + 3],
+                                        68, 0, 4, 1, 3, mirror=side == "right", rotation=rotation))
                 elements.append(element(f"{side}_curl_roll", [x0 + ox, oy, z0 - 1], [x0 + 4 + ox, oy + 2, z0 + 1],
                                         68, 5, 4, 2, 2, mirror=side == "right", rotation=rotation))
             continue

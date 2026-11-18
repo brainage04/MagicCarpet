@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import org.jspecify.annotations.NonNull;
 
@@ -123,7 +124,11 @@ public class MagicCarpetEntityRenderer
             MagicCarpetEntity entity, MagicCarpetEntityRenderState state, float tickDelta) {
         super.extractRenderState(entity, state, tickDelta);
 
-        state.yaw = entity.getYRot(tickDelta);
+        // The carpet faces where its rider looks, and the mouse turns the rider between ticks
+        // (Entity.turn, Entity.java:495-503 in 26.3), so the carpet is drawn at the rider's own
+        // interpolated yaw: its own yRotO is set once a tick and would snap the carpet round.
+        Entity rider = entity.getControllingPassenger();
+        state.yaw = rider == null ? entity.getYRot(tickDelta) : rider.getYRot(tickDelta);
         state.pitch = Mth.rotLerp(tickDelta, entity.prevRenderPitch, entity.renderPitch);
         state.roll = Mth.rotLerp(tickDelta, entity.prevRenderRoll, entity.renderRoll);
         state.speed = Mth.lerp(tickDelta, entity.prevAnimationSpeed, entity.animationSpeed);
