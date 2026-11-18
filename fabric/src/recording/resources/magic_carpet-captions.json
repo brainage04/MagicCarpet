@@ -26,5 +26,9 @@
   "magic_carpet.legendary": {
     "title": "Legendary: curls and glowing threads",
     "subtitle": "48 blocks/s, half a second to top speed"
+  },
+  "magic_carpet.input": {
+    "title": "Input overlay",
+    "subtitle": "Keys, clicks and the cursor on screen"
   }
 }

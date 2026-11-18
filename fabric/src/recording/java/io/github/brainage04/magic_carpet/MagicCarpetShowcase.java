@@ -3,6 +3,7 @@ package io.github.brainage04.magic_carpet;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.blaze3d.platform.InputConstants;
 import io.github.brainage04.magic_carpet.client.MagicCarpetFlightSound;
 import io.github.brainage04.magic_carpet.entity.ModEntities;
 import io.github.brainage04.magic_carpet.entity.custom.CarpetMotion;
@@ -27,6 +28,7 @@ import java.util.function.Predicate;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
 import net.minecraft.client.CameraType;
+import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundEventListener;
 import net.minecraft.client.sounds.WeighedSoundEvents;
@@ -182,6 +184,9 @@ public final class MagicCarpetShowcase {
      */
     private static final int MIN_MOVING_TICKS = SPEED_WINDOW_TICKS;
 
+    /** How long the input proof holds the chat screen with the cursor and the typed line on it. */
+    private static final long INPUT_PROOF_MILLIS = 2000L;
+
     private static final int CAPTION_LEAD_TICKS = 4;
     private static final int HOLD_AFTER_END_TICKS = 6;
     private static final int LOAD_TIMEOUT_TICKS = 2400;
@@ -244,6 +249,7 @@ public final class MagicCarpetShowcase {
                     client.options.fov().set(NORMAL_FOV);
                 });
         context.runOnClient(client -> client.getSoundManager().addListener(SOUNDS));
+        inputProof(context);
         tiers(context, server);
         flight(
                 context,
@@ -274,6 +280,26 @@ public final class MagicCarpetShowcase {
                     client.options.setCameraType(CameraType.FIRST_PERSON);
                     client.getSoundManager().removeListener(SOUNDS);
                 });
+    }
+
+    /**
+     * The recording harness's input overlay, on screen: the chat screen open with the cursor over it
+     * and a line typed into it, so a viewer sees the cursor and the typed keys. The line is never
+     * submitted, so nothing runs.
+     */
+    private static void inputProof(ClientGameTestContext context) {
+        String id = "magic_carpet.input";
+        caption(context, id);
+        ClientGameTestStages.markStage(id);
+        context.setScreen(() -> new ChatScreen("", false));
+        context.waitTicks(10);
+        context.getInput().setCursorPos(320.0D, 200.0D);
+        context.waitTicks(10);
+        context.getInput().typeChars("magic carpet");
+        ClientGameTestWaits.holdFor(context, INPUT_PROOF_MILLIS);
+        context.getInput().pressKey(InputConstants.KEY_ESCAPE);
+        context.waitTicks(10);
+        ClientGameTestStages.endStage(context, id, HOLD_AFTER_END_TICKS);
     }
 
     /**
