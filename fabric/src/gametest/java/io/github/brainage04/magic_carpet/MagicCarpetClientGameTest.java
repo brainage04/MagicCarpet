@@ -154,9 +154,9 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
 
     /**
      * The film measures a tier's top speed after a wall-clock hold, so a client that ticks below 20
-     * a second gets fewer ticks than the tier's acceleration needs and the carpet is still
-     * speeding up when the window opens. The basic tier accelerates for 2 s, 40 ticks; a 1.5 s
-     * hold at 10 ticks a second is 15 ticks, and the carpet is then at 11.21 blocks/s, not 12.
+     * a second gets fewer ticks than the tier's acceleration needs and the carpet is still speeding
+     * up when the window opens. The basic tier accelerates for 2 s, 40 ticks; a 1.5 s hold at 10
+     * ticks a second is 15 ticks, and the carpet is then at 11.21 blocks/s, not 12.
      *
      * <p>This runs the film's own measurement at 10 ticks a second, so it fails when the hold is
      * wall clock alone and passes when the film waits in ticks for the speed it checks.

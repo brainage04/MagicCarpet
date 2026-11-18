@@ -636,9 +636,7 @@ public final class MagicCarpetShowcase {
                                             vehicle instanceof MagicCarpetEntity,
                                             "The player must ride a carpet to measure its speed");
                                     return CarpetMotion.ticksToTopSpeed(
-                                            ((MagicCarpetEntity) vehicle)
-                                                    .tier()
-                                                    .accelerationTime(),
+                                            ((MagicCarpetEntity) vehicle).tier().accelerationTime(),
                                             SPEED_TOLERANCE);
                                 })
                         + SPEED_WINDOW_TICKS;
