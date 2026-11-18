@@ -155,6 +155,9 @@ public final class MagicCarpetShowcase {
 
     private static final int TURN_TICKS = 20;
 
+    /** {@code Entity.turn} scales its argument by this much (Entity.java:498 in 26.3). */
+    private static final double TURN_SCALE = 0.15D;
+
     private static final int LAND_TIMEOUT_TICKS = 200;
 
     /** How long the landed carpet stays on screen before its rider gets off. */
@@ -550,7 +553,11 @@ public final class MagicCarpetShowcase {
         // sees the yaw the frame is drawn at.
         for (int tick = 1; tick <= TURN_TICKS; tick++) {
             watch.tick(context);
-            context.runOnClient(client -> client.player.turn(TURN_DEGREES / TURN_TICKS, 0.0D));
+            context.runOnClient(
+                    client -> client.player.turn(TURN_DEGREES / TURN_TICKS / TURN_SCALE, 0.0D));
+            // Measured after the turn, as the frame is drawn: the carpet's own tick has already
+            // run, so a carpet drawn from its own yaw fields is a tick behind the rider here.
+            watch.measureYawGap(context);
         }
         float fromPitch = context.computeOnClient(client -> client.player.getXRot());
         for (int tick = 1; tick <= LOOK_DOWN_TICKS; tick++) {
@@ -697,6 +704,29 @@ public final class MagicCarpetShowcase {
             }
         }
 
+        /**
+         * The gap between the yaw the frame draws the carpet at and the yaw it draws the rider at.
+         * The render state's yaw is what the frame draws, so this compares the drawn carpet with
+         * the drawn rider, not two entity fields that positionRider keeps equal by construction.
+         */
+        private void measureYawGap(ClientGameTestContext context) {
+            context.runOnClient(
+                    client -> {
+                        MagicCarpetEntity carpet = (MagicCarpetEntity) client.player.getVehicle();
+                        MagicCarpetEntityRenderer renderer =
+                                (MagicCarpetEntityRenderer)
+                                        client.getEntityRenderDispatcher().getRenderer(carpet);
+                        MagicCarpetEntityRenderState drawn =
+                                renderer.createRenderState(carpet, 0.5F);
+                        this.widestYawGap =
+                                Math.max(
+                                        this.widestYawGap,
+                                        Math.abs(
+                                                Mth.wrapDegrees(
+                                                        drawn.yaw - client.player.getYRot(0.5F))));
+                    });
+        }
+
         private void tick(ClientGameTestContext context) {
             context.waitTick();
             context.runOnClient(
@@ -768,20 +798,6 @@ public final class MagicCarpetShowcase {
                                                                             - this.lastRipplePhase)
                                                                     * Mth.RAD_TO_DEG)));
                         }
-                        // The render state's yaw is what the frame draws, so this compares the
-                        // drawn carpet with the drawn rider, not two entity fields that
-                        // positionRider keeps equal by construction.
-                        MagicCarpetEntityRenderer renderer =
-                                (MagicCarpetEntityRenderer)
-                                        client.getEntityRenderDispatcher().getRenderer(carpet);
-                        MagicCarpetEntityRenderState drawn =
-                                renderer.createRenderState(carpet, 0.5F);
-                        this.widestYawGap =
-                                Math.max(
-                                        this.widestYawGap,
-                                        Math.abs(
-                                                Mth.wrapDegrees(
-                                                        drawn.yaw - client.player.getYRot(0.5F))));
                         this.lastCameraYaw = camera.yRot();
                         this.lastCameraPitch = camera.xRot();
                         this.lastAnimationSpeed = carpet.animationSpeed;

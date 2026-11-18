@@ -120,8 +120,9 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
             context.waitTick();
             // The mouse turns the rider between ticks, moving both of its yaw fields
             // (Entity.turn, Entity.java:495-503 in 26.3), so the frame is drawn at a yaw the
-            // carpet's own tick never saw.
-            context.runOnClient(client -> client.player.turn(4.5D, 0.0D));
+            // carpet's own tick never saw. turn scales its argument by 0.15
+            // (Entity.java:498), so 30 is 4.5 degrees: a quarter turn over the 20 ticks.
+            context.runOnClient(client -> client.player.turn(30.0D, 0.0D));
             float gap =
                     context.computeOnClient(
                             client -> {
