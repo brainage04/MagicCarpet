@@ -156,11 +156,25 @@ public class MagicCarpetEntity extends VehicleEntity {
         }
 
         collectAdditionalPassengers();
+    }
 
-        if (hasControllingPassenger()) {
-            //noinspection DataFlowIssue - should be obvious why
-            setYRot(getControllingPassenger().getYRot());
+    /**
+     * The carpet faces where its rider looks, and the rider's seat is offset along that facing, so
+     * the yaw has to be current when the seat is placed. A vehicle ticks before its passengers
+     * (ClientLevel.java:468-486 in 26.3), so setting the yaw in {@link #tick()} would use the
+     * rider's yaw from the tick before and draw the carpet, and swing the seat, one tick late.
+     *
+     * <p>Both yaw fields come from the rider, so the frame draws the carpet at the same yaw it
+     * draws the rider: the carpet's own {@code yRotO} is a tick older than the rider's, and a
+     * carpet drawn between the two would sit half a tick behind its rider.
+     */
+    @Override
+    protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
+        if (passenger == getControllingPassenger()) {
+            setYRot(passenger.getYRot());
+            this.yRotO = passenger.yRotO;
         }
+        super.positionRider(passenger, moveFunction);
     }
 
     private void updateTilt(Vec3 movement) {
