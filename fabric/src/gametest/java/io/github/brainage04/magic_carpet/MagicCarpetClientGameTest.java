@@ -32,6 +32,7 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class MagicCarpetClientGameTest implements FabricClientGameTest {
