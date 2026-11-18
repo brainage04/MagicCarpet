@@ -29,8 +29,7 @@ public final class CarpetMotion {
      */
     public static int ticksToTopSpeed(double accelerationTime, double tolerance) {
         return (int)
-                Math.ceil(
-                        Math.log(tolerance) / Math.log(1.0 - smoothingFactor(accelerationTime)));
+                Math.ceil(Math.log(tolerance) / Math.log(1.0 - smoothingFactor(accelerationTime)));
     }
 
     /**
