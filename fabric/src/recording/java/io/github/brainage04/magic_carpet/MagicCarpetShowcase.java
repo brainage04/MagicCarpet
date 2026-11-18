@@ -712,18 +712,29 @@ public final class MagicCarpetShowcase {
         private void measureYawGap(ClientGameTestContext context) {
             context.runOnClient(
                     client -> {
-                        MagicCarpetEntity carpet = (MagicCarpetEntity) client.player.getVehicle();
+                        Entity vehicle = client.player.getVehicle();
+                        check(
+                                vehicle instanceof MagicCarpetEntity
+                                        && vehicle.getId() == this.carpetId,
+                                "The player must ride the carpet through its flight");
+                        MagicCarpetEntity carpet = (MagicCarpetEntity) vehicle;
                         MagicCarpetEntityRenderer renderer =
                                 (MagicCarpetEntityRenderer)
                                         client.getEntityRenderDispatcher().getRenderer(carpet);
-                        MagicCarpetEntityRenderState drawn =
-                                renderer.createRenderState(carpet, 0.5F);
-                        this.widestYawGap =
-                                Math.max(
-                                        this.widestYawGap,
-                                        Math.abs(
-                                                Mth.wrapDegrees(
-                                                        drawn.yaw - client.player.getYRot(0.5F))));
+                        // Both ends of the tick, as the position gap does: a carpet a tick behind
+                        // is a whole turn step off at the end of the tick and none at its start.
+                        for (float partialTick : new float[] {0.0F, 1.0F}) {
+                            MagicCarpetEntityRenderState drawn =
+                                    renderer.createRenderState(carpet, partialTick);
+                            this.widestYawGap =
+                                    Math.max(
+                                            this.widestYawGap,
+                                            Math.abs(
+                                                    Mth.wrapDegrees(
+                                                            drawn.yaw
+                                                                    - client.player.getYRot(
+                                                                            partialTick))));
+                        }
                     });
         }
 
