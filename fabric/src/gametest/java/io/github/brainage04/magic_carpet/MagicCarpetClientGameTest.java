@@ -225,10 +225,18 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                 context.getInput().releaseKey(options -> options.keyUp);
             }
         } finally {
+            // The film's tiers stage counts the carpets in a box around z 0.5, so this test's
+            // carpet must not be left there.
             server.runOnServer(
                     minecraftServer -> {
                         minecraftServer.tickRateManager().setTickRate(20.0F);
-                        minecraftServer.getPlayerList().getPlayers().getFirst().stopRiding();
+                        ServerPlayer player =
+                                minecraftServer.getPlayerList().getPlayers().getFirst();
+                        player.stopRiding();
+                        Entity carpet = player.level().getEntity(carpetId[0]);
+                        if (carpet != null) {
+                            carpet.discard();
+                        }
                     });
         }
     }
