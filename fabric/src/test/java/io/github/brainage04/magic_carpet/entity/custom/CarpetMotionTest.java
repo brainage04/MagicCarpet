@@ -144,6 +144,30 @@ class CarpetMotionTest {
         }
     }
 
+    /**
+     * The film measures the speed after a wall-clock hold, so at a slow tick rate it gets fewer
+     * ticks than the tier's acceleration needs. The basic tier's 2 s acceleration is 40 ticks, and
+     * a 1.5 s hold at 10 ticks a second is 15: the carpet is then at 11.21 blocks/s, not 12.
+     */
+    @Test
+    void ticksToTopSpeedCoversTheWholeAcceleration() {
+        for (double seconds : new double[] {0.5, 1.0, 2.0}) {
+            double factor = CarpetMotion.smoothingFactor(seconds);
+            int ticks = CarpetMotion.ticksToTopSpeed(seconds, 0.01);
+            assertTrue(
+                    Math.pow(1.0 - factor, ticks) <= 0.01,
+                    "the speed is still short after " + ticks + " ticks of " + seconds + " s");
+            assertTrue(
+                    Math.pow(1.0 - factor, ticks - 1) > 0.01,
+                    "the bound is later than it needs to be for " + seconds + " s");
+            // The tier's own figure is the acceleration time in ticks; the bound may round one
+            // tick past it, because 40 ticks of the 2 s curve leave 1.0000000000000014 %.
+            assertTrue(
+                    Math.abs(ticks - seconds * 20.0) <= 1.0,
+                    ticks + " ticks for " + seconds + " s");
+        }
+    }
+
     @Property
     void aTickCoversPartOfTheWayButNeverAllOfIt(
             @ForAll @DoubleRange(min = 0.05, max = 60.0) double seconds) {

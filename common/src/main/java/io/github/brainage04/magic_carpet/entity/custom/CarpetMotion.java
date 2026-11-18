@@ -22,6 +22,18 @@ public final class CarpetMotion {
     }
 
     /**
+     * The ticks a carpet needs, from rest, before its speed is within {@code tolerance} of its top
+     * speed. A film that measures the speed after a wall-clock hold gets fewer ticks than it
+     * expects whenever the client ticks below 20 a second, and the carpet is then still
+     * accelerating.
+     */
+    public static int ticksToTopSpeed(double accelerationTime, double tolerance) {
+        return (int)
+                Math.ceil(
+                        Math.log(tolerance) / Math.log(1.0 - smoothingFactor(accelerationTime)));
+    }
+
+    /**
      * One tick from {@code current} towards {@code target}. Each axis that would get slower moves
      * at half the rate, so the carpet coasts for twice its acceleration time.
      */

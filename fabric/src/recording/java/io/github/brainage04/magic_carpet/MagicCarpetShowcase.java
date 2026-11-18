@@ -496,11 +496,11 @@ public final class MagicCarpetShowcase {
                 new RiderWatch(carpetId[0], context.computeOnClient(client -> SOUNDS.flight));
         context.getInput().holdKey(options -> options.keyUp);
         try {
+            // The hold is wall clock, so a client ticking below 20 a second gets fewer ticks than
+            // the tier's acceleration needs and the carpet is still speeding up when the window
+            // opens. measureTopSpeed waits in ticks for the speed the check is about.
             watch.holdFor(context, FLY_MILLIS);
-            double before = alongZ(server);
-            double ticksBefore = gameTime(server);
-            watch.waitTicks(context, SPEED_WINDOW_TICKS);
-            double measured = Math.abs(alongZ(server) - before) / (gameTime(server) - ticksBefore);
+            double measured = measureTopSpeed(server, () -> watch.tick(context), topSpeed);
             check(
                     Math.abs(measured - topSpeed) <= topSpeed * SPEED_TOLERANCE,
                     type
@@ -617,6 +617,51 @@ public final class MagicCarpetShowcase {
                                     + player.position());
                 });
         ClientGameTestStages.endStage(context, id, HOLD_AFTER_END_TICKS);
+    }
+
+    /**
+     * The carpet's speed over {@link #SPEED_WINDOW_TICKS} ticks, in blocks a tick, once it has
+     * reached {@code topSpeed}. The wait is in ticks, not wall clock: a client that ticks below 20
+     * a second gets fewer ticks than the tier's acceleration needs from a wall-clock hold, and the
+     * window would then measure the tail of the acceleration. The basic tier's 2 s acceleration is
+     * 40 ticks, and a 1.5 s hold at 10 ticks a second is 15, which measures 11.21 blocks/s.
+     */
+    static double measureTopSpeed(
+            TestDedicatedServerContext server, Runnable tick, double topSpeed) {
+        int bound =
+                server.computeOnServer(
+                                minecraftServer -> {
+                                    Entity vehicle = player(minecraftServer).getVehicle();
+                                    check(
+                                            vehicle instanceof MagicCarpetEntity,
+                                            "The player must ride a carpet to measure its speed");
+                                    return CarpetMotion.ticksToTopSpeed(
+                                            ((MagicCarpetEntity) vehicle)
+                                                    .tier()
+                                                    .accelerationTime(),
+                                            SPEED_TOLERANCE);
+                                })
+                        + SPEED_WINDOW_TICKS;
+        for (int waited = 0; !atTopSpeed(server, topSpeed); waited++) {
+            check(waited < bound, "The carpet must reach its top speed within " + bound + " ticks");
+            tick.run();
+        }
+        double before = alongZ(server);
+        double ticksBefore = gameTime(server);
+        for (int waited = 0; waited < SPEED_WINDOW_TICKS; waited++) {
+            tick.run();
+        }
+        return Math.abs(alongZ(server) - before) / (gameTime(server) - ticksBefore);
+    }
+
+    private static boolean atTopSpeed(TestDedicatedServerContext server, double topSpeed) {
+        return server.computeOnServer(
+                minecraftServer -> {
+                    Entity vehicle = player(minecraftServer).getVehicle();
+                    return vehicle != null
+                            && vehicle.getDeltaMovement().horizontalDistance()
+                                    >= topSpeed * (1.0D - SPEED_TOLERANCE);
+                });
     }
 
     /**

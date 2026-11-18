@@ -53,6 +53,7 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                     context.runOnClient(MagicCarpetClientGameTest::verifyTierModels);
                     context.runOnClient(client -> verifyAnimation());
                     verifyRiderYaw(context, server);
+                    verifySpeedAtASlowTickRate(context, server);
                     MagicCarpetShowcase.film(context, server);
                 });
     }
@@ -149,6 +150,87 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
         server.runOnServer(
                 minecraftServer ->
                         minecraftServer.getPlayerList().getPlayers().getFirst().stopRiding());
+    }
+
+    /**
+     * The film measures a tier's top speed after a wall-clock hold, so a client that ticks below 20
+     * a second gets fewer ticks than the tier's acceleration needs and the carpet is still
+     * speeding up when the window opens. The basic tier accelerates for 2 s, 40 ticks; a 1.5 s
+     * hold at 10 ticks a second is 15 ticks, and the carpet is then at 11.21 blocks/s, not 12.
+     *
+     * <p>This runs the film's own measurement at 10 ticks a second, so it fails when the hold is
+     * wall clock alone and passes when the film waits in ticks for the speed it checks.
+     */
+    private static void verifySpeedAtASlowTickRate(
+            ClientGameTestContext context, TestDedicatedServerContext server) {
+        int[] carpetId = new int[1];
+        server.runOnServer(
+                minecraftServer -> {
+                    ServerPlayer player = minecraftServer.getPlayerList().getPlayers().getFirst();
+                    ServerLevel level = player.level();
+                    // The film's own basic site, where buildStage placed the runway: the floor is
+                    // y 100, the carpet flies at 101.5, and the rider stands on the floor at 101.
+                    player.teleportTo(level, 0.5D, 101.0D, 3.3D, Set.of(), 180.0F, 10.0F, true);
+                    MagicCarpetEntity carpet =
+                            (MagicCarpetEntity)
+                                    ModEntities.basic().create(level, EntitySpawnReason.COMMAND);
+                    carpet.setPos(0.5D, 101.5D, 0.5D);
+                    level.addFreshEntity(carpet);
+                    player.startRiding(carpet, true, true);
+                    carpetId[0] = carpet.getId();
+                });
+        try {
+            context.waitFor(
+                    client ->
+                            client.player.getVehicle() != null
+                                    && client.player.getVehicle().getId() == carpetId[0],
+                    200);
+            context.waitTicks(20);
+            context.getInput().holdKey(options -> options.keyUp);
+            try {
+                // The server must see the key before the hold means anything.
+                for (int tick = 0; ; tick++) {
+                    if (tick > 100) {
+                        throw new AssertionError("The forward key never reached the server");
+                    }
+                    if (server.computeOnServer(
+                            minecraftServer ->
+                                    minecraftServer
+                                            .getPlayerList()
+                                            .getPlayers()
+                                            .getFirst()
+                                            .getLastClientInput()
+                                            .forward())) {
+                        break;
+                    }
+                    context.waitTick();
+                }
+                server.runOnServer(
+                        minecraftServer -> minecraftServer.tickRateManager().setTickRate(10.0F));
+                // The film's own hold, in wall clock, at the slow rate, then its own measurement.
+                long end = System.currentTimeMillis() + 1500L;
+                while (System.currentTimeMillis() < end) {
+                    context.waitTick();
+                }
+                double measured =
+                        MagicCarpetShowcase.measureTopSpeed(server, context::waitTick, 0.6D);
+                if (Math.abs(measured - 0.6D) > 0.6D * 0.05D) {
+                    throw new AssertionError(
+                            "The film's measurement at 10 ticks a second must reach the top speed;"
+                                    + " it measured "
+                                    + measured * 20.0D
+                                    + " blocks/s");
+                }
+            } finally {
+                context.getInput().releaseKey(options -> options.keyUp);
+            }
+        } finally {
+            server.runOnServer(
+                    minecraftServer -> {
+                        minecraftServer.tickRateManager().setTickRate(20.0F);
+                        minecraftServer.getPlayerList().getPlayers().getFirst().stopRiding();
+                    });
+        }
     }
 
     /**
