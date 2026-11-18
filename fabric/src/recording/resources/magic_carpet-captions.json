@@ -5,7 +5,7 @@
   },
   "magic_carpet.basic.sneak": {
     "title": "Basic: sneak and right click",
-    "subtitle": "The carpet stays empty"
+    "subtitle": "Sneaking keeps the carpet empty, as it does a boat"
   },
   "magic_carpet.basic": {
     "title": "Basic: right click to ride",
@@ -13,7 +13,7 @@
   },
   "magic_carpet.advanced.sneak": {
     "title": "Advanced: sneak and right click",
-    "subtitle": "The carpet stays empty"
+    "subtitle": "Sneaking keeps the carpet empty, as it does a boat"
   },
   "magic_carpet.advanced": {
     "title": "Advanced: gold cord and tassels",
@@ -21,7 +21,7 @@
   },
   "magic_carpet.legendary.sneak": {
     "title": "Legendary: sneak and right click",
-    "subtitle": "The carpet stays empty"
+    "subtitle": "Sneaking keeps the carpet empty, as it does a boat"
   },
   "magic_carpet.legendary": {
     "title": "Legendary: curls and glowing threads",
