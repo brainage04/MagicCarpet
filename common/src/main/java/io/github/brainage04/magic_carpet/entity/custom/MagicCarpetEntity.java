@@ -308,8 +308,8 @@ public class MagicCarpetEntity extends VehicleEntity {
      * The animation follows the carpet's own velocity, not the distance the client drew it: the
      * client only moves the carpet when a move packet lands, every third tick, so the drawn
      * distance is zero on two ticks and three times the real speed on the third
-     * (SteppedInterpolationHandler.java:177-193 in 26.3, EntityType.java:479 for the interval).
-     * The phases are accumulated, so a change of speed never jumps the wave.
+     * (SteppedInterpolationHandler.java:177-193 in 26.3, EntityType.java:479 for the interval). The
+     * phases are accumulated, so a change of speed never jumps the wave.
      */
     private void updateAnimation() {
         this.prevAnimationSpeed = this.animationSpeed;

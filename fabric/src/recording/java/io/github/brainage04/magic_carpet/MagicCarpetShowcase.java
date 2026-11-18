@@ -529,7 +529,6 @@ public final class MagicCarpetShowcase {
                     checkNoItemsAt(player.level(), site);
                 });
 
-
         // A rider that turns while flying: the carpet's yaw follows the rider's every tick
         // (MagicCarpetEntity.java:161-164), and the seat offset is rotated by that yaw, so a carpet
         // that turns in steps swings its rider round in steps.
@@ -739,8 +738,7 @@ public final class MagicCarpetShowcase {
                             if (carpet.isInterpolating()) {
                                 this.interpolatingTicks++;
                             }
-                            this.steepestCameraStep =
-                                    Math.max(this.steepestCameraStep, cameraStep);
+                            this.steepestCameraStep = Math.max(this.steepestCameraStep, cameraStep);
                             this.steepestSpeedStep =
                                     Math.max(
                                             this.steepestSpeedStep,
@@ -753,8 +751,7 @@ public final class MagicCarpetShowcase {
                                             Math.abs(
                                                     Mth.wrapDegrees(
                                                             (carpet.ripplePhase
-                                                                            - this
-                                                                                    .lastRipplePhase)
+                                                                            - this.lastRipplePhase)
                                                                     * Mth.RAD_TO_DEG)));
                         }
                         this.widestYawGap =

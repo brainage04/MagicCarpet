@@ -107,8 +107,7 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
                         .addBox(10.0F, 0.0F, 0.0F, 2.0F, 1.0F, 4.0F, BORDER_SIDES);
             }
             if (cutCorners) {
-                cubes.texOffs(0, 43)
-                        .addBox(-8.0F, 0.0F, 0.0F, 16.0F, 1.0F, 2.0F, BORDER_SIDES);
+                cubes.texOffs(0, 43).addBox(-8.0F, 0.0F, 0.0F, 16.0F, 1.0F, 2.0F, BORDER_SIDES);
             } else if (first) {
                 cubes.texOffs(0, 40)
                         .addBox(-10.0F, 0.0F, 0.0F, 20.0F, 1.0F, 2.0F, BORDER_SIDES_BETWEEN);

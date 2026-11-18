@@ -60,10 +60,8 @@ class CarpetAnimationTest {
     @Test
     void theSpeedShareFollowsTheVelocity() {
         assertEquals(0.0F, CarpetAnimation.speedTarget(Vec3.ZERO, 0.6), EPSILON);
-        assertEquals(
-                1.0F, CarpetAnimation.speedTarget(new Vec3(0.6, 0.0, 0.0), 0.6), EPSILON);
-        assertEquals(
-                0.5F, CarpetAnimation.speedTarget(new Vec3(0.0, 0.0, 0.3), 0.6), EPSILON);
+        assertEquals(1.0F, CarpetAnimation.speedTarget(new Vec3(0.6, 0.0, 0.0), 0.6), EPSILON);
+        assertEquals(0.5F, CarpetAnimation.speedTarget(new Vec3(0.0, 0.0, 0.3), 0.6), EPSILON);
         assertEquals(
                 1.0F,
                 CarpetAnimation.speedTarget(new Vec3(6.0, 0.0, 0.0), 0.6),
