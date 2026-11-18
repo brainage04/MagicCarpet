@@ -110,8 +110,7 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                     player.teleportTo(level, 400.5D, 100.0D, 0.5D, Set.of(), 0.0F, 0.0F, true);
                     MagicCarpetEntity carpet =
                             (MagicCarpetEntity)
-                                    ModEntities.basic()
-                                            .create(level, EntitySpawnReason.COMMAND);
+                                    ModEntities.basic().create(level, EntitySpawnReason.COMMAND);
                     carpet.setPos(400.5D, 100.0D, 0.5D);
                     level.addFreshEntity(carpet);
                     player.startRiding(carpet, true, true);
@@ -140,8 +139,7 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                                 MagicCarpetEntityRenderState state =
                                         renderer.createRenderState(magic, 0.5F);
                                 return Math.abs(
-                                        Mth.wrapDegrees(
-                                                state.yaw - client.player.getYRot(0.5F)));
+                                        Mth.wrapDegrees(state.yaw - client.player.getYRot(0.5F)));
                             });
             if (gap > 0.01F) {
                 throw new AssertionError(
@@ -154,11 +152,7 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
         }
         server.runOnServer(
                 minecraftServer ->
-                        minecraftServer
-                                .getPlayerList()
-                                .getPlayers()
-                                .getFirst()
-                                .stopRiding());
+                        minecraftServer.getPlayerList().getPlayers().getFirst().stopRiding());
     }
 
     private static void verifyTierModels(Minecraft client) {
