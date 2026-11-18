@@ -283,9 +283,9 @@ public final class MagicCarpetShowcase {
     }
 
     /**
-     * The recording harness's input overlay, on screen: the chat screen open with the cursor over it
-     * and a line typed into it, so a viewer sees the cursor and the typed keys. The line is never
-     * submitted, so nothing runs.
+     * The recording harness's input overlay, on screen: the chat screen open with the cursor over
+     * it and a line typed into it, so a viewer sees the cursor and the typed keys. The line is
+     * never submitted, so nothing runs.
      */
     private static void inputProof(ClientGameTestContext context) {
         String id = "magic_carpet.input";
