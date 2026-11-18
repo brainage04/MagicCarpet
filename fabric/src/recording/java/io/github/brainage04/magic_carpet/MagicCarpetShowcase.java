@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
+import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundEventListener;
@@ -147,6 +148,11 @@ public final class MagicCarpetShowcase {
     /** Ticks the rider takes to look down to the pitch that flies the carpet down. */
     private static final int LOOK_DOWN_TICKS = 8;
 
+    /** How far and over how many ticks the rider turns while flying, to show the camera's yaw. */
+    private static final float TURN_DEGREES = 90.0F;
+
+    private static final int TURN_TICKS = 20;
+
     private static final int LAND_TIMEOUT_TICKS = 200;
 
     /** How long the landed carpet stays on screen before its rider gets off. */
@@ -175,6 +181,12 @@ public final class MagicCarpetShowcase {
      * on the legendary one, and the eased tilt by at most 2.4 (measured 12 Nov 2026).
      */
     private static final float MAX_TILT_STEP = 4.0F;
+
+    /**
+     * The most, in degrees, that a frame may draw the carpet's facing away from its rider's. The
+     * seat is offset along the carpet's facing, so a gap swings the rider round the carpet.
+     */
+    private static final float MAX_YAW_GAP = 0.01F;
 
     /**
      * The fewest ticks of a flight in which the carpet must move, so the checks are not empty: at
@@ -517,6 +529,16 @@ public final class MagicCarpetShowcase {
                     checkNoItemsAt(player.level(), site);
                 });
 
+
+        // A rider that turns while flying: the carpet's yaw follows the rider's every tick
+        // (MagicCarpetEntity.java:161-164), and the seat offset is rotated by that yaw, so a carpet
+        // that turns in steps swings its rider round in steps.
+        float fromYaw = context.computeOnClient(client -> client.player.getYRot());
+        for (int tick = 1; tick <= TURN_TICKS; tick++) {
+            float yaw = fromYaw + TURN_DEGREES * tick / TURN_TICKS;
+            context.runOnClient(client -> client.player.setYRot(yaw));
+            watch.tick(context);
+        }
         float fromPitch = context.computeOnClient(client -> client.player.getXRot());
         for (int tick = 1; tick <= LOOK_DOWN_TICKS; tick++) {
             float pitch =
@@ -621,6 +643,16 @@ public final class MagicCarpetShowcase {
         private int movingTicks;
         private float loudest;
         private float volumeError;
+        private final List<String> samples = new ArrayList<>();
+        private float steepestCameraStep;
+        private float steepestSpeedStep;
+        private float steepestRippleStep;
+        private float lastCameraYaw;
+        private float lastCameraPitch;
+        private float lastAnimationSpeed;
+        private float lastRipplePhase;
+        private int interpolatingTicks;
+        private float widestYawGap;
 
         private RiderWatch(int carpetId, MagicCarpetFlightSound sound) {
             this.carpetId = carpetId;
@@ -692,6 +724,80 @@ public final class MagicCarpetShowcase {
                                                         - MagicCarpetFlightSound.volumeFor(
                                                                 carpet.getDrawnMovement()
                                                                         .lengthSqr())));
+
+                        // The camera's yaw and pitch come from the rider (Camera.java:259-262 in
+                        // 26.3), and the rider's position from the carpet's current position, so
+                        // a carpet that moves in steps moves the camera in steps.
+                        Camera camera = client.gameRenderer.mainCamera();
+                        float cameraStep =
+                                Math.max(
+                                        Math.abs(
+                                                Mth.wrapDegrees(
+                                                        camera.yRot() - this.lastCameraYaw)),
+                                        Math.abs(camera.xRot() - this.lastCameraPitch));
+                        if (this.samples.size() > 1) {
+                            if (carpet.isInterpolating()) {
+                                this.interpolatingTicks++;
+                            }
+                            this.steepestCameraStep =
+                                    Math.max(this.steepestCameraStep, cameraStep);
+                            this.steepestSpeedStep =
+                                    Math.max(
+                                            this.steepestSpeedStep,
+                                            Math.abs(
+                                                    carpet.animationSpeed
+                                                            - this.lastAnimationSpeed));
+                            this.steepestRippleStep =
+                                    Math.max(
+                                            this.steepestRippleStep,
+                                            Math.abs(
+                                                    Mth.wrapDegrees(
+                                                            (carpet.ripplePhase
+                                                                            - this
+                                                                                    .lastRipplePhase)
+                                                                    * Mth.RAD_TO_DEG)));
+                        }
+                        this.widestYawGap =
+                                Math.max(
+                                        this.widestYawGap,
+                                        Math.abs(
+                                                Mth.wrapDegrees(
+                                                        carpet.getYRot(0.5F)
+                                                                - client.player.getYRot(0.5F))));
+                        this.lastCameraYaw = camera.yRot();
+                        this.lastCameraPitch = camera.xRot();
+                        this.lastAnimationSpeed = carpet.animationSpeed;
+                        this.lastRipplePhase = carpet.ripplePhase;
+                        this.samples.add(
+                                this.samples.size()
+                                        + ","
+                                        + camera.yRot()
+                                        + ","
+                                        + camera.xRot()
+                                        + ","
+                                        + client.player.getX()
+                                        + ","
+                                        + client.player.getY()
+                                        + ","
+                                        + client.player.getZ()
+                                        + ","
+                                        + carpet.getX()
+                                        + ","
+                                        + carpet.getY()
+                                        + ","
+                                        + carpet.getZ()
+                                        + ","
+                                        + carpet.animationSpeed
+                                        + ","
+                                        + carpet.ripplePhase
+                                        + ","
+                                        + carpet.isInterpolating()
+                                        + ","
+                                        + carpet.getDeltaMovement().length()
+                                        + ","
+                                        + carpet.getYRot(0.5F)
+                                        + ","
+                                        + client.player.getYRot(0.5F));
                     });
         }
 
@@ -699,13 +805,21 @@ public final class MagicCarpetShowcase {
             MagicCarpet.LOGGER.info(
                     "Flight of {}: moved in {} ticks, widest carpet-to-rider gap {} blocks,"
                             + " steepest tilt step {} degrees, loudest wind {}, wind volume off by"
-                            + " up to {}",
+                            + " up to {}, steepest camera step {} degrees, steepest animation speed"
+                            + " step {}, steepest ripple step {} degrees, interpolating ticks {},"
+                            + " widest carpet-to-rider yaw gap {} degrees",
                     type,
                     this.movingTicks,
                     this.widestGap,
                     this.steepestTiltStep,
                     this.loudest,
-                    this.volumeError);
+                    this.volumeError,
+                    this.steepestCameraStep,
+                    this.steepestSpeedStep,
+                    this.steepestRippleStep,
+                    this.interpolatingTicks,
+                    this.widestYawGap);
+            writeSamples(type);
             check(
                     this.movingTicks >= MIN_MOVING_TICKS,
                     type + " must move in at least " + MIN_MOVING_TICKS + " ticks of its flight");
@@ -716,6 +830,13 @@ public final class MagicCarpetShowcase {
                             + " under its rider; they were drawn "
                             + this.widestGap
                             + " blocks apart");
+            check(
+                    this.widestYawGap <= MAX_YAW_GAP,
+                    "Every frame must draw "
+                            + type
+                            + " facing where it draws its rider; they were drawn "
+                            + this.widestYawGap
+                            + " degrees apart");
             check(
                     this.steepestTiltStep <= MAX_TILT_STEP,
                     type
@@ -737,6 +858,15 @@ public final class MagicCarpetShowcase {
                             + expected
                             + " at top speed, reached "
                             + this.loudest);
+        }
+
+        /** Logs this flight's per-tick samples for the frame checks. */
+        private void writeSamples(EntityType<?> type) {
+            MagicCarpet.LOGGER.info(
+                    "Samples of {}: tick,cameraYaw,cameraPitch,playerX,playerY,playerZ,carpetX,"
+                            + "carpetY,carpetZ,animationSpeed,ripplePhase,interpolating,deltaMovement,carpetDrawnYaw,riderDrawnYaw|{}",
+                    type,
+                    String.join("|", this.samples));
         }
     }
 

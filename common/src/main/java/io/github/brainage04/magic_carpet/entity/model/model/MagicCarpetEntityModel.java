@@ -198,12 +198,11 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
         this.carpet.xRot = 0.015F * Mth.sin(time * 0.05F + 1.0F) * calm;
 
         float amplitude = 0.4F + 1.1F * speed;
-        float frequency = 0.08F + 0.42F * speed;
         for (int i = 0; i <= SEGMENTS; i++) {
             float along = (float) i / SEGMENTS;
             float z = SEGMENT_LENGTH * i;
             this.heights[i] =
-                    amplitude * (0.5F + along) * Mth.sin(z * 0.22F - time * frequency)
+                    amplitude * (0.5F + along) * Mth.sin(z * 0.22F - state.ripplePhase)
                             + 1.4F * speed * along * along;
         }
         for (int i = 0; i < SEGMENTS; i++) {
@@ -214,8 +213,7 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
         }
 
         for (int i = 0; i < this.backTassels.length; i++) {
-            float flutter =
-                    (0.12F + 0.3F * speed) * Mth.sin(time * (0.12F + 0.6F * speed) + i * 1.3F);
+            float flutter = (0.12F + 0.3F * speed) * Mth.sin(state.flutterPhase + i * 1.3F);
             float sway = 0.12F * Mth.sin(time * 0.09F + i * 2.1F) * calm;
             this.backTassels[i].xRot = Mth.lerp(speed, TASSEL_DROOP, 0.2F) + flutter;
             this.backTassels[i].yRot = sway;

@@ -43,11 +43,10 @@ public class MagicCarpetEntity extends VehicleEntity {
     private static final double MAX_TILT_ROLL = 12.0;
 
     /**
-     * The share of the way the tilt and the ripple move towards the carpet's drawn movement each
-     * tick. That movement changes in steps, once per position update from the server, because the
-     * interpolation handler moves the carpet along a straight line from one update to the next
-     * (SteppedInterpolationHandler.java:177-193 in 26.3). Easing keeps the tilt from snapping at
-     * each step.
+     * The share of the way the tilt and the animation speed move towards their target each tick.
+     * The tilt's target comes from the distance the client drew the carpet, which changes in steps
+     * once per position update from the server (SteppedInterpolationHandler.java:177-193 in 26.3),
+     * so easing keeps the tilt from snapping at each step.
      */
     private static final float MOTION_EASING = 0.25F;
 
@@ -61,6 +60,14 @@ public class MagicCarpetEntity extends VehicleEntity {
     public float prevAnimationSpeed;
 
     public float animationSpeed;
+
+    public float prevRipplePhase;
+
+    public float ripplePhase;
+
+    public float prevFlutterPhase;
+
+    public float flutterPhase;
 
     private Vec3 drawnMovement = Vec3.ZERO;
 
@@ -144,7 +151,7 @@ public class MagicCarpetEntity extends VehicleEntity {
         if (level().isClientSide()) {
             this.drawnMovement = position().subtract(this.xo, this.yo, this.zo);
             updateTilt(this.drawnMovement);
-            updateAnimationSpeed(this.drawnMovement);
+            updateAnimation();
             spawnAmbientParticles();
         }
 
@@ -283,10 +290,29 @@ public class MagicCarpetEntity extends VehicleEntity {
         move(MoverType.PLAYER, this.getDeltaMovement());
     }
 
-    private void updateAnimationSpeed(Vec3 movement) {
+    /**
+     * The animation follows the carpet's own velocity, not the distance the client drew it: the
+     * client only moves the carpet when a move packet lands, every third tick, so the drawn
+     * distance is zero on two ticks and three times the real speed on the third
+     * (SteppedInterpolationHandler.java:177-193 in 26.3, EntityType.java:479 for the interval).
+     * The phases are accumulated, so a change of speed never jumps the wave.
+     */
+    private void updateAnimation() {
         this.prevAnimationSpeed = this.animationSpeed;
-        float target = (float) Math.min(movement.horizontalDistance() / tier().maxSpeed(), 1.0);
-        this.animationSpeed += (target - this.animationSpeed) * MOTION_EASING;
+        this.animationSpeed =
+                CarpetAnimation.advanceSpeed(
+                        this.animationSpeed,
+                        CarpetAnimation.speedTarget(getDeltaMovement(), tier().maxSpeed()),
+                        MOTION_EASING);
+
+        this.prevRipplePhase = this.ripplePhase;
+        this.ripplePhase =
+                CarpetAnimation.advancePhase(
+                        this.ripplePhase, CarpetAnimation.rippleFrequency(this.animationSpeed));
+        this.prevFlutterPhase = this.flutterPhase;
+        this.flutterPhase =
+                CarpetAnimation.advancePhase(
+                        this.flutterPhase, CarpetAnimation.flutterFrequency(this.animationSpeed));
     }
 
     private void spawnAmbientParticles() {

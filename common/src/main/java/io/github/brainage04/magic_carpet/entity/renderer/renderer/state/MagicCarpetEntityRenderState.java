@@ -9,6 +9,10 @@ public class MagicCarpetEntityRenderState extends EntityRenderState {
 
     public float speed;
 
+    public float ripplePhase;
+
+    public float flutterPhase;
+
     public float animationOffset;
 
     public int shape;

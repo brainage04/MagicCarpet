@@ -136,7 +136,11 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
         }
     }
 
-    /** The idle hover and the flight ripple must differ, and the animation must not accumulate. */
+    /**
+     * The idle hover and the flight ripple must differ, and the animation must not accumulate. The
+     * ripple's phase comes from the entity, so a still carpet keeps the phase it has and a flying
+     * one advances it.
+     */
     private static void verifyAnimation() {
         var root = MagicCarpetEntityModel.createBodyLayer(true, true).bakeRoot();
         var model = new MagicCarpetEntityModel(root);
@@ -145,6 +149,7 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
         model.setupAnim(state);
         float idle = root.getChild("carpet").getChild("segment_7").y;
         state.speed = 1;
+        state.ripplePhase = 1.0F;
         model.setupAnim(state);
         float flying = root.getChild("carpet").getChild("segment_7").y;
         if (Math.abs(idle - flying) < 0.01) {

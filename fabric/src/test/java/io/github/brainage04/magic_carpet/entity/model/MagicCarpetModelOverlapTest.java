@@ -87,8 +87,10 @@ class MagicCarpetModelOverlapTest {
         Vector3f across = first.normal().cross(along, new Vector3f()).normalize();
         float[] firstRect = bounds(first, along, across);
         float[] secondRect = bounds(second, along, across);
-        float width = Math.min(firstRect[2], secondRect[2]) - Math.max(firstRect[0], secondRect[0]);
-        float height = Math.min(firstRect[3], secondRect[3]) - Math.max(firstRect[1], secondRect[1]);
+        float width =
+                Math.min(firstRect[2], secondRect[2]) - Math.max(firstRect[0], secondRect[0]);
+        float height =
+                Math.min(firstRect[3], secondRect[3]) - Math.max(firstRect[1], secondRect[1]);
         return width > EPSILON && height > EPSILON ? width * height : 0.0F;
     }
 

@@ -3,6 +3,7 @@ package io.github.brainage04.magic_carpet.entity.renderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import io.github.brainage04.magic_carpet.MagicCarpet;
+import io.github.brainage04.magic_carpet.entity.custom.CarpetAnimation;
 import io.github.brainage04.magic_carpet.entity.custom.CarpetTier;
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import io.github.brainage04.magic_carpet.entity.model.MagicCarpetEntityModel;
@@ -126,6 +127,10 @@ public class MagicCarpetEntityRenderer
         state.pitch = Mth.rotLerp(tickDelta, entity.prevRenderPitch, entity.renderPitch);
         state.roll = Mth.rotLerp(tickDelta, entity.prevRenderRoll, entity.renderRoll);
         state.speed = Mth.lerp(tickDelta, entity.prevAnimationSpeed, entity.animationSpeed);
+        state.ripplePhase =
+                CarpetAnimation.lerpPhase(entity.prevRipplePhase, entity.ripplePhase, tickDelta);
+        state.flutterPhase =
+                CarpetAnimation.lerpPhase(entity.prevFlutterPhase, entity.flutterPhase, tickDelta);
         state.animationOffset = (entity.getId() * 37) % 1000;
         CarpetTier.Model model = entity.tier().model();
         state.shape = shape(model);
