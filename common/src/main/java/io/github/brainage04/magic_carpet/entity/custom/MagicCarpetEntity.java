@@ -168,8 +168,8 @@ public class MagicCarpetEntity extends VehicleEntity {
      * The carpet faces where its rider looks. A vehicle ticks before its passengers
      * (ClientLevel.java:468-486 in 26.3), so setting the yaw in {@link #tick()} used the rider's
      * yaw from the tick before: the carpet was drawn, and its two-rider seat offset placed, one
-     * tick behind the rider. Both yaw fields come from the rider here, so the carpet's own
-     * {@code yRotO} is not a tick older than the rider's.
+     * tick behind the rider. Both yaw fields come from the rider here, so the carpet's own {@code
+     * yRotO} is not a tick older than the rider's.
      */
     @Override
     protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
@@ -309,11 +309,11 @@ public class MagicCarpetEntity extends VehicleEntity {
 
     /**
      * The animation follows the carpet's own velocity, not the distance the client drew it. The
-     * client only moves the carpet when a move packet lands, every third tick
-     * (EntityType.java:479 in 26.3), and the interpolation handler then walks it along a straight
-     * line (SteppedInterpolationHandler.java:177-193), so the drawn distance changes in runs of
-     * three equal steps rather than following the carpet's speed. The phases are accumulated, so a
-     * change of speed never jumps the wave.
+     * client only moves the carpet when a move packet lands, every third tick (EntityType.java:479
+     * in 26.3), and the interpolation handler then walks it along a straight line
+     * (SteppedInterpolationHandler.java:177-193), so the drawn distance changes in runs of three
+     * equal steps rather than following the carpet's speed. The phases are accumulated, so a change
+     * of speed never jumps the wave.
      */
     private void updateAnimation() {
         this.prevAnimationSpeed = this.animationSpeed;
