@@ -28,6 +28,9 @@ public final class CarpetMotion {
      * accelerating.
      */
     public static int ticksToTopSpeed(double accelerationTime, double tolerance) {
+        if (!(tolerance > 0.0 && tolerance < 1.0)) {
+            throw new IllegalArgumentException("tolerance must be between 0 and 1: " + tolerance);
+        }
         return (int)
                 Math.ceil(Math.log(tolerance) / Math.log(1.0 - smoothingFactor(accelerationTime)));
     }

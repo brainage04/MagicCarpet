@@ -156,7 +156,7 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
      * The film measures a tier's top speed after a wall-clock hold, so a client that ticks below 20
      * a second gets fewer ticks than the tier's acceleration needs and the carpet is still speeding
      * up when the window opens. The basic tier accelerates for 2 s, 40 ticks; a 1.5 s hold at 10
-     * ticks a second is 15 ticks, and the carpet is then at 11.21 blocks/s, not 12.
+     * ticks a second is 15 ticks, and the carpet is then still accelerating.
      *
      * <p>This runs the film's own measurement at 10 ticks a second, so it fails when the hold is
      * wall clock alone and passes when the film waits in ticks for the speed it checks.
@@ -168,13 +168,15 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                 minecraftServer -> {
                     ServerPlayer player = minecraftServer.getPlayerList().getPlayers().getFirst();
                     ServerLevel level = player.level();
-                    // The film's own basic site, where buildStage placed the runway: the floor is
-                    // y 100, the carpet flies at 101.5, and the rider stands on the floor at 101.
-                    player.teleportTo(level, 0.5D, 101.0D, 3.3D, Set.of(), 180.0F, 10.0F, true);
+                    // The film's own basic site, where buildStage placed the runway.
+                    Vec3 stand = MagicCarpetShowcase.basicStand();
+                    Vec3 hang = MagicCarpetShowcase.basicCarpet();
+                    player.teleportTo(
+                            level, stand.x, stand.y, stand.z, Set.of(), 180.0F, 10.0F, true);
                     MagicCarpetEntity carpet =
                             (MagicCarpetEntity)
                                     ModEntities.basic().create(level, EntitySpawnReason.COMMAND);
-                    carpet.setPos(0.5D, 101.5D, 0.5D);
+                    carpet.setPos(hang.x, hang.y, hang.z);
                     level.addFreshEntity(carpet);
                     player.startRiding(carpet, true, true);
                     carpetId[0] = carpet.getId();
@@ -212,9 +214,21 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                 while (System.currentTimeMillis() < end) {
                     context.waitTick();
                 }
+                double topSpeed =
+                        server.computeOnServer(
+                                minecraftServer ->
+                                        ((MagicCarpetEntity)
+                                                        minecraftServer
+                                                                .getPlayerList()
+                                                                .getPlayers()
+                                                                .getFirst()
+                                                                .getVehicle())
+                                                .tier()
+                                                .maxSpeed());
                 double measured =
-                        MagicCarpetShowcase.measureTopSpeed(server, context::waitTick, 0.6D);
-                if (Math.abs(measured - 0.6D) > 0.6D * 0.05D) {
+                        MagicCarpetShowcase.measureTopSpeed(server, context::waitTick, topSpeed);
+                if (Math.abs(measured - topSpeed)
+                        > topSpeed * MagicCarpetShowcase.speedTolerance()) {
                     throw new AssertionError(
                             "The film's measurement at 10 ticks a second must reach the top speed;"
                                     + " it measured "

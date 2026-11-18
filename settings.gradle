@@ -1,7 +1,6 @@
 pluginManagement {
-	// A MinecraftModConventions checkout beside this one can be older than
-	// minecraftmodconventions_version, and an included build then replaces that
-	// version whatever the build asks for. Opt in with -PuseLocalConventions.
+	// A MinecraftModConventions checkout beside this one is used only when the build asks for it
+	// with -PuseLocalConventions, so a sibling checkout cannot change the build by being there.
 	settings.ext.useLocalConventions = providers.gradleProperty('useLocalConventions')
 			.map { it.isEmpty() || it.toBoolean() }
 			.getOrElse(false)

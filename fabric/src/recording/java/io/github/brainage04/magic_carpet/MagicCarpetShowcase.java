@@ -124,6 +124,20 @@ public final class MagicCarpetShowcase {
      */
     private static final double MOUNT_DISTANCE = 2.8D;
 
+    /** Where the player stands to mount the basic carpet, and where that carpet hangs. */
+    static Vec3 basicStand() {
+        return new Vec3(BASIC_SITE + 0.5D, STAND_Y, CARPET_Z + MOUNT_DISTANCE);
+    }
+
+    static Vec3 basicCarpet() {
+        return new Vec3(BASIC_SITE + 0.5D, CARPET_Y, CARPET_Z);
+    }
+
+    /** The most the measured top speed may differ from the tier's, as a share of that speed. */
+    static double speedTolerance() {
+        return SPEED_TOLERANCE;
+    }
+
     /** The hotbar slot the player holds: empty, so the hand stays out of the frame. */
     private static final int EMPTY_SLOT = 8;
 
@@ -496,9 +510,6 @@ public final class MagicCarpetShowcase {
                 new RiderWatch(carpetId[0], context.computeOnClient(client -> SOUNDS.flight));
         context.getInput().holdKey(options -> options.keyUp);
         try {
-            // The hold is wall clock, so a client ticking below 20 a second gets fewer ticks than
-            // the tier's acceleration needs and the carpet is still speeding up when the window
-            // opens. measureTopSpeed waits in ticks for the speed the check is about.
             watch.holdFor(context, FLY_MILLIS);
             double measured = measureTopSpeed(server, () -> watch.tick(context), topSpeed);
             check(
@@ -624,7 +635,8 @@ public final class MagicCarpetShowcase {
      * reached {@code topSpeed}. The wait is in ticks, not wall clock: a client that ticks below 20
      * a second gets fewer ticks than the tier's acceleration needs from a wall-clock hold, and the
      * window would then measure the tail of the acceleration. The basic tier's 2 s acceleration is
-     * 40 ticks, and a 1.5 s hold at 10 ticks a second is 15, which measures 11.21 blocks/s.
+     * 40 ticks, and a 1.5 s hold at 10 ticks a second is 15, which measures well under the top
+     * speed.
      */
     static double measureTopSpeed(
             TestDedicatedServerContext server, Runnable tick, double topSpeed) {
@@ -725,12 +737,6 @@ public final class MagicCarpetShowcase {
         private void holdFor(ClientGameTestContext context, long millis) {
             long end = System.currentTimeMillis() + millis;
             while (System.currentTimeMillis() < end) {
-                tick(context);
-            }
-        }
-
-        private void waitTicks(ClientGameTestContext context, int ticks) {
-            for (int tick = 0; tick < ticks; tick++) {
                 tick(context);
             }
         }

@@ -1,6 +1,7 @@
 package io.github.brainage04.magic_carpet.entity.custom;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -147,7 +148,7 @@ class CarpetMotionTest {
     /**
      * The film measures the speed after a wall-clock hold, so at a slow tick rate it gets fewer
      * ticks than the tier's acceleration needs. The basic tier's 2 s acceleration is 40 ticks, and
-     * a 1.5 s hold at 10 ticks a second is 15: the carpet is then at 11.21 blocks/s, not 12.
+     * a 1.5 s hold at 10 ticks a second is 15: the carpet is then still accelerating.
      */
     @Test
     void ticksToTopSpeedCoversTheWholeAcceleration() {
@@ -165,6 +166,36 @@ class CarpetMotionTest {
             assertTrue(
                     Math.abs(ticks - seconds * 20.0) <= 1.0,
                     ticks + " ticks for " + seconds + " s");
+        }
+    }
+
+    /**
+     * The film's old measurement: a 1.5 s wall-clock hold at 10 ticks a second is 15 ticks, and the
+     * 20-tick window that follows averages the basic tier's speed over ticks 16 to 35. That is
+     * 11.213011763741406 blocks/s, the figure the failing take reported, so the film was measuring
+     * the tail of the acceleration and not the carpet's top speed.
+     */
+    @Test
+    void aWallClockHoldAtTenTicksASecondMeasuresUnderTheTopSpeed() {
+        double maxSpeed = 0.6;
+        double factor = CarpetMotion.smoothingFactor(2.0);
+        double moved = 0.0;
+        for (int tick = 16; tick <= 35; tick++) {
+            moved += maxSpeed * (1.0 - Math.pow(1.0 - factor, tick));
+        }
+        assertEquals(11.213011763741406, moved / 20.0 * 20.0, 1.0E-12, "the failing take's figure");
+        assertTrue(
+                moved / 20.0 < maxSpeed * 0.95,
+                "the old measurement must fall short of the top speed: " + moved / 20.0);
+    }
+
+    @Test
+    void ticksToTopSpeedRefusesAToleranceItCannotMeet() {
+        for (double tolerance : new double[] {0.0, -0.1, 1.0, 2.0, Double.NaN}) {
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> CarpetMotion.ticksToTopSpeed(2.0, tolerance),
+                    "tolerance " + tolerance);
         }
     }
 
