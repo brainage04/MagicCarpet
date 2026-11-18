@@ -1,6 +1,9 @@
 package io.github.brainage04.magic_carpet.entity.model;
 
 import io.github.brainage04.magic_carpet.entity.renderer.state.MagicCarpetEntityRenderState;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -8,6 +11,7 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 
 /**
@@ -27,6 +31,24 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
     private static final float CURL_ROLL = 0.5F;
 
     private static final float HOVER_HEIGHT = 1.0F;
+
+    /**
+     * The raised borders sit on the slab, so their bottom face is coplanar with the slab's top and
+     * the two flicker against each other: the render type does not cull back faces
+     * (RenderPipelines.java:507 in 26.3). The slab's top covers the border's footprint, so the
+     * border's bottom is never seen and is left out.
+     */
+    private static final Set<Direction> BORDER_SIDES = without(Direction.DOWN);
+
+    /**
+     * The front and back borders butt against the side borders, which cover their end faces, so
+     * those are left out too.
+     */
+    private static final Set<Direction> BORDER_SIDES_BETWEEN =
+            without(Direction.DOWN, Direction.WEST, Direction.EAST);
+
+    /** The curl's flap ends inside the roll, which covers its front face. */
+    private static final Set<Direction> CURL_FLAP_SIDES = without(Direction.NORTH);
 
     private final ModelPart carpet;
     private final ModelPart[] segments = new ModelPart[SEGMENTS];
@@ -81,15 +103,18 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
 
             if (!cutCorners) {
                 cubes.texOffs(56, 5 * i)
-                        .addBox(-12.0F, 0.0F, 0.0F, 2.0F, 1.0F, 4.0F)
-                        .addBox(10.0F, 0.0F, 0.0F, 2.0F, 1.0F, 4.0F);
+                        .addBox(-12.0F, 0.0F, 0.0F, 2.0F, 1.0F, 4.0F, BORDER_SIDES)
+                        .addBox(10.0F, 0.0F, 0.0F, 2.0F, 1.0F, 4.0F, BORDER_SIDES);
             }
             if (cutCorners) {
-                cubes.texOffs(0, 43).addBox(-8.0F, 0.0F, 0.0F, 16.0F, 1.0F, 2.0F);
+                cubes.texOffs(0, 43)
+                        .addBox(-8.0F, 0.0F, 0.0F, 16.0F, 1.0F, 2.0F, BORDER_SIDES);
             } else if (first) {
-                cubes.texOffs(0, 40).addBox(-10.0F, 0.0F, 0.0F, 20.0F, 1.0F, 2.0F);
+                cubes.texOffs(0, 40)
+                        .addBox(-10.0F, 0.0F, 0.0F, 20.0F, 1.0F, 2.0F, BORDER_SIDES_BETWEEN);
             } else if (last) {
-                cubes.texOffs(0, 40).addBox(-10.0F, 0.0F, 2.0F, 20.0F, 1.0F, 2.0F);
+                cubes.texOffs(0, 40)
+                        .addBox(-10.0F, 0.0F, 2.0F, 20.0F, 1.0F, 2.0F, BORDER_SIDES_BETWEEN);
             }
 
             PartDefinition segment =
@@ -127,6 +152,11 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
         return LayerDefinition.create(mesh, TEXTURE_WIDTH, TEXTURE_HEIGHT);
     }
 
+    /**
+     * The flap stops where the roll starts, so the two never share a plane: the roll covers the
+     * flap's last pixel of depth with the same width and a taller box, so the surface the player
+     * sees is the same. The flap's front face is then inside the roll and is left out.
+     */
     private static void addCurl(PartDefinition segment, String name, float side) {
         float innerX = side < 0 ? -4.0F : 0.0F;
         segment.addOrReplaceChild(
@@ -134,11 +164,17 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
                 CubeListBuilder.create()
                         .mirror(side > 0)
                         .texOffs(68, 0)
-                        .addBox(innerX, -1.0F, -4.0F, 4.0F, 1.0F, 4.0F)
+                        .addBox(innerX, -1.0F, -3.0F, 4.0F, 1.0F, 3.0F, CURL_FLAP_SIDES)
                         .texOffs(68, 5)
                         .addBox(innerX, -1.0F, -5.0F, 4.0F, 2.0F, 2.0F),
                 PartPose.offsetAndRotation(
                         8.0F * side, 0.0F, SEGMENT_LENGTH, CURL_PITCH, 0.0F, CURL_ROLL * side));
+    }
+
+    private static Set<Direction> without(Direction... hidden) {
+        Set<Direction> sides = EnumSet.allOf(Direction.class);
+        sides.removeAll(EnumSet.copyOf(List.of(hidden)));
+        return sides;
     }
 
     private static String segmentName(int index) {
