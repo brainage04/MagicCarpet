@@ -11,14 +11,21 @@ import io.github.brainage04.magic_carpet.item.ModItems;
 import io.github.brainage04.minecraftmodconventions.ClientGameTestServers;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
+import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.player.inventory.Hotbar;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -45,6 +52,7 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                             MagicCarpetClientGameTest::verifyCreativeOnServerWithMagicCarpet);
                     context.runOnClient(MagicCarpetClientGameTest::verifyTierModels);
                     context.runOnClient(client -> verifyAnimation());
+                    verifyRiderYaw(context, server);
                     MagicCarpetShowcase.film(context, server);
                 });
     }
@@ -86,6 +94,73 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
      * nor curls, the advanced carpet has tassels only, and the legendary carpet has both and glows.
      * This is the negative that keeps the three tiers from rendering as the same carpet.
      */
+    /**
+     * The carpet must be drawn facing where its rider looks, every frame. The mouse turns the rider
+     * between ticks (Entity.java:495-503 in 26.3), so a carpet drawn from its own yaw fields, which
+     * are set once a tick, snaps round behind the player. This turns the rider a quarter turn over
+     * 20 ticks and fails if any frame draws the two apart.
+     */
+    private static void verifyRiderYaw(
+            ClientGameTestContext context, TestDedicatedServerContext server) {
+        int[] carpetId = new int[1];
+        server.runOnServer(
+                minecraftServer -> {
+                    ServerPlayer player = minecraftServer.getPlayerList().getPlayers().getFirst();
+                    ServerLevel level = player.level();
+                    player.teleportTo(level, 400.5D, 100.0D, 0.5D, Set.of(), 0.0F, 0.0F, true);
+                    MagicCarpetEntity carpet =
+                            (MagicCarpetEntity)
+                                    ModEntities.basic()
+                                            .create(level, EntitySpawnReason.COMMAND);
+                    carpet.setPos(400.5D, 100.0D, 0.5D);
+                    level.addFreshEntity(carpet);
+                    player.startRiding(carpet, true, true);
+                    carpetId[0] = carpet.getId();
+                });
+        context.waitFor(
+                client ->
+                        client.player.getVehicle() != null
+                                && client.player.getVehicle().getId() == carpetId[0],
+                200);
+        context.waitTicks(10);
+        float from = context.computeOnClient(client -> client.player.getYRot());
+        for (int tick = 1; tick <= 20; tick++) {
+            float yaw = from + 90.0F * tick / 20;
+            context.runOnClient(client -> client.player.setYRot(yaw));
+            context.waitTick();
+            float gap =
+                    context.computeOnClient(
+                            client -> {
+                                Entity carpet = client.level.getEntity(carpetId[0]);
+                                MagicCarpetEntity magic = (MagicCarpetEntity) carpet;
+                                MagicCarpetEntityRenderer renderer =
+                                        (MagicCarpetEntityRenderer)
+                                                client.getEntityRenderDispatcher()
+                                                        .getRenderer(magic);
+                                MagicCarpetEntityRenderState state =
+                                        renderer.createRenderState(magic, 0.5F);
+                                return Math.abs(
+                                        Mth.wrapDegrees(
+                                                state.yaw - client.player.getYRot(0.5F)));
+                            });
+            if (gap > 0.01F) {
+                throw new AssertionError(
+                        "Every frame must draw the carpet facing where it draws its rider; they"
+                                + " were drawn "
+                                + gap
+                                + " degrees apart at tick "
+                                + tick);
+            }
+        }
+        server.runOnServer(
+                minecraftServer ->
+                        minecraftServer
+                                .getPlayerList()
+                                .getPlayers()
+                                .getFirst()
+                                .stopRiding());
+    }
+
     private static void verifyTierModels(Minecraft client) {
         List<EntityType<MagicCarpetEntity>> types =
                 List.of(ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary());
