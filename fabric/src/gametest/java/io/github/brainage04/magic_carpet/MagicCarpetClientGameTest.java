@@ -170,8 +170,8 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                     ServerPlayer player = minecraftServer.getPlayerList().getPlayers().getFirst();
                     ServerLevel level = player.level();
                     // The film's own basic site, where buildStage placed the runway.
-                    Vec3 stand = MagicCarpetShowcase.standAt(0);
-                    Vec3 hang = MagicCarpetShowcase.carpetAt(0);
+                    Vec3 stand = MagicCarpetShowcase.standAt(MagicCarpetShowcase.BASIC_SITE);
+                    Vec3 hang = MagicCarpetShowcase.carpetAt(MagicCarpetShowcase.BASIC_SITE);
                     player.teleportTo(
                             level,
                             stand.x,

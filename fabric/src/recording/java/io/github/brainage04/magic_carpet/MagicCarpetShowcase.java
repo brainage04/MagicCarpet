@@ -107,7 +107,7 @@ public final class MagicCarpetShowcase {
      * One site per tier, far enough apart that a stage never fights the last one's scene. The tiers
      * stage shares the basic site.
      */
-    private static final int BASIC_SITE = 0;
+    static final int BASIC_SITE = 0;
 
     private static final int ADVANCED_SITE = 200;
     private static final int LEGENDARY_SITE = 400;
