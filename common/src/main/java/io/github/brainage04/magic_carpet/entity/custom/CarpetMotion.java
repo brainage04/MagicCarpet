@@ -26,6 +26,8 @@ public final class CarpetMotion {
      * speed. A film that measures the speed after a wall-clock hold gets fewer ticks than it
      * expects whenever the client ticks below 20 a second, and the carpet is then still
      * accelerating.
+     *
+     * @throws IllegalArgumentException when {@code tolerance} is not between 0 and 1
      */
     public static int ticksToTopSpeed(double accelerationTime, double tolerance) {
         if (!(tolerance > 0.0 && tolerance < 1.0)) {

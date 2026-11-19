@@ -183,10 +183,12 @@ class CarpetMotionTest {
         for (int tick = 16; tick <= 35; tick++) {
             moved += maxSpeed * (1.0 - Math.pow(1.0 - factor, tick));
         }
-        assertEquals(11.213011763741406, moved / 20.0 * 20.0, 1.0E-12, "the failing take's figure");
+        // The window is 20 ticks, so the mean blocks a tick times 20 is blocks a second.
+        double blocksPerSecond = moved / 20.0 * 20.0;
+        assertEquals(11.213011763741406, blocksPerSecond, 1.0E-12, "the failing take's figure");
         assertTrue(
-                moved / 20.0 < maxSpeed * 0.95,
-                "the old measurement must fall short of the top speed: " + moved / 20.0);
+                blocksPerSecond < maxSpeed * 20.0 * 0.95,
+                "the old measurement must fall short of the top speed: " + blocksPerSecond);
     }
 
     @Test

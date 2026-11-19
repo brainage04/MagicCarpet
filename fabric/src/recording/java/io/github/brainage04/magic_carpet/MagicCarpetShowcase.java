@@ -124,13 +124,22 @@ public final class MagicCarpetShowcase {
      */
     private static final double MOUNT_DISTANCE = 2.8D;
 
-    /** Where the player stands to mount the basic carpet, and where that carpet hangs. */
-    static Vec3 basicStand() {
-        return new Vec3(BASIC_SITE + 0.5D, STAND_Y, CARPET_Z + MOUNT_DISTANCE);
+    /** Where the player stands to mount the carpet at {@code site}, and where that carpet hangs. */
+    static Vec3 standAt(int site) {
+        return new Vec3(site + 0.5D, STAND_Y, CARPET_Z + MOUNT_DISTANCE);
     }
 
-    static Vec3 basicCarpet() {
-        return new Vec3(BASIC_SITE + 0.5D, CARPET_Y, CARPET_Z);
+    static Vec3 carpetAt(int site) {
+        return new Vec3(site + 0.5D, CARPET_Y, CARPET_Z);
+    }
+
+    /** The yaw and pitch the player looks at when it mounts a carpet. */
+    static float mountYaw() {
+        return NORTH;
+    }
+
+    static float mountPitch() {
+        return 10.0F;
     }
 
     /** The most the measured top speed may differ from the tier's, as a share of that speed. */
@@ -150,7 +159,7 @@ public final class MagicCarpetShowcase {
     private static final long CROSSHAIR_MILLIS = 250L;
 
     private static final long MOUNT_MILLIS = 150L;
-    private static final long FLY_MILLIS = 1500L;
+    static final long FLY_MILLIS = 1500L;
 
     /**
      * The climb after the level run. Its vertical speed ramps up like the horizontal one, so the
@@ -406,7 +415,7 @@ public final class MagicCarpetShowcase {
             EntityType<?> type,
             Item item,
             double topSpeed) {
-        Vec3 stand = new Vec3(site + 0.5D, STAND_Y, CARPET_Z + MOUNT_DISTANCE);
+        Vec3 stand = standAt(site);
         int[] carpetId = new int[1];
         server.runOnServer(
                 minecraftServer -> {
@@ -415,7 +424,14 @@ public final class MagicCarpetShowcase {
                     resetPlayer(player);
                     player.getInventory().setItem(0, new ItemStack(item));
                     player.teleportTo(
-                            level, stand.x, stand.y, stand.z, Set.of(), NORTH, 10.0F, true);
+                            level,
+                            stand.x,
+                            stand.y,
+                            stand.z,
+                            Set.of(),
+                            mountYaw(),
+                            mountPitch(),
+                            true);
                     level.getEntitiesOfClass(ItemEntity.class, siteBox(site))
                             .forEach(ItemEntity::discard);
                     level.getEntitiesOfClass(MagicCarpetEntity.class, siteBox(site))
@@ -423,7 +439,8 @@ public final class MagicCarpetShowcase {
                     MagicCarpetEntity carpet =
                             (MagicCarpetEntity) type.create(level, EntitySpawnReason.COMMAND);
                     check(carpet != null, "Expected a registered carpet for " + type);
-                    carpet.setPos(site + 0.5D, CARPET_Y, CARPET_Z);
+                    Vec3 hang = carpetAt(site);
+                    carpet.setPos(hang.x, hang.y, hang.z);
                     check(level.addFreshEntity(carpet), "Failed to spawn " + type);
                     carpetId[0] = carpet.getId();
                 });

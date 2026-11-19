@@ -170,10 +170,17 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                     ServerPlayer player = minecraftServer.getPlayerList().getPlayers().getFirst();
                     ServerLevel level = player.level();
                     // The film's own basic site, where buildStage placed the runway.
-                    Vec3 stand = MagicCarpetShowcase.basicStand();
-                    Vec3 hang = MagicCarpetShowcase.basicCarpet();
+                    Vec3 stand = MagicCarpetShowcase.standAt(0);
+                    Vec3 hang = MagicCarpetShowcase.carpetAt(0);
                     player.teleportTo(
-                            level, stand.x, stand.y, stand.z, Set.of(), 180.0F, 10.0F, true);
+                            level,
+                            stand.x,
+                            stand.y,
+                            stand.z,
+                            Set.of(),
+                            MagicCarpetShowcase.mountYaw(),
+                            MagicCarpetShowcase.mountPitch(),
+                            true);
                     MagicCarpetEntity carpet =
                             (MagicCarpetEntity)
                                     ModEntities.basic().create(level, EntitySpawnReason.COMMAND);
@@ -211,21 +218,26 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                 server.runOnServer(
                         minecraftServer -> minecraftServer.tickRateManager().setTickRate(10.0F));
                 // The film's own hold, in wall clock, at the slow rate, then its own measurement.
-                long end = System.currentTimeMillis() + 1500L;
+                long end = System.currentTimeMillis() + MagicCarpetShowcase.FLY_MILLIS;
                 while (System.currentTimeMillis() < end) {
                     context.waitTick();
                 }
                 double topSpeed =
                         server.computeOnServer(
-                                minecraftServer ->
-                                        ((MagicCarpetEntity)
-                                                        minecraftServer
-                                                                .getPlayerList()
-                                                                .getPlayers()
-                                                                .getFirst()
-                                                                .getVehicle())
-                                                .tier()
-                                                .maxSpeed());
+                                minecraftServer -> {
+                                    Entity vehicle =
+                                            minecraftServer
+                                                    .getPlayerList()
+                                                    .getPlayers()
+                                                    .getFirst()
+                                                    .getVehicle();
+                                    if (!(vehicle instanceof MagicCarpetEntity carpet)) {
+                                        throw new AssertionError(
+                                                "The player must ride a carpet to measure its"
+                                                        + " speed");
+                                    }
+                                    return carpet.tier().maxSpeed();
+                                });
                 double measured =
                         MagicCarpetShowcase.measureTopSpeed(server, context::waitTick, topSpeed);
                 if (Math.abs(measured - topSpeed)
@@ -240,8 +252,8 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                 context.getInput().releaseKey(options -> options.keyUp);
             }
         } finally {
-            // The film's tiers stage counts the carpets in a box around z 0.5, so this test's
-            // carpet must not be left there.
+            // The carpet flies north along the runway the film's basic flight uses, so it must not
+            // be left in the world.
             server.runOnServer(
                     minecraftServer -> {
                         minecraftServer.tickRateManager().setTickRate(20.0F);
