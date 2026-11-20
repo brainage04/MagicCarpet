@@ -5,7 +5,7 @@
   "name": "${mod_name}",
   "description": "Adds Magic Carpets to Minecraft.",
   "authors": ["brainage04"],
-  "contact": {"homepage": "https://github.com/brainage04/MagicCarpet", "sources": "https://github.com/brainage04/MagicCarpet"},
+  "contact": {"homepage": "https://github.com/brainage04/MagicCarpet", "sources": "https://github.com/brainage04/MagicCarpet", "issues": "https://github.com/brainage04/MagicCarpet/issues"},
   "license": "MIT",
   "icon": "assets/magic_carpet/icon.png",
   "environment": "*",
