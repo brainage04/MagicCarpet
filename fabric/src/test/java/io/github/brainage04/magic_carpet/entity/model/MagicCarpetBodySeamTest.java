@@ -22,7 +22,7 @@ class MagicCarpetBodySeamTest {
     private static final int SEGMENTS = 8;
     private static final float SEGMENT_LENGTH = 4.0F;
     private static final float FRONT_Z = -16.0F;
-    private static final float BOTTOM = -1.0F;
+    private static final float BOTTOM = -1.0F / 16.0F;
     private static final float SLAB_TOP = 0.0F;
     /** Model units are 1/16 of a block, so a vertex is placed to well under a texel. */
     private static final float EPSILON = 1.0E-4F;
@@ -35,7 +35,7 @@ class MagicCarpetBodySeamTest {
             assertFalse(quads.isEmpty(), "Shape " + shape + " draws no body");
 
             for (int joint = 1; joint < SEGMENTS; joint++) {
-                float z = FRONT_Z + SEGMENT_LENGTH * joint;
+                float z = (FRONT_Z + SEGMENT_LENGTH * joint) / 16.0F;
                 Set<String> before = ring(quads, z, true);
                 Set<String> after = ring(quads, z, false);
                 assertTrue(
@@ -52,7 +52,7 @@ class MagicCarpetBodySeamTest {
                                 + before
                                 + " and the one after starts at "
                                 + after);
-                float top = body.heights()[joint];
+                float top = body.heights()[joint] / 16.0F;
                 assertTrue(
                         hasHeight(before, top) && hasHeight(before, top + BOTTOM - SLAB_TOP),
                         "Shape "

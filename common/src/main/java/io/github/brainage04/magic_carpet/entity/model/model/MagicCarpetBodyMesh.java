@@ -282,7 +282,8 @@ public final class MagicCarpetBodyMesh {
             float ny,
             float nz) {
         float localZ = z - box.minZ();
-        buffer.addVertex(pose, x, height + y, z)
+        // Model units are 1/16 of a block, as ModelPart.Cube.compile divides them (26.3).
+        buffer.addVertex(pose, x / 16.0F, (height + y) / 16.0F, z / 16.0F)
                 .setColor(color)
                 .setUv(
                         box.u(side, x, localZ) / TEXTURE_WIDTH,
