@@ -90,7 +90,8 @@ public class MagicCarpetEntityRenderer
         matrices.rotateDegrees(Axis.ZP, state.roll);
 
         MagicCarpetEntityModel model = this.models[state.shape];
-        submitBody(queue, matrices, model, state, this.renderType, state.lightCoords);
+        submitBody(queue, matrices, model, state, this.renderType, state.lightCoords, -1);
+        submitBodyOutline(queue, matrices, model, state, this.renderType);
         queue.submitModel(
                 model,
                 state,
@@ -106,7 +107,9 @@ public class MagicCarpetEntityRenderer
                     model,
                     state,
                     this.emissiveRenderType,
-                    LightCoordsUtil.FULL_BRIGHT);
+                    LightCoordsUtil.FULL_BRIGHT,
+                    -1);
+            submitBodyOutline(queue, matrices, model, state, this.emissiveRenderType);
             queue.submitModel(
                     model,
                     state,
@@ -133,7 +136,8 @@ public class MagicCarpetEntityRenderer
             MagicCarpetEntityModel model,
             MagicCarpetEntityRenderState state,
             RenderType renderType,
-            int light) {
+            int light,
+            int color) {
         matrices.pushPose();
         MagicCarpetEntityModel.transformBody(matrices, state.pose);
         queue.submitCustomGeometry(
@@ -141,8 +145,36 @@ public class MagicCarpetEntityRenderer
                 renderType,
                 (pose, buffer) ->
                         model.renderBody(
-                                pose, buffer, state.pose, light, OverlayTexture.NO_OVERLAY, -1));
+                                pose, buffer, state.pose, light, OverlayTexture.NO_OVERLAY, color));
         matrices.popPose();
+    }
+
+    /**
+     * The body's share of the glowing-team outline, which {@code submitModel} draws for the tassels
+     * and curls: the same geometry again through the render type's outline pass, at full brightness
+     * and in the team's colour (SubmitNodeCollection.submitModel, 26.3).
+     */
+    private static void submitBodyOutline(
+            SubmitNodeCollector queue,
+            PoseStack matrices,
+            MagicCarpetEntityModel model,
+            MagicCarpetEntityRenderState state,
+            RenderType renderType) {
+        if (state.outlineColor == 0) {
+            return;
+        }
+        renderType
+                .outline()
+                .ifPresent(
+                        outline ->
+                                submitBody(
+                                        queue,
+                                        matrices,
+                                        model,
+                                        state,
+                                        outline,
+                                        LightCoordsUtil.FULL_BRIGHT,
+                                        state.outlineColor));
     }
 
     @Override
