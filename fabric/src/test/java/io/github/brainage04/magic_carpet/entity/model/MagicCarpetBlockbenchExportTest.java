@@ -290,11 +290,13 @@ class MagicCarpetBlockbenchExportTest {
     private static Map<String, List<JsonObject>> exportedCubes(JsonObject project) {
         Map<String, JsonObject> groups = new LinkedHashMap<>();
         for (JsonElement element : project.getAsJsonArray("groups")) {
-            groups.put(element.getAsJsonObject().get("uuid").getAsString(), element.getAsJsonObject());
+            groups.put(
+                    element.getAsJsonObject().get("uuid").getAsString(), element.getAsJsonObject());
         }
         Map<String, JsonObject> cubes = new LinkedHashMap<>();
         for (JsonElement element : project.getAsJsonArray("elements")) {
-            cubes.put(element.getAsJsonObject().get("uuid").getAsString(), element.getAsJsonObject());
+            cubes.put(
+                    element.getAsJsonObject().get("uuid").getAsString(), element.getAsJsonObject());
         }
         Map<String, List<JsonObject>> out = new LinkedHashMap<>();
         collectCubes(project.getAsJsonArray("outliner"), "", groups, cubes, out);
