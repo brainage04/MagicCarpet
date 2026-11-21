@@ -20,26 +20,29 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Photographs each tier's underside from below, in the real client, so the joints between the body's
- * segments can be looked at. It does nothing unless the system property {@value #DIRECTORY_PROPERTY}
- * names a directory, and writes {@code <tier>-underside.png} there.
+ * Photographs each tier from below and from the side, in the real client, so the joints between the
+ * body's segments can be looked at. It does nothing unless the system property {@value
+ * #DIRECTORY_PROPERTY} names a directory, and writes {@code <tier>-underside.png} and {@code
+ * <tier>-side.png} there.
  */
 @SuppressWarnings("UnstableApiUsage")
 public final class MagicCarpetUndersideCapture {
     public static final String DIRECTORY_PROPERTY = "magic_carpet.underside_screenshots.directory";
 
-    /**
-     * The platform the carpet hangs under: glowstone, so the shot has a plain background instead of
-     * sky and the carpet's underside is lit.
-     */
+    /** The plain ceiling the carpet hangs under, so the shot has a background instead of sky. */
     private static final int CEILING_Y = 100;
 
-    private static final int CEILING_RADIUS = 6;
+    /** The lit floor below it, which lights the carpet's underside. */
+    private static final int FLOOR_Y = 94;
+
+    private static final int RADIUS = 6;
 
     private static final double CARPET_Y = CEILING_Y - 1.5D;
 
-    /** The camera's depth below the carpet: the carpet fills about a third of the frame. */
-    private static final double CAMERA_DEPTH = 7.0D;
+    /** The camera's distance from the carpet, and the field of view that makes it fill the frame. */
+    private static final double CAMERA_DISTANCE = 4.0D;
+
+    private static final int CLOSE_FOV = 30;
 
     /** One site per tier, clear of the showcase's runway sites. */
     private static final int FIRST_SITE = 700;
@@ -56,6 +59,12 @@ public final class MagicCarpetUndersideCapture {
             return;
         }
         Path output = Path.of(directory);
+        int[] fov = new int[1];
+        context.runOnClient(
+                client -> {
+                    fov[0] = client.options.fov().get();
+                    client.options.fov().set(CLOSE_FOV);
+                });
         List<EntityType<MagicCarpetEntity>> types =
                 List.of(ModEntities.basic(), ModEntities.advanced(), ModEntities.legendary());
         String[] names = {"basic", "advanced", "legendary"};
@@ -69,22 +78,16 @@ public final class MagicCarpetUndersideCapture {
                         ServerLevel level = player.level();
                         player.stopRiding();
                         player.setGameMode(GameType.SPECTATOR);
-                        for (int dx = -CEILING_RADIUS; dx <= CEILING_RADIUS; dx++) {
-                            for (int dz = -CEILING_RADIUS; dz <= CEILING_RADIUS; dz++) {
+                        for (int dx = -RADIUS; dx <= RADIUS; dx++) {
+                            for (int dz = -RADIUS; dz <= RADIUS; dz++) {
                                 level.setBlockAndUpdate(
                                         new BlockPos(site + dx, CEILING_Y, site + dz),
+                                        Blocks.SMOOTH_QUARTZ.defaultBlockState());
+                                level.setBlockAndUpdate(
+                                        new BlockPos(site + dx, FLOOR_Y, site + dz),
                                         Blocks.GLOWSTONE.defaultBlockState());
                             }
                         }
-                        player.teleportTo(
-                                level,
-                                site + 0.5D,
-                                CARPET_Y - CAMERA_DEPTH,
-                                site + 0.5D,
-                                Set.of(),
-                                180.0F,
-                                -90.0F,
-                                true);
                         MagicCarpetEntity carpet =
                                 (MagicCarpetEntity)
                                         type.create(level, EntitySpawnReason.COMMAND);
@@ -96,27 +99,58 @@ public final class MagicCarpetUndersideCapture {
                             throw new AssertionError("Failed to spawn " + type);
                         }
                     });
-            Vec3 camera = new Vec3(site + 0.5D, CARPET_Y - CAMERA_DEPTH, site + 0.5D);
-            Vec3 carpetAt = new Vec3(site + 0.5D, CARPET_Y, site + 0.5D);
-            context.waitFor(
-                    client ->
-                            client.level != null
-                                    && client.player != null
-                                    && client.player.position().distanceTo(camera) < 0.01D
-                                    && client.level.getEntitiesOfClass(
-                                                    MagicCarpetEntity.class,
-                                                    new AABB(carpetAt, carpetAt).inflate(2.0D))
-                                            .stream()
-                                            .anyMatch(carpet -> carpet.getType() == type),
-                    LOAD_TIMEOUT_TICKS);
-            ClientGameTestWaits.waitForChunkWindow(context, 4, LOAD_TIMEOUT_TICKS);
-            ClientGameTestWaits.waitForRenderSettled(context, 15, LOAD_TIMEOUT_TICKS);
-            Path shot =
-                    context.takeScreenshot(
-                            TestScreenshotOptions.of(names[index] + "-underside")
-                                    .disableCounterPrefix()
-                                    .withDestinationDir(output));
-            MagicCarpet.LOGGER.info("Underside capture of the {} carpet: {}", names[index], shot);
+            shoot(context, server, type, site, names[index] + "-underside", 0.0D, -CAMERA_DISTANCE, 0.0D, 180.0F, -90.0F, output);
+            shoot(context, server, type, site, names[index] + "-side", 0.0D, -1.5D, -4.0D, 0.0F, -20.0F, output);
         }
+        context.runOnClient(client -> client.options.fov().set(fov[0]));
+    }
+
+    private static void shoot(
+            ClientGameTestContext context,
+            TestDedicatedServerContext server,
+            EntityType<MagicCarpetEntity> type,
+            int site,
+            String name,
+            double dx,
+            double dy,
+            double dz,
+            float yaw,
+            float pitch,
+            Path output) {
+        Vec3 camera = new Vec3(site + 0.5D + dx, CARPET_Y + dy, site + 0.5D + dz);
+        Vec3 carpetAt = new Vec3(site + 0.5D, CARPET_Y, site + 0.5D);
+        server.runOnServer(
+                minecraftServer -> {
+                    ServerPlayer player = minecraftServer.getPlayerList().getPlayers().getFirst();
+                    player.teleportTo(
+                            player.level(),
+                            camera.x,
+                            camera.y,
+                            camera.z,
+                            Set.of(),
+                            yaw,
+                            pitch,
+                            true);
+                });
+        context.waitFor(
+                client ->
+                        client.level != null
+                                && client.player != null
+                                && client.player.position().distanceTo(camera) < 0.01D
+                                && client.level
+                                        .getEntitiesOfClass(
+                                                MagicCarpetEntity.class,
+                                                new AABB(carpetAt, carpetAt).inflate(2.0D))
+                                        .stream()
+                                        .anyMatch(carpet -> carpet.getType() == type),
+                LOAD_TIMEOUT_TICKS);
+        ClientGameTestWaits.waitForChunkWindow(context, 4, LOAD_TIMEOUT_TICKS);
+        ClientGameTestWaits.waitForRenderSettled(context, 15, LOAD_TIMEOUT_TICKS);
+        Path shot =
+                context.takeScreenshot(
+                        TestScreenshotOptions.of(name)
+                                .disableCounterPrefix()
+                                .withDestinationDir(output));
+        MagicCarpet.LOGGER.info("Capture {}: {}", name, shot);
     }
 }
