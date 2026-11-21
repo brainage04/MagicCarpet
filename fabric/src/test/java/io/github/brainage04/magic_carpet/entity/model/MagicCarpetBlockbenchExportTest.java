@@ -108,6 +108,7 @@ class MagicCarpetBlockbenchExportTest {
             }
         }
 
+        System.out.println("widest corner error " + worst + " pixels at " + worstWhere);
         assertTrue(
                 worst <= TOLERANCE,
                 "The .bbmodel corners differ from the baked model by "
