@@ -91,10 +91,10 @@ def noise(x, z):
 
 DESIGN_W, DESIGN_L = 24 * SCALE, 32 * SCALE
 
-# The dotted inner border sits this many rings inside the raised edge, so it lands on edge 10 and the motifs
-# have to stay at edge 11 or further in to keep clear of it.
+# The dotted inner border sits this many rings inside the raised edge, so it lands on edge 10. A motif
+# pixel at edge 11 is the last one the border can cut, so the motifs stay at edge 12 or further in.
 BORDER_RING = 6
-MOTIF_MARGIN = BORDER_RING + 4 + 1
+MOTIF_MARGIN = BORDER_RING + 4 + 2
 
 
 def motif(p, x, z):
@@ -133,11 +133,6 @@ def motif(p, x, z):
         for sx in (cx - 9, cx + 9):
             if (abs(x - sx) <= 0.5 and abs(z - mz) <= 2.5) or (abs(z - mz) <= 0.5 and abs(x - sx) <= 2.5):
                 return p["accent"] if abs(x - sx) + abs(z - mz) <= 1 else p["trim"]
-
-    # scattered sparkles between the motifs
-    for sx, sz in ((cx - 11, cz - 7), (cx + 11, cz + 7), (cx + 11, cz - 7), (cx - 11, cz + 7)):
-        if abs(x - sx) + abs(z - sz) <= 0.5:
-            return p["accent"]
 
     return None
 
