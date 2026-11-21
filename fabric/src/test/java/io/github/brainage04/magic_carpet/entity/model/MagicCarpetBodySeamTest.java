@@ -66,12 +66,12 @@ class MagicCarpetBodySeamTest {
         }
     }
 
+    private record Body(List<float[]> quads, float[] heights) {}
+
     /**
      * The body at a fixed bend. The carpet's own sway is scaled by {@code calm}, which is zero at
      * this speed, so its transform is a translation and the joints lie on planes of constant z.
      */
-    private record Body(List<float[]> quads, float[] heights) {}
-
     private static Body body(int shape) {
         MagicCarpetEntityModel model =
                 new MagicCarpetEntityModel(
