@@ -180,17 +180,15 @@ public final class MagicCarpetShowcase {
     private static final int TURN_TICKS = 20;
 
     /**
-     * The most, in degrees, that the drawn rotation may change across a tick boundary while the
-     * rider turns. A turn drawn across the tick's frames meets itself at the boundary, so the step
-     * there is 0; a turn that moves both of the rider's rotation fields is drawn in one frame, so
-     * the step is the whole tick's turn, 4.5 degrees of yaw and 3.2 of pitch. The threshold sits
-     * between the two.
+     * The most, in degrees, that the drawn rotation may change between two samples of a tick while
+     * the rider turns. A turn drawn across the tick's frames steps by the tick's turn over {@link
+     * #FRAME_SAMPLES}, 1.5 degrees of yaw and 1.1 of pitch; a turn that moves both of the rider's
+     * rotation fields is drawn in one frame, so the step is the whole tick's turn, 4.5 and 3.2. The
+     * threshold sits between the two.
      */
-    private static final float MAX_BOUNDARY_STEP = 2.0F;
+    private static final float MAX_SAMPLE_STEP = 2.0F;
 
-    /**
-     * The samples a tick's turn is measured at, so the step across the tick boundary is measured.
-     */
+    /** The samples a tick's turn is measured at, so the step between two of them is measured. */
     private static final int FRAME_SAMPLES = 3;
 
     private static final int LAND_TIMEOUT_TICKS = 200;
@@ -1014,11 +1012,11 @@ public final class MagicCarpetShowcase {
                             + this.widestYawGap
                             + " degrees apart");
             check(
-                    this.steepestFrameStep <= MAX_BOUNDARY_STEP,
+                    this.steepestFrameStep <= MAX_SAMPLE_STEP,
                     "The camera must turn smoothly while the rider turns or looks down: the drawn"
-                            + " rotation may not jump by more than "
-                            + MAX_BOUNDARY_STEP
-                            + " degrees across a tick, and it jumped by "
+                            + " rotation may not step by more than "
+                            + MAX_SAMPLE_STEP
+                            + " degrees between two samples of a tick, and it stepped by "
                             + this.steepestFrameStep);
             check(
                     this.steepestRippleStep <= MAX_RIPPLE_STEP,
@@ -1229,6 +1227,9 @@ public final class MagicCarpetShowcase {
                 client -> {
                     LocalPlayer player = client.player;
                     player.setYRot(player.getYRot() + yaw);
+                    // The drawn head reads yHeadRot (LivingEntityRenderer.java:242), and the tick's
+                    // own copy of it runs before this turn, so without this the head is a tick
+                    // behind the body.
                     player.setYHeadRot(player.getYRot());
                 });
     }
