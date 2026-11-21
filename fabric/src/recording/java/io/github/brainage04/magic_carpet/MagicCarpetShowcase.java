@@ -188,7 +188,9 @@ public final class MagicCarpetShowcase {
      */
     private static final float MAX_BOUNDARY_STEP = 2.0F;
 
-    /** The samples a tick's turn is measured at, so the step across the tick boundary is measured. */
+    /**
+     * The samples a tick's turn is measured at, so the step across the tick boundary is measured.
+     */
     private static final int FRAME_SAMPLES = 3;
 
     private static final int LAND_TIMEOUT_TICKS = 200;
@@ -601,7 +603,9 @@ public final class MagicCarpetShowcase {
         float turned = context.computeOnClient(client -> client.player.getYRot());
         check(
                 Math.abs(Mth.wrapDegrees(turned - fromYaw - TURN_DEGREES)) < 0.01F,
-                "The rider must turn " + TURN_DEGREES + " degrees, and it turned "
+                "The rider must turn "
+                        + TURN_DEGREES
+                        + " degrees, and it turned "
                         + Mth.wrapDegrees(turned - fromYaw));
         float fromPitch = context.computeOnClient(client -> client.player.getXRot());
         for (int tick = 1; tick <= LOOK_DOWN_TICKS; tick++) {
@@ -614,7 +618,9 @@ public final class MagicCarpetShowcase {
         float lookedDown = context.computeOnClient(client -> client.player.getXRot());
         check(
                 Math.abs(lookedDown - CarpetMotion.DIVE_PITCH) < 0.01F,
-                "The rider must look down to " + CarpetMotion.DIVE_PITCH + ", and it looked to "
+                "The rider must look down to "
+                        + CarpetMotion.DIVE_PITCH
+                        + ", and it looked to "
                         + lookedDown);
         context.getInput().holdKey(options -> options.keyJump);
         try {
@@ -1213,10 +1219,10 @@ public final class MagicCarpetShowcase {
      * <p>{@code Entity.turn} moves the current rotation and the old one together ({@code
      * Entity.java:496-507} in 26.3), so the frame draws the whole turn in one frame: the camera
      * reads the rider's interpolated rotation ({@code Camera.java:259-262}), and a turn that moves
-     * both ends of the interpolation is a step, not a sweep. The film applies a whole tick's turn at
-     * once, so it must leave the old rotation alone for the frame to sweep across the tick. A mouse
-     * turn applies a frame's own delta and moves both fields, which is why a real 4.5 degree mouse
-     * turn also jumps; a real mouse turn is smooth because each frame's delta is small.
+     * both ends of the interpolation is a step, not a sweep. The film applies a whole tick's turn
+     * at once, so it must leave the old rotation alone for the frame to sweep across the tick. A
+     * mouse turn applies a frame's own delta and moves both fields, which is why a real 4.5 degree
+     * mouse turn also jumps; a real mouse turn is smooth because each frame's delta is small.
      */
     private static void turnRider(ClientGameTestContext context, float yaw) {
         context.runOnClient(
