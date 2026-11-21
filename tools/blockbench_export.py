@@ -21,7 +21,6 @@ map preserves the geometry exactly.
 import argparse
 import json
 import math
-import struct
 import uuid
 from pathlib import Path
 
@@ -40,8 +39,10 @@ CURL_PITCH = 0.9
 CURL_ROLL = 0.5
 HOVER_HEIGHT = 1.0
 
-# One full ripple at rest is 2 pi / 0.08 = 78.5 ticks; 80 ticks is the nearest whole number of
-# ticks, and the animation is sampled every 2 ticks over it.
+# The clip is 4 seconds, sampled every 2 ticks. The motion does not repeat: the ripple, the tassel
+# flutter and the tassel sway run at 0.08 + 0.42 * speed, 0.12 + 0.6 * speed and 0.09 radians a
+# tick, which share no period, so no clip length closes the loop. The animations are therefore
+# written to play once rather than to loop, which would snap the pose back every 4 seconds.
 CYCLE_TICKS = 80
 SAMPLE_TICKS = 2
 TICKS_PER_SECOND = 20
@@ -78,10 +79,6 @@ def mth_sin(value):
 
 def mth_lerp(alpha, p0, p1):
     return p0 + alpha * (p1 - p0)
-
-
-def f32(value):
-    return struct.unpack("f", struct.pack("f", value))[0]
 
 
 # --- The model ------------------------------------------------------------------------------
@@ -206,7 +203,7 @@ def build_curl(name, side):
 # --- The animation --------------------------------------------------------------------------
 
 
-def sample_poses(tassels, curls, speed, ticks):
+def sample_poses(curls, speed, ticks):
     """setupAnim's part poses at each sampled tick, in Java model space.
 
     Returns a list of (tick, {part name: (x, y, z, xRot, yRot, zRot)}). The phases advance the way
@@ -293,7 +290,7 @@ def sample_poses(tassels, curls, speed, ticks):
     return samples
 
 
-def rest_poses(tassels, curls):
+def rest_poses(curls):
     """The poses createBodyLayer gives each part, which the animation's deltas are added to."""
     poses = {"carpet": (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)}
     for i in range(SEGMENTS):
@@ -307,7 +304,7 @@ def rest_poses(tassels, curls):
     return poses
 
 
-def animation(name, tassels, curls, speed, ticks):
+def animation(name, curls, speed, ticks):
     """One Blockbench animation: setupAnim's deltas from the rest pose, sampled every SAMPLE_TICKS.
 
     Blockbench adds a position keyframe to the bone's rest position and a rotation keyframe to its
@@ -315,8 +312,8 @@ def animation(name, tassels, curls, speed, ticks):
     the keyframes are the difference between setupAnim's pose and the rest pose, mirrored into
     Blockbench's space.
     """
-    rest = rest_poses(tassels, curls)
-    samples = sample_poses(tassels, curls, speed, ticks)
+    rest = rest_poses(curls)
+    samples = sample_poses(curls, speed, ticks)
     animators = {}
 
     for part, rest_pose in rest.items():
@@ -331,11 +328,11 @@ def animation(name, tassels, curls, speed, ticks):
             ry = pose[4] - rest_pose[4]
             rz = pose[5] - rest_pose[5]
             time = tick / TICKS_PER_SECOND
-            position.append(
-                keyframe(time, "position", -dx, -dy, dz)
-            )
+            position.append(keyframe(part, time, "position", -dx, -dy, dz))
             rotation.append(
-                keyframe(time, "rotation", -math.degrees(rx), -math.degrees(ry), math.degrees(rz))
+                keyframe(
+                    part, time, "rotation", -math.degrees(rx), -math.degrees(ry), math.degrees(rz)
+                )
             )
 
         animators[stable_uuid("group/" + part)] = {
@@ -347,7 +344,7 @@ def animation(name, tassels, curls, speed, ticks):
     return {
         "uuid": stable_uuid("animation/" + name),
         "name": name,
-        "loop": "loop",
+        "loop": "once",
         "override": False,
         "length": ticks / TICKS_PER_SECOND,
         "snapping": TICKS_PER_SECOND,
@@ -356,9 +353,9 @@ def animation(name, tassels, curls, speed, ticks):
     }
 
 
-def keyframe(time, channel, x, y, z):
+def keyframe(part, time, channel, x, y, z):
     return {
-        "uuid": stable_uuid("keyframe/%s/%.4f/%s" % (channel, time, x)),
+        "uuid": stable_uuid("keyframe/%s/%s/%.4f" % (part, channel, time)),
         "channel": channel,
         "time": round(time, 6),
         "color": -1,
@@ -537,8 +534,8 @@ def build_project(carpet, flags):
         "outliner": outliner,
         "textures": textures,
         "animations": [
-            animation("idle", flags["tassels"], flags["curls"], 0.0, CYCLE_TICKS),
-            animation("flying", flags["tassels"], flags["curls"], 1.0, CYCLE_TICKS),
+            animation("idle", flags["curls"], 0.0, CYCLE_TICKS),
+            animation("flying", flags["curls"], 1.0, CYCLE_TICKS),
         ],
     }
 

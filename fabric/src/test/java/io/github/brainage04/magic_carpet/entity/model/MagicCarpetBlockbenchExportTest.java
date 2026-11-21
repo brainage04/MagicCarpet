@@ -39,8 +39,6 @@ class MagicCarpetBlockbenchExportTest {
     private static final float TOLERANCE = 1.0E-3F;
 
     private static final int SEGMENTS = 8;
-    private static final float SEGMENT_LENGTH = 4.0F;
-    private static final float FRONT_Z = -16.0F;
     private static final int CYCLE_TICKS = 80;
     private static final int SAMPLE_TICKS = 2;
     private static final float TICKS_PER_SECOND = 20.0F;
@@ -122,9 +120,10 @@ class MagicCarpetBlockbenchExportTest {
     /**
      * The crack at each joint, in model pixels, measured on the baked model and on the export.
      *
-     * <p>The segments are rigid boxes pitched against each other, so their end faces separate into
-     * a wedge. The crack is the distance between the middles of the two faces' bottom edges. The
-     * export must show the same crack, or Blockbench would hide a gap the game draws.
+     * <p>Each segment is pitched about its own front-bottom pivot, so the two end faces at a joint
+     * separate at both edges: the top edge and the bottom edge each move by a different amount.
+     * Both are measured, and the export must show the same numbers, or Blockbench would hide a gap
+     * the game draws.
      */
     @Test
     void seamGapsMatchTheExport() throws IOException {
@@ -137,22 +136,32 @@ class MagicCarpetBlockbenchExportTest {
             Map<String, List<Vector3f[]>> exported = exportedCorners(project);
             String animation = carpet.speed() == 0.0F ? "idle" : "flying";
             report.append(carpet.name()).append(' ').append(animation).append('\n');
-            float widest = 0.0F;
+            report.append("  columns: joint 0..6, top edge then bottom edge, in model pixels;");
+            report.append(" then the crease angle in degrees\n");
+            float widestTop = 0.0F;
+            float widestBottom = 0.0F;
 
             for (int tick = 0; tick <= CYCLE_TICKS; tick += SAMPLE_TICKS) {
                 Map<String, List<Vector3f[]>> corners = bakedCorners(carpet, tick);
-                float[] baked = seamGaps(corners);
-                float[] shown =
+                float[][] baked = seamGaps(corners);
+                float[][] shown =
                         seamGaps(
                                 animatedCorners(
                                         project, exported, animation, tick / TICKS_PER_SECOND));
                 float[] creases = creaseAngles(corners);
                 report.append("  tick ").append(tick).append(':');
-                for (int joint = 0; joint < baked.length; joint++) {
-                    report.append(' ').append(String.format("%.3f", baked[joint]));
-                    widest = Math.max(widest, baked[joint]);
+                for (int joint = 0; joint < baked[0].length; joint++) {
+                    report.append(' ').append(String.format("%.3f", baked[0][joint]));
+                    widestTop = Math.max(widestTop, baked[0][joint]);
                     worstDifference =
-                            Math.max(worstDifference, Math.abs(baked[joint] - shown[joint]));
+                            Math.max(worstDifference, Math.abs(baked[0][joint] - shown[0][joint]));
+                }
+                report.append(" |");
+                for (int joint = 0; joint < baked[1].length; joint++) {
+                    report.append(' ').append(String.format("%.3f", baked[1][joint]));
+                    widestBottom = Math.max(widestBottom, baked[1][joint]);
+                    worstDifference =
+                            Math.max(worstDifference, Math.abs(baked[1][joint] - shown[1][joint]));
                 }
                 report.append("  crease");
                 for (int joint = 0; joint < creases.length; joint++) {
@@ -160,7 +169,11 @@ class MagicCarpetBlockbenchExportTest {
                 }
                 report.append('\n');
             }
-            report.append("  widest ").append(String.format("%.3f", widest)).append('\n');
+            report.append("  widest top ")
+                    .append(String.format("%.3f", widestTop))
+                    .append(", bottom ")
+                    .append(String.format("%.3f", widestBottom))
+                    .append('\n');
         }
 
         Path out = Path.of("build", "blockbench-seams.txt");
@@ -174,12 +187,16 @@ class MagicCarpetBlockbenchExportTest {
     }
 
     /**
-     * Every face's UV rectangle must be the one ModelPart.Cube gives that face, mirrored the way
-     * Blockbench draws the model. A wrong rectangle puts the wrong part of the texture on a face,
-     * which no corner comparison would catch.
+     * Every face must put the same corner of the texture on the same corner of the cube.
+     *
+     * <p>Comparing the four UV numbers cannot see a flip: the same rectangle describes a face and
+     * its mirror image. So this takes the texture corner at the rectangle's first end, finds the
+     * cube corner Blockbench draws it at (js/outliner/types/cube.js, UVToLocal at uv[0], uv[1]),
+     * and compares that with the cube corner ModelPart.Cube gives the vertex with the same texture
+     * coordinates. A flipped rectangle puts the texture corner on the opposite cube corner.
      */
     @Test
-    void everyFaceUsesTheModelsUv() throws IOException {
+    void everyFacePutsTheTextureCornerOnTheSameCubeCorner() throws IOException {
         Path directory = exportDirectory();
         for (Carpet carpet : CARPETS) {
             JsonObject project = read(directory.resolve(carpet.name() + ".bbmodel"));
@@ -203,54 +220,85 @@ class MagicCarpetBlockbenchExportTest {
                                 json.getAsJsonObject("faces")
                                         .getAsJsonObject(face)
                                         .getAsJsonArray("uv");
-                        float[] expectedUv = corners(uvOf(polygon));
-                        float[] actualUv = new float[4];
-                        for (int k = 0; k < 4; k++) {
-                            actualUv[k] = uv.get(k).getAsFloat();
-                        }
-                        // Blockbench writes the up and down rectangles backwards, so compare the
-                        // rectangle's two corners rather than the four numbers in order.
-                        actualUv = corners(actualUv);
-                        for (int k = 0; k < 4; k++) {
-                            assertEquals(
-                                    expectedUv[k],
-                                    actualUv[k],
-                                    TOLERANCE,
-                                    carpet.name() + " " + part + " cube " + i + " " + face);
-                        }
+                        float u = uv.get(0).getAsFloat();
+                        float v = uv.get(1).getAsFloat();
+                        Vector3f fromJava = vertexAt(polygon, u, v);
+                        Vector3f fromBlockbench = blockbenchCorner(json, face);
+                        String where = carpet.name() + " " + part + " cube " + i + " " + face;
+                        assertEquals(fromJava.x, fromBlockbench.x, TOLERANCE, where + " x");
+                        assertEquals(fromJava.y, fromBlockbench.y, TOLERANCE, where + " y");
+                        assertEquals(fromJava.z, fromBlockbench.z, TOLERANCE, where + " z");
                     }
                 }
             }
         }
     }
 
-    /**
-     * A polygon's UV rectangle in Blockbench's terms: the smallest and largest u and v of its four
-     * vertices, in texture units. Blockbench stores a rectangle, so the order of the corners does
-     * not matter.
-     */
-    private static float[] uvOf(ModelPart.Polygon polygon) {
-        float minU = Float.MAX_VALUE;
-        float minV = Float.MAX_VALUE;
-        float maxU = -Float.MAX_VALUE;
-        float maxV = -Float.MAX_VALUE;
+    /** The cube corner of the polygon's vertex at texture coordinates (u, v), in texture units. */
+    private static Vector3f vertexAt(ModelPart.Polygon polygon, float u, float v) {
         for (ModelPart.Vertex vertex : polygon.vertices()) {
-            minU = Math.min(minU, vertex.u() * 96.0F);
-            maxU = Math.max(maxU, vertex.u() * 96.0F);
-            minV = Math.min(minV, vertex.v() * 48.0F);
-            maxV = Math.max(maxV, vertex.v() * 48.0F);
+            if (Math.abs(vertex.u() * MagicCarpetEntityModel.TEXTURE_WIDTH - u) < TOLERANCE
+                    && Math.abs(vertex.v() * MagicCarpetEntityModel.TEXTURE_HEIGHT - v)
+                            < TOLERANCE) {
+                return new Vector3f(vertex.x(), vertex.y(), vertex.z());
+            }
         }
-        return new float[] {minU, minV, maxU, maxV};
+        throw new AssertionError("no vertex at texture corner " + u + ", " + v);
     }
 
-    /** A rectangle's two corners, whichever way round it is written. */
-    private static float[] corners(float[] uv) {
-        return new float[] {
-            Math.min(uv[0], uv[2]),
-            Math.min(uv[1], uv[3]),
-            Math.max(uv[0], uv[2]),
-            Math.max(uv[1], uv[3])
-        };
+    /**
+     * The cube corner Blockbench draws the face's first texture corner at, in Minecraft's model
+     * space. This is Blockbench's UVToLocal at (uv[0], uv[1]), where both lerps are zero, so only
+     * the face's own formula is left. The result is relative to the cube's origin, and the mirror
+     * into Minecraft's space acts on that offset as (-x, -y, z).
+     */
+    private static Vector3f blockbenchCorner(JsonObject cube, String face) {
+        JsonArray from = cube.getAsJsonArray("from");
+        JsonArray to = cube.getAsJsonArray("to");
+        JsonArray origin = cube.getAsJsonArray("origin");
+        float[] f = new float[3];
+        float[] t = new float[3];
+        for (int i = 0; i < 3; i++) {
+            f[i] = from.get(i).getAsFloat();
+            t[i] = to.get(i).getAsFloat();
+        }
+        float[] point = new float[3];
+        switch (face) {
+            case "east" -> {
+                point[0] = t[0];
+                point[1] = t[1];
+                point[2] = t[2];
+            }
+            case "west" -> {
+                point[0] = f[0];
+                point[1] = t[1];
+                point[2] = f[2];
+            }
+            case "up" -> {
+                point[0] = f[0];
+                point[1] = t[1];
+                point[2] = f[2];
+            }
+            case "down" -> {
+                point[0] = f[0];
+                point[1] = f[1];
+                point[2] = t[2];
+            }
+            case "south" -> {
+                point[0] = f[0];
+                point[1] = t[1];
+                point[2] = t[2];
+            }
+            default -> {
+                point[0] = t[0];
+                point[1] = t[1];
+                point[2] = f[2];
+            }
+        }
+        for (int i = 0; i < 3; i++) {
+            point[i] -= origin.get(i).getAsFloat();
+        }
+        return new Vector3f(-point[0], -point[1], point[2]);
     }
 
     /**
@@ -399,46 +447,63 @@ class MagicCarpetBlockbenchExportTest {
     }
 
     /**
-     * The crack at each of the seven joints, in model pixels.
+     * The crack at each of the seven joints, in model pixels: the top edge and the bottom edge.
      *
-     * <p>Two segments meet at a joint with their end faces touching along the top edge and opening
-     * downwards, because each segment is pitched about its own pivot. The crack is the distance
-     * between the middles of the two end faces' bottom edges: the back segment's face at its
-     * largest local z, the front segment's at its smallest. Both faces are centred on x = 0, so
-     * their middles coincide when the segments are level.
+     * <p>The back segment's end face is at its largest local z and the front segment's at its
+     * smallest. Both faces are centred on x = 0, so their middles coincide when the segments are
+     * level. The top edge is the pair of corners with the smallest y, the bottom edge the pair with
+     * the largest.
      */
-    private static float[] seamGaps(Map<String, List<Vector3f[]>> baked) {
-        float[] gaps = new float[SEGMENTS - 1];
-        for (int joint = 0; joint < gaps.length; joint++) {
-            Vector3f back = bottomEdge(baked.get("/carpet/segment_" + joint).get(0), true);
-            Vector3f front = bottomEdge(baked.get("/carpet/segment_" + (joint + 1)).get(0), false);
-            gaps[joint] = back.distance(front);
+    private static float[][] seamGaps(Map<String, List<Vector3f[]>> baked) {
+        float[][] gaps = new float[2][SEGMENTS - 1];
+        for (int joint = 0; joint < SEGMENTS - 1; joint++) {
+            Vector3f[] back = baked.get("/carpet/segment_" + joint).get(0);
+            Vector3f[] front = baked.get("/carpet/segment_" + (joint + 1)).get(0);
+            for (int edge = 0; edge < 2; edge++) {
+                boolean top = edge == 0;
+                gaps[edge][joint] =
+                        edgeMiddle(back, true, top).distance(edgeMiddle(front, false, top));
+            }
         }
         return gaps;
     }
 
     /**
-     * The middle of a cube's end-face bottom edge. Corners are indexed x, then y, then z, so the
-     * odd indices are the local z = max face and the even ones the z = min face. The bottom edge is
-     * the pair of that face with the largest y, which is the same pair in either corner order.
+     * The middle of one end face's top or bottom edge. Corners are indexed x, then y, then z, so
+     * the odd indices are the local z = max face and the even ones the z = min face; of that face's
+     * four corners, the two with the smallest y are the top edge and the two with the largest the
+     * bottom.
      */
-    private static Vector3f bottomEdge(Vector3f[] corners, boolean back) {
+    private static Vector3f edgeMiddle(Vector3f[] corners, boolean back, boolean top) {
         int first = back ? 1 : 0;
-        Vector3f low = corners[first];
-        Vector3f high = corners[first + 2];
-        if (low.y < high.y) {
-            Vector3f swap = low;
-            low = high;
-            high = swap;
+        Vector3f a = corners[first];
+        Vector3f b = corners[first + 2];
+        Vector3f c = corners[first + 4];
+        Vector3f d = corners[first + 6];
+        if (top) {
+            if (a.y > b.y) {
+                Vector3f swap = a;
+                a = b;
+                b = swap;
+            }
+            if (c.y > d.y) {
+                Vector3f swap = c;
+                c = d;
+                d = swap;
+            }
+        } else {
+            if (a.y < b.y) {
+                Vector3f swap = a;
+                a = b;
+                b = swap;
+            }
+            if (c.y < d.y) {
+                Vector3f swap = c;
+                c = d;
+                d = swap;
+            }
         }
-        Vector3f otherLow = corners[first + 4];
-        Vector3f otherHigh = corners[first + 6];
-        if (otherLow.y < otherHigh.y) {
-            Vector3f swap = otherLow;
-            otherLow = otherHigh;
-            otherHigh = swap;
-        }
-        return low.add(otherLow, new Vector3f()).mul(0.5F);
+        return a.add(c, new Vector3f()).mul(0.5F);
     }
 
     /**

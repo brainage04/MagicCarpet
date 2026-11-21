@@ -50,5 +50,4 @@ replay_*.log
 
 .gametest.lock
 .jqwik-database
-.test.lock
 __pycache__/
