@@ -81,8 +81,7 @@ class MagicCarpetModelOverlapTest {
     private static List<Face> bodyFaces(int shape) {
         MagicCarpetEntityModel model =
                 new MagicCarpetEntityModel(
-                        MagicCarpetEntityModel.createBodyLayer(
-                                        (shape & 1) != 0, (shape & 2) != 0)
+                        MagicCarpetEntityModel.createBodyLayer((shape & 1) != 0, (shape & 2) != 0)
                                 .bakeRoot());
         MagicCarpetEntityRenderState state = new MagicCarpetEntityRenderState();
         state.speed = 5.0F / 3.0F;
@@ -99,10 +98,7 @@ class MagicCarpetModelOverlapTest {
             return false;
         }
         for (Vector3f point : second.points()) {
-            if (Math.abs(
-                            new Vector3f(point)
-                                    .sub(first.points()[0])
-                                    .dot(first.normal()))
+            if (Math.abs(new Vector3f(point).sub(first.points()[0]).dot(first.normal()))
                     > EPSILON) {
                 return false;
             }

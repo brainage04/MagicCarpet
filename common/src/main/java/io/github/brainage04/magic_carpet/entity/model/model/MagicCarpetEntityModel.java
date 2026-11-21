@@ -85,8 +85,7 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
                             PartPose.offset(
                                     0.0F,
                                     1.0F,
-                                    MagicCarpetPose.FRONT_Z
-                                            + MagicCarpetPose.SEGMENT_LENGTH * i));
+                                    MagicCarpetPose.FRONT_Z + MagicCarpetPose.SEGMENT_LENGTH * i));
 
             if (tassels && first) {
                 for (int t = 0; t < TASSEL_X.length; t++) {

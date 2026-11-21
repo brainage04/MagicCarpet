@@ -24,6 +24,7 @@ class MagicCarpetBodySeamTest {
     private static final float FRONT_Z = -16.0F;
     private static final float BOTTOM = -1.0F / 16.0F;
     private static final float SLAB_TOP = 0.0F;
+
     /** Model units are 1/16 of a block, so a vertex is placed to well under a texel. */
     private static final float EPSILON = 1.0E-4F;
 
@@ -74,8 +75,7 @@ class MagicCarpetBodySeamTest {
     private static Body body(int shape) {
         MagicCarpetEntityModel model =
                 new MagicCarpetEntityModel(
-                        MagicCarpetEntityModel.createBodyLayer(
-                                        (shape & 1) != 0, (shape & 2) != 0)
+                        MagicCarpetEntityModel.createBodyLayer((shape & 1) != 0, (shape & 2) != 0)
                                 .bakeRoot());
         MagicCarpetEntityRenderState state = new MagicCarpetEntityRenderState();
         state.speed = 5.0F / 3.0F;
@@ -105,11 +105,7 @@ class MagicCarpetBodySeamTest {
             }
             for (int vertex = 0; vertex < 4; vertex++) {
                 if (Math.abs(quad[vertex * 3 + 2] - z) <= EPSILON) {
-                    ring.add(
-                            key(
-                                    quad[vertex * 3],
-                                    quad[vertex * 3 + 1],
-                                    quad[vertex * 3 + 2]));
+                    ring.add(key(quad[vertex * 3], quad[vertex * 3 + 1], quad[vertex * 3 + 2]));
                 }
             }
         }

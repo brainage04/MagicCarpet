@@ -88,8 +88,7 @@ public final class MagicCarpetUndersideCapture {
                             }
                         }
                         MagicCarpetEntity carpet =
-                                (MagicCarpetEntity)
-                                        type.create(level, EntitySpawnReason.COMMAND);
+                                (MagicCarpetEntity) type.create(level, EntitySpawnReason.COMMAND);
                         if (carpet == null) {
                             throw new AssertionError("Expected a registered carpet for " + type);
                         }
@@ -98,8 +97,30 @@ public final class MagicCarpetUndersideCapture {
                             throw new AssertionError("Failed to spawn " + type);
                         }
                     });
-            shoot(context, server, type, site, names[index] + "-underside", 0.0D, -CAMERA_DISTANCE, 0.0D, 180.0F, -90.0F, output);
-            shoot(context, server, type, site, names[index] + "-side", 0.0D, -0.5D, -1.5D, 0.0F, -20.0F, output);
+            shoot(
+                    context,
+                    server,
+                    type,
+                    site,
+                    names[index] + "-underside",
+                    0.0D,
+                    -CAMERA_DISTANCE,
+                    0.0D,
+                    180.0F,
+                    -90.0F,
+                    output);
+            shoot(
+                    context,
+                    server,
+                    type,
+                    site,
+                    names[index] + "-side",
+                    0.0D,
+                    -0.5D,
+                    -1.5D,
+                    0.0F,
+                    -20.0F,
+                    output);
         }
     }
 
@@ -115,8 +136,7 @@ public final class MagicCarpetUndersideCapture {
             float yaw,
             float pitch,
             Path output) {
-        Vec3 camera =
-                new Vec3(site + 0.5D + dx, CARPET_Y + dy - EYE_HEIGHT, site + 0.5D + dz);
+        Vec3 camera = new Vec3(site + 0.5D + dx, CARPET_Y + dy - EYE_HEIGHT, site + 0.5D + dz);
         Vec3 carpetAt = new Vec3(site + 0.5D, CARPET_Y, site + 0.5D);
         server.runOnServer(
                 minecraftServer -> {
@@ -136,7 +156,8 @@ public final class MagicCarpetUndersideCapture {
                         client.level != null
                                 && client.player != null
                                 && client.player.position().distanceTo(camera) < 0.01D
-                                && client.level
+                                && client
+                                        .level
                                         .getEntitiesOfClass(
                                                 MagicCarpetEntity.class,
                                                 new AABB(carpetAt, carpetAt).inflate(2.0D))

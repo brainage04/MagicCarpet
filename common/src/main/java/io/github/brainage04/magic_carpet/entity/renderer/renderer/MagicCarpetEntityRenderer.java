@@ -141,12 +141,7 @@ public class MagicCarpetEntityRenderer
                 renderType,
                 (pose, buffer) ->
                         model.renderBody(
-                                pose,
-                                buffer,
-                                state.pose,
-                                light,
-                                OverlayTexture.NO_OVERLAY,
-                                -1));
+                                pose, buffer, state.pose, light, OverlayTexture.NO_OVERLAY, -1));
         matrices.popPose();
     }
 
