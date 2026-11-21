@@ -103,7 +103,10 @@ class MagicCarpetTopBorderTest {
         return z == DESIGN_L - 2 - BORDER_EDGE ? DESIGN_L - 1 - BORDER_EDGE : z;
     }
 
-    /** Every colour the dotted border draws: the solid ring colour and the field showing between its dots. */
+    /**
+     * Every colour the dotted border draws: the solid ring colour and the field showing between its
+     * dots.
+     */
     private static Set<Integer> borderColours(BufferedImage texture) {
         Set<Integer> colours = new HashSet<>();
         for (int z = 0; z < DESIGN_L; z++) {
@@ -116,7 +119,9 @@ class MagicCarpetTopBorderTest {
         return colours;
     }
 
-    /** The colour the border draws on most of its ring, which is the one a cut motif pixel meets. */
+    /**
+     * The colour the border draws on most of its ring, which is the one a cut motif pixel meets.
+     */
     private static int solidBorderColour(BufferedImage texture) {
         Map<Integer, Integer> counts = new HashMap<>();
         for (int z = 0; z < DESIGN_L; z++) {
@@ -126,9 +131,6 @@ class MagicCarpetTopBorderTest {
                 }
             }
         }
-        return counts.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .orElseThrow()
-                .getKey();
+        return counts.entrySet().stream().max(Map.Entry.comparingByValue()).orElseThrow().getKey();
     }
 }
