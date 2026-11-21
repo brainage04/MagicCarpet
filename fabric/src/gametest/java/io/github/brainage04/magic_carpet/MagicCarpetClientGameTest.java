@@ -54,6 +54,7 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
                     context.runOnClient(MagicCarpetClientGameTest::verifyTierModels);
                     context.runOnClient(client -> verifyAnimation());
                     verifyRiderYaw(context, server);
+                    MagicCarpetUndersideCapture.capture(context, server);
                     MagicCarpetShowcase.film(context, server);
                 });
     }
