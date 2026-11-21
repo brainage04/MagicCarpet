@@ -88,8 +88,8 @@ class MagicCarpetTopBorderTest {
     /**
      * Each segment's top face in image pixels, as {@code {u, v, width, height}}, read from the
      * model's own UVs so a change to the layout moves the test with it. A segment's part holds the
-     * slab, its two raised side borders and, at the ends, a front or back border; the slab's face is
-     * the widest one.
+     * slab, its two raised side borders and, at the ends, a front or back border; the slab's face
+     * is the widest one.
      */
     private static List<int[]> topFaces(BufferedImage texture, boolean tassels, boolean curls) {
         ModelPart root = MagicCarpetEntityModel.createBodyLayer(tassels, curls).bakeRoot();
@@ -115,9 +115,7 @@ class MagicCarpetTopBorderTest {
                 new PoseStack(),
                 (pose, path, index, cube) -> {
                     for (ModelPart.Polygon polygon : cube.polygons) {
-                        if (pose.pose().transformDirection(
-                                                new Vector3f(polygon.normal()))
-                                        .y()
+                        if (pose.pose().transformDirection(new Vector3f(polygon.normal())).y()
                                 < 0.5F) {
                             continue;
                         }
