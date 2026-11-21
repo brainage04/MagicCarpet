@@ -180,15 +180,15 @@ public final class MagicCarpetShowcase {
     private static final int TURN_TICKS = 20;
 
     /**
-     * The most, in degrees, that the camera may turn between one frame and the next while the rider
-     * turns. A tick's turn is drawn across the frames of that tick, so the step is the tick's turn
-     * over the frames in it: 4.5 degrees of yaw and 3.2 of pitch a tick at 20 ticks a second is 1.5
-     * and 1.1 at 30 frames a second. A turn that moves both of the rider's rotation fields is drawn
-     * in one frame instead, which is the whole 4.5 and 3.2.
+     * The most, in degrees, that the drawn rotation may change across a tick boundary while the
+     * rider turns. A turn drawn across the tick's frames meets itself at the boundary, so the step
+     * there is 0; a turn that moves both of the rider's rotation fields is drawn in one frame, so
+     * the step is the whole tick's turn, 4.5 degrees of yaw and 3.2 of pitch. The threshold sits
+     * between the two.
      */
-    private static final float MAX_FRAME_STEP = 2.0F;
+    private static final float MAX_BOUNDARY_STEP = 2.0F;
 
-    /** The frames a tick's turn is sampled at, so a step between two frames is measured. */
+    /** The samples a tick's turn is measured at, so the step across the tick boundary is measured. */
     private static final int FRAME_SAMPLES = 3;
 
     private static final int LAND_TIMEOUT_TICKS = 200;
@@ -589,14 +589,20 @@ public final class MagicCarpetShowcase {
         // draws it at the rider's own interpolated yaw, so the two must never be drawn apart. The
         // turn is applied between ticks, as the mouse applies it, so the carpet's own tick never
         // sees the yaw the frame is drawn at.
+        float fromYaw = context.computeOnClient(client -> client.player.getYRot());
         for (int tick = 1; tick <= TURN_TICKS; tick++) {
             watch.tick(context);
-            turnRider(context, TURN_DEGREES / TURN_TICKS, 0.0F);
+            turnRider(context, TURN_DEGREES / TURN_TICKS);
             // Measured after the turn, as the frame is drawn: the carpet's own tick has already
             // run, so a carpet drawn from its own yaw fields is a tick behind the rider here.
             watch.measureYawGap(context);
             watch.measureFrameSteps(context);
         }
+        float turned = context.computeOnClient(client -> client.player.getYRot());
+        check(
+                Math.abs(Mth.wrapDegrees(turned - fromYaw - TURN_DEGREES)) < 0.01F,
+                "The rider must turn " + TURN_DEGREES + " degrees, and it turned "
+                        + Mth.wrapDegrees(turned - fromYaw));
         float fromPitch = context.computeOnClient(client -> client.player.getXRot());
         for (int tick = 1; tick <= LOOK_DOWN_TICKS; tick++) {
             watch.tick(context);
@@ -605,6 +611,11 @@ public final class MagicCarpetShowcase {
             context.runOnClient(client -> client.player.setXRot(pitch));
             watch.measureFrameSteps(context);
         }
+        float lookedDown = context.computeOnClient(client -> client.player.getXRot());
+        check(
+                Math.abs(lookedDown - CarpetMotion.DIVE_PITCH) < 0.01F,
+                "The rider must look down to " + CarpetMotion.DIVE_PITCH + ", and it looked to "
+                        + lookedDown);
         context.getInput().holdKey(options -> options.keyJump);
         try {
             watch.untilServer(
@@ -997,11 +1008,11 @@ public final class MagicCarpetShowcase {
                             + this.widestYawGap
                             + " degrees apart");
             check(
-                    this.steepestFrameStep <= MAX_FRAME_STEP,
-                    "The camera must turn smoothly while the rider turns: no frame may turn it by"
-                            + " more than "
-                            + MAX_FRAME_STEP
-                            + " degrees, and one turned it by "
+                    this.steepestFrameStep <= MAX_BOUNDARY_STEP,
+                    "The camera must turn smoothly while the rider turns or looks down: the drawn"
+                            + " rotation may not jump by more than "
+                            + MAX_BOUNDARY_STEP
+                            + " degrees across a tick, and it jumped by "
                             + this.steepestFrameStep);
             check(
                     this.steepestRippleStep <= MAX_RIPPLE_STEP,
@@ -1196,23 +1207,22 @@ public final class MagicCarpetShowcase {
     }
 
     /**
-     * Turns the rider by {@code yaw} and {@code pitch} degrees between ticks, as the mouse does,
-     * and leaves the fields the frame interpolates from where they were.
+     * Turns the rider by {@code yaw} degrees between ticks and leaves the rotation the frame
+     * interpolates from where it was.
      *
      * <p>{@code Entity.turn} moves the current rotation and the old one together ({@code
      * Entity.java:496-507} in 26.3), so the frame draws the whole turn in one frame: the camera
      * reads the rider's interpolated rotation ({@code Camera.java:259-262}), and a turn that moves
-     * both ends of the interpolation is a step, not a sweep. A mouse turn is smooth because the
-     * game moves only the current rotation between ticks and copies it into the old one at the
-     * start of the next tick ({@code Entity.setOldRot}, {@code Entity.java:1859-1861}), so the
-     * frame sweeps from the old rotation to the new one across the tick. This does the same.
+     * both ends of the interpolation is a step, not a sweep. The film applies a whole tick's turn at
+     * once, so it must leave the old rotation alone for the frame to sweep across the tick. A mouse
+     * turn applies a frame's own delta and moves both fields, which is why a real 4.5 degree mouse
+     * turn also jumps; a real mouse turn is smooth because each frame's delta is small.
      */
-    private static void turnRider(ClientGameTestContext context, float yaw, float pitch) {
+    private static void turnRider(ClientGameTestContext context, float yaw) {
         context.runOnClient(
                 client -> {
                     LocalPlayer player = client.player;
                     player.setYRot(player.getYRot() + yaw);
-                    player.setXRot(player.getXRot() + pitch);
                     player.setYHeadRot(player.getYRot());
                 });
     }
