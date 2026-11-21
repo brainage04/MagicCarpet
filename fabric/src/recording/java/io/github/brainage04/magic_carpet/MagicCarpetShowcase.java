@@ -819,10 +819,10 @@ public final class MagicCarpetShowcase {
 
         /**
          * The largest turn the camera makes between one frame and the next, across the tick the
-         * rider just turned in. The camera reads the rider's interpolated rotation
-         * ({@code Camera.java:259-262} in 26.3), so a turn that moves both of the rider's rotation
-         * fields is drawn in a single frame: the last frame of the tick before the turn and the
-         * first frame of the tick after it are a whole turn step apart. A turn that moves only the
+         * rider just turned in. The camera reads the rider's interpolated rotation ({@code
+         * Camera.java:259-262} in 26.3), so a turn that moves both of the rider's rotation fields
+         * is drawn in a single frame: the last frame of the tick before the turn and the first
+         * frame of the tick after it are a whole turn step apart. A turn that moves only the
          * current field is drawn across the tick's frames, so the two frames meet and the tick's
          * turn is spread over them.
          */
@@ -1196,14 +1196,14 @@ public final class MagicCarpetShowcase {
     }
 
     /**
-     * Turns the rider by {@code yaw} and {@code pitch} degrees between ticks, as the mouse does, and
-     * leaves the fields the frame interpolates from where they were.
+     * Turns the rider by {@code yaw} and {@code pitch} degrees between ticks, as the mouse does,
+     * and leaves the fields the frame interpolates from where they were.
      *
-     * <p>{@code Entity.turn} moves the current rotation and the old one together
-     * ({@code Entity.java:496-507} in 26.3), so the frame draws the whole turn in one frame: the
-     * camera reads the rider's interpolated rotation ({@code Camera.java:259-262}), and a turn that
-     * moves both ends of the interpolation is a step, not a sweep. A mouse turn is smooth because
-     * the game moves only the current rotation between ticks and copies it into the old one at the
+     * <p>{@code Entity.turn} moves the current rotation and the old one together ({@code
+     * Entity.java:496-507} in 26.3), so the frame draws the whole turn in one frame: the camera
+     * reads the rider's interpolated rotation ({@code Camera.java:259-262}), and a turn that moves
+     * both ends of the interpolation is a step, not a sweep. A mouse turn is smooth because the
+     * game moves only the current rotation between ticks and copies it into the old one at the
      * start of the next tick ({@code Entity.setOldRot}, {@code Entity.java:1859-1861}), so the
      * frame sweeps from the old rotation to the new one across the tick. This does the same.
      */
