@@ -5,6 +5,7 @@ import io.github.brainage04.magic_carpet.entity.ModEntities;
 import io.github.brainage04.magic_carpet.entity.custom.CarpetTier;
 import io.github.brainage04.magic_carpet.entity.custom.MagicCarpetEntity;
 import io.github.brainage04.magic_carpet.entity.model.MagicCarpetEntityModel;
+import io.github.brainage04.magic_carpet.entity.model.MagicCarpetPose;
 import io.github.brainage04.magic_carpet.entity.renderer.MagicCarpetEntityRenderer;
 import io.github.brainage04.magic_carpet.entity.renderer.state.MagicCarpetEntityRenderState;
 import io.github.brainage04.magic_carpet.item.ModItems;
@@ -218,15 +219,15 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
         var state = new MagicCarpetEntityRenderState();
         state.ageInTicks = 20;
         model.setupAnim(state);
-        float idle = root.getChild("carpet").getChild("segment_7").y;
+        float idle = state.pose.heights()[MagicCarpetPose.SEGMENTS];
         state.speed = 1;
         model.setupAnim(state);
-        float flying = root.getChild("carpet").getChild("segment_7").y;
+        float flying = state.pose.heights()[MagicCarpetPose.SEGMENTS];
         if (Math.abs(idle - flying) < 0.01) {
             throw new AssertionError("Flight must change the carpet's ripple");
         }
         model.setupAnim(state);
-        if (root.getChild("carpet").getChild("segment_7").y != flying) {
+        if (state.pose.heights()[MagicCarpetPose.SEGMENTS] != flying) {
             throw new AssertionError("Animation must not accumulate offsets between frames");
         }
     }

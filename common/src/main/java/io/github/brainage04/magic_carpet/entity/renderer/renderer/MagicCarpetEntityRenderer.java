@@ -90,6 +90,7 @@ public class MagicCarpetEntityRenderer
         matrices.rotateDegrees(Axis.ZP, state.roll);
 
         MagicCarpetEntityModel model = this.models[state.shape];
+        submitBody(queue, matrices, model, state, this.renderType, state.lightCoords);
         queue.submitModel(
                 model,
                 state,
@@ -99,6 +100,13 @@ public class MagicCarpetEntityRenderer
                 OverlayTexture.NO_OVERLAY,
                 state.outlineColor);
         if (state.glow) {
+            submitBody(
+                    queue,
+                    matrices,
+                    model,
+                    state,
+                    this.emissiveRenderType,
+                    LightCoordsUtil.FULL_BRIGHT);
             queue.submitModel(
                     model,
                     state,
@@ -112,6 +120,34 @@ public class MagicCarpetEntityRenderer
         matrices.popPose();
 
         super.submit(state, matrices, queue, cameraState);
+    }
+
+    /**
+     * The body is one surface, so it is drawn as custom geometry rather than as model parts
+     * (SubmitNodeCollector.submitCustomGeometry, 26.3). The tassels and curls stay model parts and
+     * go through {@code submitModel}.
+     */
+    private static void submitBody(
+            SubmitNodeCollector queue,
+            PoseStack matrices,
+            MagicCarpetEntityModel model,
+            MagicCarpetEntityRenderState state,
+            RenderType renderType,
+            int light) {
+        matrices.pushPose();
+        MagicCarpetEntityModel.transformBody(matrices, state.pose);
+        queue.submitCustomGeometry(
+                matrices,
+                renderType,
+                (pose, buffer) ->
+                        model.renderBody(
+                                pose,
+                                buffer,
+                                state.pose,
+                                light,
+                                OverlayTexture.NO_OVERLAY,
+                                -1));
+        matrices.popPose();
     }
 
     @Override
@@ -137,6 +173,7 @@ public class MagicCarpetEntityRenderer
         state.flutterPhase =
                 CarpetAnimation.lerpPhase(entity.prevFlutterPhase, entity.flutterPhase, tickDelta);
         state.animationOffset = (entity.getId() * 37) % 1000;
+        state.pose.set(state);
         CarpetTier.Model model = entity.tier().model();
         state.shape = shape(model);
         state.glow = model.glow();

@@ -1,5 +1,7 @@
 package io.github.brainage04.magic_carpet.entity.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.brainage04.magic_carpet.entity.renderer.state.MagicCarpetEntityRenderState;
 import java.util.EnumSet;
 import java.util.List;
@@ -13,59 +15,43 @@ import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+import org.joml.Quaternionf;
 
 /**
- * The texture layout (96x48 texture units) is shared with {@code tools/generate_carpet_assets.py},
- * which paints the textures and item models; change both together.
+ * The carpet's tassels and curled corners, and the pose the body is drawn from. The body itself is
+ * one surface, {@link MagicCarpetBodyMesh}, because eight rigid boxes leave a crack at every joint.
+ *
+ * <p>The texture layout (96x48 texture units) is shared with {@code
+ * tools/generate_carpet_assets.py}, which paints the textures and item models; change both
+ * together.
  */
 public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderState> {
     public static final int TEXTURE_WIDTH = 96;
     public static final int TEXTURE_HEIGHT = 48;
 
-    private static final int SEGMENTS = 8;
-    private static final float SEGMENT_LENGTH = 4.0F;
-    private static final float FRONT_Z = -16.0F;
     private static final float[] TASSEL_X = {-6.0F, -3.0F, 0.0F, 3.0F, 6.0F};
     private static final float TASSEL_DROOP = 0.6F;
     private static final float CURL_PITCH = 0.9F;
     private static final float CURL_ROLL = 0.5F;
 
-    private static final float HOVER_HEIGHT = 1.0F;
-
-    /**
-     * The raised borders sit on the slab, so their bottom face is coplanar with the slab's top and
-     * the two flicker against each other: the render type does not cull back faces
-     * (RenderPipelines.java:507 in 26.3). The slab's top covers the border's footprint, so the
-     * border's bottom is never seen and is left out.
-     */
-    private static final Set<Direction> BORDER_SIDES = without(Direction.DOWN);
-
-    /**
-     * The front and back borders butt against the side borders, which cover their end faces, so
-     * those are left out too.
-     */
-    private static final Set<Direction> BORDER_SIDES_BETWEEN =
-            without(Direction.DOWN, Direction.WEST, Direction.EAST);
-
     /** The curl's flap ends inside the roll, which covers its front face. */
     private static final Set<Direction> CURL_FLAP_SIDES = without(Direction.NORTH);
 
     private final ModelPart carpet;
-    private final ModelPart[] segments = new ModelPart[SEGMENTS];
+    private final ModelPart[] segments = new ModelPart[MagicCarpetPose.SEGMENTS];
     private final ModelPart[] frontTassels;
     private final ModelPart[] backTassels;
     private final ModelPart[] curls;
-    private final float[] heights = new float[SEGMENTS + 1];
 
     public MagicCarpetEntityModel(ModelPart root) {
         super(root);
         this.carpet = root.getChild("carpet");
-        for (int i = 0; i < SEGMENTS; i++) {
+        for (int i = 0; i < MagicCarpetPose.SEGMENTS; i++) {
             this.segments[i] = this.carpet.getChild(segmentName(i));
         }
 
         ModelPart front = this.segments[0];
-        ModelPart back = this.segments[SEGMENTS - 1];
+        ModelPart back = this.segments[MagicCarpetPose.SEGMENTS - 1];
         boolean tassels = front.hasChild(tasselName("front", 0));
         this.frontTassels = new ModelPart[tassels ? TASSEL_X.length : 0];
         this.backTassels = new ModelPart[this.frontTassels.length];
@@ -87,40 +73,20 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
         PartDefinition carpet =
                 mesh.getRoot().addOrReplaceChild("carpet", CubeListBuilder.create(), PartPose.ZERO);
 
-        for (int i = 0; i < SEGMENTS; i++) {
+        for (int i = 0; i < MagicCarpetPose.SEGMENTS; i++) {
             boolean first = i == 0;
-            boolean last = i == SEGMENTS - 1;
+            boolean last = i == MagicCarpetPose.SEGMENTS - 1;
             boolean cutCorners = first && curls;
-
-            CubeListBuilder cubes =
-                    cutCorners
-                            ? CubeListBuilder.create()
-                                    .texOffs(56, 40)
-                                    .addBox(-8.0F, -1.0F, 0.0F, 16.0F, 1.0F, 4.0F)
-                            : CubeListBuilder.create()
-                                    .texOffs(0, 5 * i)
-                                    .addBox(-12.0F, -1.0F, 0.0F, 24.0F, 1.0F, 4.0F);
-
-            if (!cutCorners) {
-                cubes.texOffs(56, 5 * i)
-                        .addBox(-12.0F, 0.0F, 0.0F, 2.0F, 1.0F, 4.0F, BORDER_SIDES)
-                        .addBox(10.0F, 0.0F, 0.0F, 2.0F, 1.0F, 4.0F, BORDER_SIDES);
-            }
-            if (cutCorners) {
-                cubes.texOffs(0, 43).addBox(-8.0F, 0.0F, 0.0F, 16.0F, 1.0F, 2.0F, BORDER_SIDES);
-            } else if (first) {
-                cubes.texOffs(0, 40)
-                        .addBox(-10.0F, 0.0F, 0.0F, 20.0F, 1.0F, 2.0F, BORDER_SIDES_BETWEEN);
-            } else if (last) {
-                cubes.texOffs(0, 40)
-                        .addBox(-10.0F, 0.0F, 2.0F, 20.0F, 1.0F, 2.0F, BORDER_SIDES_BETWEEN);
-            }
 
             PartDefinition segment =
                     carpet.addOrReplaceChild(
                             segmentName(i),
-                            cubes,
-                            PartPose.offset(0.0F, 1.0F, FRONT_Z + SEGMENT_LENGTH * i));
+                            CubeListBuilder.create(),
+                            PartPose.offset(
+                                    0.0F,
+                                    1.0F,
+                                    MagicCarpetPose.FRONT_Z
+                                            + MagicCarpetPose.SEGMENT_LENGTH * i));
 
             if (tassels && first) {
                 for (int t = 0; t < TASSEL_X.length; t++) {
@@ -139,7 +105,7 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
                             CubeListBuilder.create()
                                     .texOffs(44, 40)
                                     .addBox(-0.5F, -0.5F, 0.0F, 1.0F, 1.0F, 3.0F),
-                            PartPose.offset(TASSEL_X[t], -0.5F, SEGMENT_LENGTH));
+                            PartPose.offset(TASSEL_X[t], -0.5F, MagicCarpetPose.SEGMENT_LENGTH));
                 }
             }
             if (cutCorners) {
@@ -167,7 +133,12 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
                         .texOffs(68, 5)
                         .addBox(innerX, -1.0F, -5.0F, 4.0F, 2.0F, 2.0F),
                 PartPose.offsetAndRotation(
-                        8.0F * side, 0.0F, SEGMENT_LENGTH, CURL_PITCH, 0.0F, CURL_ROLL * side));
+                        8.0F * side,
+                        0.0F,
+                        MagicCarpetPose.SEGMENT_LENGTH,
+                        CURL_PITCH,
+                        0.0F,
+                        CURL_ROLL * side));
     }
 
     private static Set<Direction> without(Direction... hidden) {
@@ -184,6 +155,27 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
         return end + "_tassel_" + index;
     }
 
+    /**
+     * Puts the matrices where the body is drawn: the carpet part's own hover and sway, which the
+     * tassels and curls get from {@link #setupAnim} through the part tree.
+     */
+    public static void transformBody(PoseStack matrices, MagicCarpetPose pose) {
+        matrices.translate(0.0F, (pose.y() + 1.0F) / 16.0F, 0.0F);
+        matrices.rotate(new Quaternionf().rotationZYX(pose.zRot(), 0.0F, pose.xRot()));
+    }
+
+    /** Draws the body at the pose the render state carries. */
+    public void renderBody(
+            PoseStack.Pose pose,
+            VertexConsumer buffer,
+            MagicCarpetPose carpet,
+            int light,
+            int overlay,
+            int color) {
+        MagicCarpetBodyMesh.render(
+                pose, buffer, carpet, this.curls.length > 0, light, overlay, color);
+    }
+
     @Override
     public void setupAnim(MagicCarpetEntityRenderState state) {
         super.setupAnim(state);
@@ -192,23 +184,20 @@ public class MagicCarpetEntityModel extends EntityModel<MagicCarpetEntityRenderS
         float speed = state.speed;
         float calm = 1.0F - 0.6F * speed;
 
-        this.carpet.y = HOVER_HEIGHT + 0.5F * Mth.sin(time * 0.1F) * calm;
-        this.carpet.zRot = 0.03F * Mth.sin(time * 0.07F) * calm;
-        this.carpet.xRot = 0.015F * Mth.sin(time * 0.05F + 1.0F) * calm;
+        MagicCarpetPose pose = state.pose;
+        pose.set(state);
+        this.carpet.y = pose.y();
+        this.carpet.zRot = pose.zRot();
+        this.carpet.xRot = pose.xRot();
 
-        float amplitude = 0.4F + 1.1F * speed;
-        for (int i = 0; i <= SEGMENTS; i++) {
-            float along = (float) i / SEGMENTS;
-            float z = SEGMENT_LENGTH * i;
-            this.heights[i] =
-                    amplitude * (0.5F + along) * Mth.sin(z * 0.22F - state.ripplePhase)
-                            + 1.4F * speed * along * along;
-        }
-        for (int i = 0; i < SEGMENTS; i++) {
+        float[] heights = pose.heights();
+        for (int i = 0; i < MagicCarpetPose.SEGMENTS; i++) {
             ModelPart segment = this.segments[i];
-            segment.y += this.heights[i];
+            segment.y += heights[i];
             segment.xRot =
-                    (float) -Math.atan2(this.heights[i + 1] - this.heights[i], SEGMENT_LENGTH);
+                    (float)
+                            -Math.atan2(
+                                    heights[i + 1] - heights[i], MagicCarpetPose.SEGMENT_LENGTH);
         }
 
         for (int i = 0; i < this.backTassels.length; i++) {
