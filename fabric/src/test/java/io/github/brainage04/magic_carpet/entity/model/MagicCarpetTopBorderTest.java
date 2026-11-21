@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.imageio.ImageIO;
 import net.minecraft.client.model.geom.ModelPart;
+import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,9 +27,6 @@ import org.junit.jupiter.api.Test;
  * border, whatever produced it.
  */
 class MagicCarpetTopBorderTest {
-    /** Art pixels per texture unit, as the generator draws them. */
-    private static final int SCALE = 2;
-
     private static final int SEGMENTS = 8;
 
     private static final int SEGMENT_ROWS = 8;
@@ -40,13 +38,19 @@ class MagicCarpetTopBorderTest {
     /** The ring the dotted border sits on, counted from the design's outer edge. */
     private static final int BORDER_EDGE = 10;
 
+    /** Each tier's shape, as the tier data gives it: tassels, then curled corners. */
     private static final String[] TIERS = {"basic", "advanced", "legendary"};
+
+    private static final boolean[] TASSELS = {false, true, true};
+
+    private static final boolean[] CURLS = {false, false, true};
 
     @Test
     void noMotifPixelIsCutByTheInnerBorder() throws IOException {
-        for (String tier : TIERS) {
+        for (int index = 0; index < TIERS.length; index++) {
+            String tier = TIERS[index];
             BufferedImage texture = load(tier);
-            List<int[]> segments = topFaces(texture);
+            List<int[]> segments = topFaces(texture, TASSELS[index], CURLS[index]);
             Set<Integer> border = borderColours(texture, segments);
             int solid = solidBorderColour(texture, segments);
             List<String> cut = new ArrayList<>();
@@ -84,10 +88,11 @@ class MagicCarpetTopBorderTest {
     /**
      * Each segment's top face in image pixels, as {@code {u, v, width, height}}, read from the
      * model's own UVs so a change to the layout moves the test with it. A segment's part holds the
-     * slab and its two raised side borders; the slab's face is the widest one.
+     * slab, its two raised side borders and, at the ends, a front or back border; the slab's face is
+     * the widest one.
      */
-    private static List<int[]> topFaces(BufferedImage texture) {
-        ModelPart root = MagicCarpetEntityModel.createBodyLayer(false, false).bakeRoot();
+    private static List<int[]> topFaces(BufferedImage texture, boolean tassels, boolean curls) {
+        ModelPart root = MagicCarpetEntityModel.createBodyLayer(tassels, curls).bakeRoot();
         ModelPart carpet = root.getChild("carpet");
         List<int[]> faces = new ArrayList<>();
         for (int segment = 0; segment < SEGMENTS; segment++) {
@@ -110,7 +115,10 @@ class MagicCarpetTopBorderTest {
                 new PoseStack(),
                 (pose, path, index, cube) -> {
                     for (ModelPart.Polygon polygon : cube.polygons) {
-                        if (polygon.normal().y() < 0.5F) {
+                        if (pose.pose().transformDirection(
+                                                new Vector3f(polygon.normal()))
+                                        .y()
+                                < 0.5F) {
                             continue;
                         }
                         float[] rect = {
