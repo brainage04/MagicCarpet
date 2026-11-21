@@ -16,6 +16,7 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -27,15 +28,18 @@ import net.minecraft.world.phys.Vec3;
 public final class MagicCarpetUndersideCapture {
     public static final String DIRECTORY_PROPERTY = "magic_carpet.underside_screenshots.directory";
 
-    /** The platform the carpet hangs under, so the shot has a plain background instead of sky. */
+    /**
+     * The platform the carpet hangs under: glowstone, so the shot has a plain background instead of
+     * sky and the carpet's underside is lit.
+     */
     private static final int CEILING_Y = 100;
 
-    private static final int CEILING_RADIUS = 4;
+    private static final int CEILING_RADIUS = 6;
 
     private static final double CARPET_Y = CEILING_Y - 1.5D;
 
     /** The camera's depth below the carpet: the carpet fills about a third of the frame. */
-    private static final double CAMERA_DEPTH = 3.5D;
+    private static final double CAMERA_DEPTH = 7.0D;
 
     /** One site per tier, clear of the showcase's runway sites. */
     private static final int FIRST_SITE = 700;
@@ -69,7 +73,7 @@ public final class MagicCarpetUndersideCapture {
                             for (int dz = -CEILING_RADIUS; dz <= CEILING_RADIUS; dz++) {
                                 level.setBlockAndUpdate(
                                         new BlockPos(site + dx, CEILING_Y, site + dz),
-                                        Blocks.SMOOTH_QUARTZ.defaultBlockState());
+                                        Blocks.GLOWSTONE.defaultBlockState());
                             }
                         }
                         player.teleportTo(
@@ -93,11 +97,17 @@ public final class MagicCarpetUndersideCapture {
                         }
                     });
             Vec3 camera = new Vec3(site + 0.5D, CARPET_Y - CAMERA_DEPTH, site + 0.5D);
+            Vec3 carpetAt = new Vec3(site + 0.5D, CARPET_Y, site + 0.5D);
             context.waitFor(
                     client ->
                             client.level != null
                                     && client.player != null
-                                    && client.player.position().distanceTo(camera) < 0.01D,
+                                    && client.player.position().distanceTo(camera) < 0.01D
+                                    && client.level.getEntitiesOfClass(
+                                                    MagicCarpetEntity.class,
+                                                    new AABB(carpetAt, carpetAt).inflate(2.0D))
+                                            .stream()
+                                            .anyMatch(carpet -> carpet.getType() == type),
                     LOAD_TIMEOUT_TICKS);
             ClientGameTestWaits.waitForChunkWindow(context, 4, LOAD_TIMEOUT_TICKS);
             ClientGameTestWaits.waitForRenderSettled(context, 15, LOAD_TIMEOUT_TICKS);
