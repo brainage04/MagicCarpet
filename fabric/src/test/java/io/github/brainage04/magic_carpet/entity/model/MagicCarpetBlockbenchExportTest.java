@@ -29,8 +29,8 @@ import org.junit.jupiter.api.Test;
  * setupAnim} and compares every cube corner of every part against the corners the .bbmodel
  * describes, so the copy cannot drift from the code it was made from.
  *
- * <p>It also measures the crack at each joint between two segments: the segments are rigid boxes
- * pitched against each other, so their end faces meet at the top edge and open downwards. The
+ * <p>It also measures the crack at each joint between two segments: each segment is a rigid box
+ * pitched about its own pivot, so the two end faces at a joint separate at both edges. The
  * measurement is in model pixels (1/16 block) and is written per joint per sampled tick to {@code
  * build/blockbench-seams.txt}, with the angle between the two faces.
  */
@@ -228,10 +228,49 @@ class MagicCarpetBlockbenchExportTest {
                         assertEquals(fromJava.x, fromBlockbench.x, TOLERANCE, where + " x");
                         assertEquals(fromJava.y, fromBlockbench.y, TOLERANCE, where + " y");
                         assertEquals(fromJava.z, fromBlockbench.z, TOLERANCE, where + " z");
+
+                        // The corner alone would pass for a rectangle of the wrong size, so the
+                        // rectangle's extent is compared too. Blockbench writes up and down
+                        // backwards, so the extent is the larger number minus the smaller.
+                        float[] expectedExtent = extent(polygon);
+                        float[] actualExtent =
+                                extent(
+                                        new float[] {
+                                            uv.get(0).getAsFloat(),
+                                            uv.get(1).getAsFloat(),
+                                            uv.get(2).getAsFloat(),
+                                            uv.get(3).getAsFloat()
+                                        });
+                        assertEquals(expectedExtent[0], actualExtent[0], TOLERANCE, where + " u");
+                        assertEquals(expectedExtent[1], actualExtent[1], TOLERANCE, where + " v");
                     }
                 }
             }
         }
+    }
+
+    /**
+     * A polygon's UV rectangle in texture units, as its width and height. The four vertices are
+     * taken together because ModelPart.Cube gives the up and down faces two vertices per corner
+     * pair, so no two of them span the rectangle.
+     */
+    private static float[] extent(ModelPart.Polygon polygon) {
+        float minU = Float.MAX_VALUE;
+        float minV = Float.MAX_VALUE;
+        float maxU = -Float.MAX_VALUE;
+        float maxV = -Float.MAX_VALUE;
+        for (ModelPart.Vertex vertex : polygon.vertices()) {
+            minU = Math.min(minU, vertex.u() * MagicCarpetEntityModel.TEXTURE_WIDTH);
+            maxU = Math.max(maxU, vertex.u() * MagicCarpetEntityModel.TEXTURE_WIDTH);
+            minV = Math.min(minV, vertex.v() * MagicCarpetEntityModel.TEXTURE_HEIGHT);
+            maxV = Math.max(maxV, vertex.v() * MagicCarpetEntityModel.TEXTURE_HEIGHT);
+        }
+        return new float[] {maxU - minU, maxV - minV};
+    }
+
+    /** A rectangle's width and height, whichever way round it is written. */
+    private static float[] extent(float[] uv) {
+        return new float[] {Math.abs(uv[2] - uv[0]), Math.abs(uv[3] - uv[1])};
     }
 
     /** The cube corner of the polygon's vertex at texture coordinates (u, v), in texture units. */
@@ -507,9 +546,9 @@ class MagicCarpetBlockbenchExportTest {
     }
 
     /**
-     * The angle, in degrees, between each joint's two end faces. The faces meet at the top edge and
-     * open downwards, so the crease is what shows them: the render type does not cull back faces,
-     * so both are drawn and the crease is a V of end-face texture.
+     * The angle, in degrees, between each joint's two end faces. The faces are not coplanar, so the
+     * crease is what shows them: the render type does not cull back faces, so both are drawn and
+     * the crease is a V of end-face texture.
      */
     private static float[] creaseAngles(Map<String, List<Vector3f[]>> baked) {
         float[] angles = new float[SEGMENTS - 1];

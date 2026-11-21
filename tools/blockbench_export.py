@@ -39,10 +39,11 @@ CURL_PITCH = 0.9
 CURL_ROLL = 0.5
 HOVER_HEIGHT = 1.0
 
-# The clip is 4 seconds, sampled every 2 ticks. The motion does not repeat: the ripple, the tassel
-# flutter and the tassel sway run at 0.08 + 0.42 * speed, 0.12 + 0.6 * speed and 0.09 radians a
-# tick, which share no period, so no clip length closes the loop. The animations are therefore
-# written to play once rather than to loop, which would snap the pose back every 4 seconds.
+# The clip is 4 seconds, sampled every 2 ticks. The motion repeats only every 628.3 ticks (31.4
+# seconds) at both speeds: the ripple, the tassel flutter and the tassel sway run at 0.08 + 0.42 *
+# speed, 0.12 + 0.6 * speed and 0.09 radians a tick, and their common period is not a whole number
+# of ticks. A 4-second clip therefore cannot close the loop, so the animations play once rather than
+# looping, which would snap the pose back every 4 seconds.
 CYCLE_TICKS = 80
 SAMPLE_TICKS = 2
 TICKS_PER_SECOND = 20
@@ -328,10 +329,16 @@ def animation(name, curls, speed, ticks):
             ry = pose[4] - rest_pose[4]
             rz = pose[5] - rest_pose[5]
             time = tick / TICKS_PER_SECOND
-            position.append(keyframe(part, time, "position", -dx, -dy, dz))
+            position.append(keyframe(name, part, time, "position", -dx, -dy, dz))
             rotation.append(
                 keyframe(
-                    part, time, "rotation", -math.degrees(rx), -math.degrees(ry), math.degrees(rz)
+                    name,
+                    part,
+                    time,
+                    "rotation",
+                    -math.degrees(rx),
+                    -math.degrees(ry),
+                    math.degrees(rz),
                 )
             )
 
@@ -353,9 +360,9 @@ def animation(name, curls, speed, ticks):
     }
 
 
-def keyframe(part, time, channel, x, y, z):
+def keyframe(animation, part, time, channel, x, y, z):
     return {
-        "uuid": stable_uuid("keyframe/%s/%s/%.4f" % (part, channel, time)),
+        "uuid": stable_uuid("keyframe/%s/%s/%s/%.4f" % (animation, part, channel, time)),
         "channel": channel,
         "time": round(time, 6),
         "color": -1,
