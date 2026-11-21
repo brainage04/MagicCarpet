@@ -173,6 +173,164 @@ class MagicCarpetBlockbenchExportTest {
                 "The export's seam gaps differ from the baked model's by " + worstDifference);
     }
 
+    /**
+     * Every face's UV rectangle must be the one ModelPart.Cube gives that face, mirrored the way
+     * Blockbench draws the model. A wrong rectangle puts the wrong part of the texture on a face,
+     * which no corner comparison would catch.
+     */
+    @Test
+    void everyFaceUsesTheModelsUv() throws IOException {
+        Path directory = exportDirectory();
+        for (Carpet carpet : CARPETS) {
+            JsonObject project = read(directory.resolve(carpet.name() + ".bbmodel"));
+            Map<String, List<JsonObject>> exported = exportedCubes(project);
+            Map<String, List<ModelPart.Cube>> baked = bakedCubes(carpet);
+
+            assertEquals(
+                    new java.util.TreeSet<>(baked.keySet()),
+                    new java.util.TreeSet<>(exported.keySet()),
+                    carpet.name() + ": part names");
+            for (String part : baked.keySet()) {
+                List<ModelPart.Cube> expected = baked.get(part);
+                List<JsonObject> actual = exported.get(part);
+                assertEquals(expected.size(), actual.size(), carpet.name() + " " + part);
+                for (int i = 0; i < expected.size(); i++) {
+                    ModelPart.Cube cube = expected.get(i);
+                    JsonObject json = actual.get(i);
+                    for (ModelPart.Polygon polygon : cube.polygons) {
+                        String face = faceName(polygon.normal());
+                        JsonArray uv =
+                                json.getAsJsonObject("faces")
+                                        .getAsJsonObject(face)
+                                        .getAsJsonArray("uv");
+                        float[] expectedUv = corners(uvOf(polygon));
+                        float[] actualUv = new float[4];
+                        for (int k = 0; k < 4; k++) {
+                            actualUv[k] = uv.get(k).getAsFloat();
+                        }
+                        // Blockbench writes the up and down rectangles backwards, so compare the
+                        // rectangle's two corners rather than the four numbers in order.
+                        actualUv = corners(actualUv);
+                        for (int k = 0; k < 4; k++) {
+                            assertEquals(
+                                    expectedUv[k],
+                                    actualUv[k],
+                                    TOLERANCE,
+                                    carpet.name() + " " + part + " cube " + i + " " + face);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * A polygon's UV rectangle in Blockbench's terms: the smallest and largest u and v of its four
+     * vertices, in texture units. Blockbench stores a rectangle, so the order of the corners does
+     * not matter.
+     */
+    private static float[] uvOf(ModelPart.Polygon polygon) {
+        float minU = Float.MAX_VALUE;
+        float minV = Float.MAX_VALUE;
+        float maxU = -Float.MAX_VALUE;
+        float maxV = -Float.MAX_VALUE;
+        for (ModelPart.Vertex vertex : polygon.vertices()) {
+            minU = Math.min(minU, vertex.u() * 96.0F);
+            maxU = Math.max(maxU, vertex.u() * 96.0F);
+            minV = Math.min(minV, vertex.v() * 48.0F);
+            maxV = Math.max(maxV, vertex.v() * 48.0F);
+        }
+        return new float[] {minU, minV, maxU, maxV};
+    }
+
+    /** A rectangle's two corners, whichever way round it is written. */
+    private static float[] corners(float[] uv) {
+        return new float[] {
+            Math.min(uv[0], uv[2]),
+            Math.min(uv[1], uv[3]),
+            Math.max(uv[0], uv[2]),
+            Math.max(uv[1], uv[3])
+        };
+    }
+
+    /**
+     * The Blockbench face name for a polygon's normal, in Minecraft's model space. Blockbench's
+     * layout is mirrored from ModelPart.Cube's, so its up rectangle is Java's down face and its
+     * east is Java's west.
+     */
+    private static String faceName(org.joml.Vector3fc normal) {
+        if (normal.y() > 0.5F) {
+            return "down";
+        }
+        if (normal.y() < -0.5F) {
+            return "up";
+        }
+        if (normal.x() > 0.5F) {
+            return "west";
+        }
+        if (normal.x() < -0.5F) {
+            return "east";
+        }
+        return normal.z() > 0.0F ? "south" : "north";
+    }
+
+    /** Each part's cubes, in the order the export writes them. */
+    private static Map<String, List<ModelPart.Cube>> bakedCubes(Carpet carpet) {
+        ModelPart root =
+                MagicCarpetEntityModel.createBodyLayer(carpet.tassels(), carpet.curls()).bakeRoot();
+        Map<String, List<ModelPart.Cube>> cubes = new LinkedHashMap<>();
+        root.visit(
+                new PoseStack(),
+                (pose, path, index, cube) ->
+                        cubes.computeIfAbsent(path, key -> new ArrayList<>()).add(cube));
+        return cubes;
+    }
+
+    /** Each part's cubes as the .bbmodel writes them. */
+    private static Map<String, List<JsonObject>> exportedCubes(JsonObject project) {
+        Map<String, JsonObject> groups = new LinkedHashMap<>();
+        for (JsonElement element : project.getAsJsonArray("groups")) {
+            groups.put(element.getAsJsonObject().get("uuid").getAsString(), element.getAsJsonObject());
+        }
+        Map<String, JsonObject> cubes = new LinkedHashMap<>();
+        for (JsonElement element : project.getAsJsonArray("elements")) {
+            cubes.put(element.getAsJsonObject().get("uuid").getAsString(), element.getAsJsonObject());
+        }
+        Map<String, List<JsonObject>> out = new LinkedHashMap<>();
+        collectCubes(project.getAsJsonArray("outliner"), "", groups, cubes, out);
+        return out;
+    }
+
+    private static void collectCubes(
+            JsonArray outliner,
+            String path,
+            Map<String, JsonObject> groups,
+            Map<String, JsonObject> cubes,
+            Map<String, List<JsonObject>> out) {
+        for (JsonElement element : outliner) {
+            if (element.isJsonPrimitive()) {
+                continue;
+            }
+            JsonObject group = groups.get(element.getAsJsonObject().get("uuid").getAsString());
+            String childPath = path + "/" + group.get("name").getAsString();
+            List<JsonObject> list = new ArrayList<>();
+            for (JsonElement child : element.getAsJsonObject().getAsJsonArray("children")) {
+                if (child.isJsonPrimitive() && cubes.containsKey(child.getAsString())) {
+                    list.add(cubes.get(child.getAsString()));
+                }
+            }
+            if (!list.isEmpty()) {
+                out.put(childPath, list);
+            }
+            collectCubes(
+                    element.getAsJsonObject().getAsJsonArray("children"),
+                    childPath,
+                    groups,
+                    cubes,
+                    out);
+        }
+    }
+
     /** The eight corners in a fixed order, so two corner sets can be compared index by index. */
     private static Vector3f[] sorted(Vector3f[] corners) {
         Vector3f[] copy = corners.clone();

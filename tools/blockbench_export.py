@@ -87,22 +87,30 @@ def f32(value):
 # --- The model ------------------------------------------------------------------------------
 
 
-def box_uvs(width, height, depth, u, v):
-    """Blockbench's box UV layout for a cube of this size at texture offset (u, v).
+def box_uvs(width, height, depth, u, v, mirror):
+    """Blockbench's box UV rectangles for a cube of this size at texture offset (u, v).
 
-    Blockbench lays the faces out mirrored from ModelPart.Cube: its east rectangle is Java's west
-    and its up is Java's down (js/outliner/types/cube.js, updateUV), which is the same mirror the
-    coordinates get.
+    This is Blockbench's own layout (js/outliner/types/cube.js, updateUV), which is mirrored from
+    ModelPart.Cube's: its east rectangle is Java's west and its up is Java's down, the same mirror
+    the coordinates get. The up and down rectangles run backwards, which is how Blockbench writes
+    them, and a mirrored cube flips every rectangle's U and swaps east with west.
     """
     w, h, d = width, height, depth
     rects = {
         "east": (0, d, d, d + h),
         "west": (d + w, d, 2 * d + w, d + h),
-        "up": (d, 0, d + w, d),
-        "down": (d + w, 0, d + 2 * w, d),
+        "up": (d + w, d, d, 0),
+        "down": (d + 2 * w, 0, d + w, d),
         "south": (2 * d + w, d, 2 * d + 2 * w, d + h),
         "north": (d, d, d + w, d + h),
     }
+    if mirror:
+        flipped = {}
+        for face, (x0, y0, x1, y1) in rects.items():
+            flipped[face] = (x1, y0, x0, y1)
+        rects["east"], rects["west"] = flipped["west"], flipped["east"]
+        for face in ("up", "down", "south", "north"):
+            rects[face] = flipped[face]
     return {face: [u + r[0], v + r[1], u + r[2], v + r[3]] for face, r in rects.items()}
 
 
@@ -411,7 +419,7 @@ def write_group(group, parent, elements, groups):
         # group's origin (js/formats/java/modded_entity.ts, convertPositionsFromLocalToGlobal).
         low = to_blockbench(x + cube.x + cube.w, y + cube.y + cube.h, z + cube.z)
         high = to_blockbench(x + cube.x, y + cube.y, z + cube.z + cube.d)
-        uvs = box_uvs(cube.w, cube.h, cube.d, cube.tex[0], cube.tex[1])
+        uvs = box_uvs(cube.w, cube.h, cube.d, cube.tex[0], cube.tex[1], cube.mirror)
         faces = {}
         for face in ALL_SIDES:
             faces[face] = {
