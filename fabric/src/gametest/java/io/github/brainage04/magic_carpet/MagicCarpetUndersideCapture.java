@@ -12,7 +12,6 @@ import net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptio
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.GameType;
@@ -42,10 +41,10 @@ public final class MagicCarpetUndersideCapture {
 
     /**
      * The camera's distance below the carpet, in blocks. The body is 2 blocks long, and the default
-     * 70 degree field of view covers 2 * 3 * tan(35) = 4.2 blocks at this distance, so the carpet
-     * fills half the frame and the joints are several pixels wide.
+     * 70 degree field of view covers 2 * 1.5 * tan(35) = 2.1 blocks at this distance, so the whole
+     * carpet fits the frame and each joint is several pixels wide.
      */
-    private static final double CAMERA_DISTANCE = 3.0D;
+    private static final double CAMERA_DISTANCE = 1.5D;
 
     /** The player's eye above its feet, which is where the camera is (Player.java, 26.3). */
     private static final double EYE_HEIGHT = 1.62D;
@@ -100,7 +99,7 @@ public final class MagicCarpetUndersideCapture {
                         }
                     });
             shoot(context, server, type, site, names[index] + "-underside", 0.0D, -CAMERA_DISTANCE, 0.0D, 180.0F, -90.0F, output);
-            shoot(context, server, type, site, names[index] + "-underside-far", 0.0D, -2.0D * CAMERA_DISTANCE, 0.0D, 180.0F, -90.0F, output);
+            shoot(context, server, type, site, names[index] + "-side", 0.0D, -0.5D, -1.5D, 0.0F, -20.0F, output);
         }
     }
 
@@ -144,21 +143,6 @@ public final class MagicCarpetUndersideCapture {
                                         .stream()
                                         .anyMatch(carpet -> carpet.getType() == type),
                 LOAD_TIMEOUT_TICKS);
-        context.runOnClient(
-                client ->
-                        MagicCarpet.LOGGER.info(
-                                "Capture {}: fov {} camera {} eye {}, carpet {}",
-                                name,
-                                client.options.fov().get(),
-                                camera,
-                                client.player.getEyePosition(),
-                                client.level
-                                        .getEntitiesOfClass(
-                                                MagicCarpetEntity.class,
-                                                new AABB(carpetAt, carpetAt).inflate(4.0D))
-                                        .stream()
-                                        .map(Entity::position)
-                                        .toList()));
         ClientGameTestWaits.waitForChunkWindow(context, 4, LOAD_TIMEOUT_TICKS);
         ClientGameTestWaits.waitForRenderSettled(context, 15, LOAD_TIMEOUT_TICKS);
         Path shot =
