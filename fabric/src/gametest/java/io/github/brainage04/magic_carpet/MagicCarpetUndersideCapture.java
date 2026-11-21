@@ -46,9 +46,6 @@ public final class MagicCarpetUndersideCapture {
      */
     private static final double CAMERA_DISTANCE = 1.5D;
 
-    /** The player's eye above its feet, which is where the camera is (Player.java, 26.3). */
-    private static final double EYE_HEIGHT = 1.62D;
-
     /** One site per tier, clear of the showcase's runway sites. */
     private static final int FIRST_SITE = 700;
 
@@ -136,7 +133,16 @@ public final class MagicCarpetUndersideCapture {
             float yaw,
             float pitch,
             Path output) {
-        Vec3 camera = new Vec3(site + 0.5D + dx, CARPET_Y + dy - EYE_HEIGHT, site + 0.5D + dz);
+        double[] eye = new double[1];
+        server.runOnServer(
+                minecraftServer ->
+                        eye[0] =
+                                minecraftServer
+                                        .getPlayerList()
+                                        .getPlayers()
+                                        .getFirst()
+                                        .getEyeHeight());
+        Vec3 camera = new Vec3(site + 0.5D + dx, CARPET_Y + dy - eye[0], site + 0.5D + dz);
         Vec3 carpetAt = new Vec3(site + 0.5D, CARPET_Y, site + 0.5D);
         server.runOnServer(
                 minecraftServer -> {
