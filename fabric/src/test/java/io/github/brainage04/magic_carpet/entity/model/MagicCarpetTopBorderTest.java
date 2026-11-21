@@ -126,9 +126,7 @@ class MagicCarpetTopBorderTest {
                     }
                 });
         assertTrue(!rects.isEmpty(), "the part has no upward face");
-        return rects.stream()
-                .max((a, b) -> Float.compare(a[2] - a[0], b[2] - b[0]))
-                .orElseThrow();
+        return rects.stream().max((a, b) -> Float.compare(a[2] - a[0], b[2] - b[0])).orElseThrow();
     }
 
     /** The colour of the design's art pixel (x, z), read from the segment that carries it. */
