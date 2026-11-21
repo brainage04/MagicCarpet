@@ -20,9 +20,9 @@ public class MagicCarpetEntityRenderState extends EntityRenderState {
     public boolean glow;
 
     /**
-     * Where the body sits this frame. The renderer draws the body from it when the frame is
-     * submitted and the model poses the tassels from it when the frame is drawn, so it is filled
-     * once, here, rather than by either of them.
+     * Where the body sits this frame. The renderer reads it when the frame is submitted and the
+     * model refills it when the frame is drawn; both compute it from this state, so they cannot
+     * disagree.
      */
     public final MagicCarpetPose pose = new MagicCarpetPose();
 }

@@ -17,8 +17,7 @@ import org.junit.jupiter.api.Test;
  * Two faces of one part that lie in the same plane and cover the same pixels are drawn on top of
  * each other. The carpet's render type does not cull back faces (RenderPipelines.java:507 in 26.3),
  * so both are rasterised and the depth test picks between them per pixel: the carpet flickers.
- * Faces of different parts are left alone, because the ripple bends the segments apart and their
- * touching end faces then show.
+ * Faces of different parts are left alone.
  *
  * <p>The body is one surface drawn as custom geometry, so its quads are checked as one part.
  */

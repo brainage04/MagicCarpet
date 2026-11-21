@@ -41,13 +41,11 @@ public final class MagicCarpetUndersideCapture {
 
     /**
      * The camera's distance below the carpet, in blocks. The body is 2 blocks long, and the default
-     * 70 degree field of view covers 2 * 1.5 * tan(35) = 2.1 blocks at this distance, so the whole
-     * carpet fits the frame and each joint is several pixels wide.
+     * 70 degree field of view covers 2 * 1.5 * tan(35) = 2.1 blocks at this distance, so the body
+     * fits the frame and each joint is several pixels wide; the tassels run past the top and bottom
+     * edges.
      */
     private static final double CAMERA_DISTANCE = 1.5D;
-
-    /** The player's eye above its feet, which is where the camera is (Player.java, 26.3). */
-    private static final double EYE_HEIGHT = 1.62D;
 
     /** One site per tier, clear of the showcase's runway sites. */
     private static final int FIRST_SITE = 700;
@@ -136,7 +134,16 @@ public final class MagicCarpetUndersideCapture {
             float yaw,
             float pitch,
             Path output) {
-        Vec3 camera = new Vec3(site + 0.5D + dx, CARPET_Y + dy - EYE_HEIGHT, site + 0.5D + dz);
+        double[] eye = new double[1];
+        server.runOnServer(
+                minecraftServer ->
+                        eye[0] =
+                                minecraftServer
+                                        .getPlayerList()
+                                        .getPlayers()
+                                        .getFirst()
+                                        .getEyeHeight());
+        Vec3 camera = new Vec3(site + 0.5D + dx, CARPET_Y + dy - eye[0], site + 0.5D + dz);
         Vec3 carpetAt = new Vec3(site + 0.5D, CARPET_Y, site + 0.5D);
         server.runOnServer(
                 minecraftServer -> {

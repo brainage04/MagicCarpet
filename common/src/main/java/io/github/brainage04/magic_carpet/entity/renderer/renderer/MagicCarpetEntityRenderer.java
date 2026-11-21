@@ -109,7 +109,6 @@ public class MagicCarpetEntityRenderer
                     this.emissiveRenderType,
                     LightCoordsUtil.FULL_BRIGHT,
                     -1);
-            submitBodyOutline(queue, matrices, model, state, this.emissiveRenderType);
             queue.submitModel(
                     model,
                     state,

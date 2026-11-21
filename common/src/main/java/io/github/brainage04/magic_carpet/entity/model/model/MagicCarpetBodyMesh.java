@@ -7,7 +7,7 @@ import net.minecraft.util.Mth;
 /**
  * The carpet's body as one surface, bent at the nine joints {@link MagicCarpetPose} gives. Each
  * joint is a row of vertices that the quads either side of it share, so the body has no crack
- * between segments and no two quads in one plane.
+ * between segments and no two quads overlap in one plane.
  *
  * <p>The texture layout (96x48 texture units) is shared with {@code
  * tools/generate_carpet_assets.py}, which paints the textures and item models; change both
@@ -15,8 +15,8 @@ import net.minecraft.util.Mth;
  * texture is unchanged.
  */
 public final class MagicCarpetBodyMesh {
-    private static final int TEXTURE_WIDTH = 96;
-    private static final int TEXTURE_HEIGHT = 48;
+    private static final int TEXTURE_WIDTH = MagicCarpetEntityModel.TEXTURE_WIDTH;
+    private static final int TEXTURE_HEIGHT = MagicCarpetEntityModel.TEXTURE_HEIGHT;
 
     private static final float HALF_WIDTH = 12.0F;
     private static final float INNER = 10.0F;
@@ -26,7 +26,7 @@ public final class MagicCarpetBodyMesh {
     private static final float BORDER_TOP = 1.0F;
     private static final float FRONT_BORDER_END = 2.0F;
     private static final float BACK_BORDER_START = 30.0F;
-    private static final float LENGTH = 32.0F;
+    private static final float LENGTH = MagicCarpetPose.SEGMENTS * MagicCarpetPose.SEGMENT_LENGTH;
 
     /**
      * The offsets along the body where a row of vertices sits: the nine joints, plus the two places
@@ -183,19 +183,11 @@ public final class MagicCarpetBodyMesh {
     private static Box slab(int segment, boolean cut) {
         return cut
                 ? new Box(
-                        56.0F,
-                        40.0F,
-                        16.0F,
-                        1.0F,
-                        4.0F,
-                        -CUT_HALF_WIDTH,
-                        BOTTOM,
-                        MagicCarpetPose.FRONT_Z)
+                        56.0F, 40.0F, 16.0F, 4.0F, -CUT_HALF_WIDTH, BOTTOM, MagicCarpetPose.FRONT_Z)
                 : new Box(
                         0.0F,
                         5.0F * segment,
                         24.0F,
-                        1.0F,
                         4.0F,
                         -HALF_WIDTH,
                         BOTTOM,
@@ -207,7 +199,6 @@ public final class MagicCarpetBodyMesh {
                 56.0F,
                 5.0F * segment,
                 2.0F,
-                1.0F,
                 4.0F,
                 minX,
                 SLAB_TOP,
@@ -220,13 +211,11 @@ public final class MagicCarpetBodyMesh {
                         0.0F,
                         43.0F,
                         16.0F,
-                        1.0F,
                         2.0F,
                         -CUT_HALF_WIDTH,
                         SLAB_TOP,
                         MagicCarpetPose.FRONT_Z)
-                : new Box(
-                        0.0F, 40.0F, 20.0F, 1.0F, 2.0F, -INNER, SLAB_TOP, MagicCarpetPose.FRONT_Z);
+                : new Box(0.0F, 40.0F, 20.0F, 2.0F, -INNER, SLAB_TOP, MagicCarpetPose.FRONT_Z);
     }
 
     private static Box backBorder() {
@@ -234,7 +223,6 @@ public final class MagicCarpetBodyMesh {
                 0.0F,
                 40.0F,
                 20.0F,
-                1.0F,
                 2.0F,
                 -INNER,
                 SLAB_TOP,
@@ -356,19 +344,11 @@ public final class MagicCarpetBodyMesh {
     }
 
     /**
-     * One of the boxes the body used to be built from. Its UVs are the ones vanilla gives that
-     * box's faces (ModelPart.Cube, 26.3), so the texture is unchanged; only the corners move, onto
-     * the shared rows.
+     * The texture rectangle and extent of one face group. {@code u} and {@code v} reproduce
+     * vanilla's {@code ModelPart.Cube} polygon UVs (ModelPart.java:286-318 in 26.3).
      */
     private record Box(
-            float texU,
-            float texV,
-            float width,
-            float height,
-            float depth,
-            float minX,
-            float minY,
-            float minZ) {
+            float texU, float texV, float width, float depth, float minX, float minY, float minZ) {
         private float u1() {
             return this.texU + this.depth;
         }

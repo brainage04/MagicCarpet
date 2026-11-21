@@ -344,9 +344,13 @@ public final class MagicCarpetClientGameTest implements FabricClientGameTest {
         if (Math.abs(idle - flying) < 0.01) {
             throw new AssertionError("Flight must change the carpet's ripple");
         }
+        float posed = root.getChild("carpet").getChild("segment_7").y;
         model.setupAnim(state);
         if (state.pose.heights()[MagicCarpetPose.SEGMENTS] != flying) {
             throw new AssertionError("Animation must not accumulate offsets between frames");
+        }
+        if (root.getChild("carpet").getChild("segment_7").y != posed) {
+            throw new AssertionError("The posed parts must not accumulate offsets between frames");
         }
     }
 }
