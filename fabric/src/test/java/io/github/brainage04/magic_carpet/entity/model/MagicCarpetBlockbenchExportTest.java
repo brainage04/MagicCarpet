@@ -250,9 +250,8 @@ class MagicCarpetBlockbenchExportTest {
     }
 
     /**
-     * A polygon's UV rectangle in texture units, as its width and height. The four vertices are
-     * taken together because ModelPart.Cube gives the up and down faces two vertices per corner
-     * pair, so no two of them span the rectangle.
+     * A polygon's UV rectangle in texture units, as its width and height. The four vertices are the
+     * rectangle's four corners, so the smallest and largest of each coordinate give the extent.
      */
     private static float[] extent(ModelPart.Polygon polygon) {
         float minU = Float.MAX_VALUE;
