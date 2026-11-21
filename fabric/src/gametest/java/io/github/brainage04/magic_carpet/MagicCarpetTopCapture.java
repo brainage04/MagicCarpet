@@ -34,8 +34,17 @@ public final class MagicCarpetTopCapture {
 
     private static final double CARPET_Y = FLOOR_Y + 1.5D;
 
-    /** The camera's height above the carpet: the carpet fills about a third of the frame. */
-    private static final double CAMERA_HEIGHT = 3.5D;
+    /** The camera's height above the carpet. */
+    private static final double CAMERA_HEIGHT = 2.0D;
+
+    /**
+     * The field of view the capture uses. At the camera's height the carpet fills about four tenths
+     * of a 70 degree frame, so the narrower view brings it to about four fifths.
+     */
+    private static final int CAPTURE_FOV = 40;
+
+    /** The field of view the rest of the client GameTest runs at. */
+    private static final int NORMAL_FOV = 70;
 
     /** One site per tier, clear of the showcase's runway sites. */
     private static final int FIRST_SITE = 600;
@@ -101,11 +110,23 @@ public final class MagicCarpetTopCapture {
                     LOAD_TIMEOUT_TICKS);
             ClientGameTestWaits.waitForChunkWindow(context, 4, LOAD_TIMEOUT_TICKS);
             ClientGameTestWaits.waitForRenderSettled(context, 15, LOAD_TIMEOUT_TICKS);
+            context.runOnClient(
+                    client -> {
+                        // The HUD, the recording panel included, would cover the carpet.
+                        client.gui.hud.toggle();
+                        client.options.fov().set(CAPTURE_FOV);
+                    });
+            context.waitTicks(2);
             Path shot =
                     context.takeScreenshot(
                             TestScreenshotOptions.of(names[index] + "-top")
                                     .disableCounterPrefix()
                                     .withDestinationDir(output));
+            context.runOnClient(
+                    client -> {
+                        client.gui.hud.toggle();
+                        client.options.fov().set(NORMAL_FOV);
+                    });
             MagicCarpet.LOGGER.info("Top capture of the {} carpet: {}", names[index], shot);
         }
     }
