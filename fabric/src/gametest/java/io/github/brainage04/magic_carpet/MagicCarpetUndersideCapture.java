@@ -41,8 +41,9 @@ public final class MagicCarpetUndersideCapture {
 
     /**
      * The camera's distance below the carpet, in blocks. The body is 2 blocks long, and the default
-     * 70 degree field of view covers 2 * 1.5 * tan(35) = 2.1 blocks at this distance, so the whole
-     * carpet fits the frame and each joint is several pixels wide.
+     * 70 degree field of view covers 2 * 1.5 * tan(35) = 2.1 blocks at this distance, so the body
+     * fits the frame and each joint is several pixels wide; the tassels run past the top and bottom
+     * edges.
      */
     private static final double CAMERA_DISTANCE = 1.5D;
 
