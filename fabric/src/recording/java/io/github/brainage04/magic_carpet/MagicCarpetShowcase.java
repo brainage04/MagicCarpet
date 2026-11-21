@@ -168,6 +168,12 @@ public final class MagicCarpetShowcase {
      */
     private static final long CLIMB_MILLIS = 900L;
 
+    /**
+     * The ticks the climb may take to lift the carpet a block. The basic tier's 2 s acceleration
+     * reaches the climb's vertical speed in about 40 ticks, and the lift then needs a few more.
+     */
+    private static final int CLIMB_TIMEOUT_TICKS = 120;
+
     private static final long LEVEL_MILLIS = 250L;
     private static final long COAST_MILLIS = 500L;
 
@@ -549,14 +555,15 @@ public final class MagicCarpetShowcase {
                             + " blocks/s");
             context.getInput().holdKey(options -> options.keyJump);
             watch.holdFor(context, CLIMB_MILLIS);
-            context.getInput().releaseKey(options -> options.keyJump);
-            server.runOnServer(
-                    minecraftServer -> {
-                        double height = player(minecraftServer).getVehicle().getY();
-                        check(
-                                height > CARPET_Y + 1.0D,
-                                "Held jump must lift " + type + ", held at " + height);
-                    });
+            // The climb's vertical speed ramps up like the horizontal one, so a client that ticks
+            // below 20 a second gets fewer ticks from a wall-clock hold than the ramp needs; the
+            // lift is waited for in ticks, as the top speed is.
+            for (int waited = 0; !lifted(server); waited++) {
+                check(
+                        waited < CLIMB_TIMEOUT_TICKS,
+                        "Held jump must lift " + type + ", held at " + carpetHeight(server));
+                watch.tick(context);
+            }
         } finally {
             context.getInput().releaseKey(options -> options.keyJump);
         }
@@ -715,6 +722,15 @@ public final class MagicCarpetShowcase {
                             && vehicle.getDeltaMovement().horizontalDistance()
                                     >= topSpeed * (1.0D - SPEED_TOLERANCE);
                 });
+    }
+
+    private static boolean lifted(TestDedicatedServerContext server) {
+        return carpetHeight(server) > CARPET_Y + 1.0D;
+    }
+
+    private static double carpetHeight(TestDedicatedServerContext server) {
+        return server.computeOnServer(
+                minecraftServer -> player(minecraftServer).getVehicle().getY());
     }
 
     /**
