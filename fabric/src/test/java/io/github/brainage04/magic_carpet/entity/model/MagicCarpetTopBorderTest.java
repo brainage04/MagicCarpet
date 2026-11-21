@@ -26,6 +26,9 @@ import org.junit.jupiter.api.Test;
  * border, whatever produced it.
  */
 class MagicCarpetTopBorderTest {
+    /** Art pixels per texture unit, as the generator draws them. */
+    private static final int SCALE = 2;
+
     private static final int SEGMENTS = 8;
 
     private static final int SEGMENT_ROWS = 8;
@@ -43,7 +46,7 @@ class MagicCarpetTopBorderTest {
     void noMotifPixelIsCutByTheInnerBorder() throws IOException {
         for (String tier : TIERS) {
             BufferedImage texture = load(tier);
-            List<int[]> segments = topFaces();
+            List<int[]> segments = topFaces(texture);
             Set<Integer> border = borderColours(texture, segments);
             int solid = solidBorderColour(texture, segments);
             List<String> cut = new ArrayList<>();
@@ -79,30 +82,30 @@ class MagicCarpetTopBorderTest {
     }
 
     /**
-     * Each segment's top face in texture pixels, as {@code {u, v, width, height}}, read from the
-     * model's own UVs so a change to the layout moves the test with it.
+     * Each segment's top face in image pixels, as {@code {u, v, width, height}}, read from the
+     * model's own UVs so a change to the layout moves the test with it. A segment's part holds the
+     * slab and its two raised side borders; the slab's face is the widest one.
      */
-    private static List<int[]> topFaces() {
+    private static List<int[]> topFaces(BufferedImage texture) {
         ModelPart root = MagicCarpetEntityModel.createBodyLayer(false, false).bakeRoot();
         ModelPart carpet = root.getChild("carpet");
         List<int[]> faces = new ArrayList<>();
         for (int segment = 0; segment < SEGMENTS; segment++) {
-            ModelPart part = carpet.getChild("segment_" + segment);
-            float[] rect = upFace(part);
+            float[] rect = widestUpFace(carpet.getChild("segment_" + segment));
             faces.add(
                     new int[] {
-                        Math.round(rect[0] * MagicCarpetEntityModel.TEXTURE_WIDTH),
-                        Math.round(rect[1] * MagicCarpetEntityModel.TEXTURE_HEIGHT),
-                        Math.round((rect[2] - rect[0]) * MagicCarpetEntityModel.TEXTURE_WIDTH),
-                        Math.round((rect[3] - rect[1]) * MagicCarpetEntityModel.TEXTURE_HEIGHT)
+                        Math.round(rect[0] * texture.getWidth()),
+                        Math.round(rect[1] * texture.getHeight()),
+                        Math.round((rect[2] - rect[0]) * texture.getWidth()),
+                        Math.round((rect[3] - rect[1]) * texture.getHeight())
                     });
         }
         return faces;
     }
 
-    /** The UV rectangle of a part's upward face, in texture units from 0 to 1. */
-    private static float[] upFace(ModelPart part) {
-        float[] rect = {Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+    /** The UV rectangle of the part's widest upward face, in texture units from 0 to 1. */
+    private static float[] widestUpFace(ModelPart part) {
+        List<float[]> rects = new ArrayList<>();
         part.visit(
                 new PoseStack(),
                 (pose, path, index, cube) -> {
@@ -110,16 +113,22 @@ class MagicCarpetTopBorderTest {
                         if (polygon.normal().y() < 0.5F) {
                             continue;
                         }
+                        float[] rect = {
+                            Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE
+                        };
                         for (ModelPart.Vertex vertex : polygon.vertices()) {
                             rect[0] = Math.min(rect[0], vertex.u());
                             rect[1] = Math.min(rect[1], vertex.v());
                             rect[2] = Math.max(rect[2], vertex.u());
                             rect[3] = Math.max(rect[3], vertex.v());
                         }
+                        rects.add(rect);
                     }
                 });
-        assertTrue(rect[0] <= rect[2], "the part has no upward face");
-        return rect;
+        assertTrue(!rects.isEmpty(), "the part has no upward face");
+        return rects.stream()
+                .max((a, b) -> Float.compare(a[2] - a[0], b[2] - b[0]))
+                .orElseThrow();
     }
 
     /** The colour of the design's art pixel (x, z), read from the segment that carries it. */
