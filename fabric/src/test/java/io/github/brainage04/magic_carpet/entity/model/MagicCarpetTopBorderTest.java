@@ -56,11 +56,15 @@ class MagicCarpetTopBorderTest {
             List<String> cut = new ArrayList<>();
             for (int z = 0; z < DESIGN_L; z++) {
                 for (int x = 0; x < DESIGN_W; x++) {
-                    if (edge(x, z) != BORDER_EDGE + 1
-                            || border.contains(pixel(texture, segments, x, z))) {
+                    if (edge(x, z) != BORDER_EDGE + 1) {
                         continue;
                     }
-                    if (pixel(texture, segments, outwardX(x), outwardZ(z)) == solid) {
+                    Integer inside = pixel(texture, segments, x, z);
+                    Integer outside = pixel(texture, segments, outwardX(x), outwardZ(z));
+                    if (inside == null || outside == null || border.contains(inside)) {
+                        continue;
+                    }
+                    if (outside == solid) {
                         cut.add("(" + x + ", " + z + ")");
                     }
                 }
@@ -135,11 +139,19 @@ class MagicCarpetTopBorderTest {
         return rects.stream().max((a, b) -> Float.compare(a[2] - a[0], b[2] - b[0])).orElseThrow();
     }
 
-    /** The colour of the design's art pixel (x, z), read from the segment that carries it. */
-    private static int pixel(BufferedImage texture, List<int[]> segments, int x, int z) {
+    /**
+     * The colour of the design's art pixel (x, z), or null when no segment carries it. A segment
+     * whose slab is narrower than the design carries a slice of it, centred: the legendary carpet's
+     * front segment is 16 art pixels wide and paints the design's x 8..23.
+     */
+    private static Integer pixel(BufferedImage texture, List<int[]> segments, int x, int z) {
         int[] face = segments.get(z / SEGMENT_ROWS);
+        int column = x - (DESIGN_W - face[2]) / 2;
+        if (column < 0 || column >= face[2]) {
+            return null;
+        }
         int row = SEGMENT_ROWS - 1 - z % SEGMENT_ROWS;
-        return texture.getRGB(face[0] + x, face[1] + row) & 0xFFFFFF;
+        return texture.getRGB(face[0] + column, face[1] + row) & 0xFFFFFF;
     }
 
     private static int edge(int x, int z) {
@@ -169,8 +181,9 @@ class MagicCarpetTopBorderTest {
         Set<Integer> colours = new HashSet<>();
         for (int z = 0; z < DESIGN_L; z++) {
             for (int x = 0; x < DESIGN_W; x++) {
-                if (edge(x, z) == BORDER_EDGE) {
-                    colours.add(pixel(texture, segments, x, z));
+                Integer colour = pixel(texture, segments, x, z);
+                if (edge(x, z) == BORDER_EDGE && colour != null) {
+                    colours.add(colour);
                 }
             }
         }
@@ -184,8 +197,9 @@ class MagicCarpetTopBorderTest {
         Map<Integer, Integer> counts = new HashMap<>();
         for (int z = 0; z < DESIGN_L; z++) {
             for (int x = 0; x < DESIGN_W; x++) {
-                if (edge(x, z) == BORDER_EDGE) {
-                    counts.merge(pixel(texture, segments, x, z), 1, Integer::sum);
+                Integer colour = pixel(texture, segments, x, z);
+                if (edge(x, z) == BORDER_EDGE && colour != null) {
+                    counts.merge(colour, 1, Integer::sum);
                 }
             }
         }
