@@ -194,6 +194,26 @@ public final class MagicCarpetBodyMesh {
                         MagicCarpetPose.FRONT_Z + MagicCarpetPose.SEGMENT_LENGTH * segment);
     }
 
+    /**
+     * Each segment's top face, as {@code {u, v, width, height}} in texture units from 0 to 1, for
+     * the plain shape. The design is painted across these rectangles, so a test that reads the
+     * texture's art pixels needs the same layout the mesh draws with.
+     */
+    public static float[][] topFaceRects() {
+        float[][] rects = new float[MagicCarpetPose.SEGMENTS][];
+        for (int segment = 0; segment < MagicCarpetPose.SEGMENTS; segment++) {
+            Box slab = slab(segment, false);
+            rects[segment] =
+                    new float[] {
+                        slab.u2() / TEXTURE_WIDTH,
+                        slab.v0() / TEXTURE_HEIGHT,
+                        slab.width() / TEXTURE_WIDTH,
+                        slab.depth() / TEXTURE_HEIGHT
+                    };
+        }
+        return rects;
+    }
+
     private static Box sideBorder(int segment, float minX) {
         return new Box(
                 56.0F,
