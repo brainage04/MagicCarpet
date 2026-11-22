@@ -169,8 +169,10 @@ public final class MagicCarpetShowcase {
     private static final long CLIMB_MILLIS = 900L;
 
     /**
-     * The ticks the climb may take to lift the carpet a block. The basic tier's 2 s acceleration
-     * reaches the climb's vertical speed in about 40 ticks, and the lift then needs a few more.
+     * The ticks the climb may take to lift the carpet a block. The rider looks 19 degrees down, so
+     * the jump key asks for 0.36 of the top speed upwards, and the slowest tier (0.6 blocks a tick
+     * over a 2 s ramp) covers the block in 11 ticks; the faster tiers need 5 and 3. The bound is
+     * ten times the slowest, so a client ticking well below 20 a second still passes.
      */
     private static final int CLIMB_TIMEOUT_TICKS = 120;
 
