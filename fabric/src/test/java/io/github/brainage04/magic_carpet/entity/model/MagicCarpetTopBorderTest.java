@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import javax.imageio.ImageIO;
 import net.minecraft.client.model.geom.ModelPart;
-import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -25,6 +24,10 @@ import org.junit.jupiter.api.Test;
  *
  * <p>The check reads the shipped textures, so it fails on a texture whose design still reaches the
  * border, whatever produced it.
+ *
+ * <p>Only the border's own area is read, at edge 10 and 11, and the design is 64 art pixels deep,
+ * so the segments it touches are 1 to 6. Those segments are the plain shape in all three tiers: the
+ * tassels and the curled corners only change segments 0 and 7.
  */
 class MagicCarpetTopBorderTest {
     private static final int SEGMENTS = 8;
@@ -38,19 +41,13 @@ class MagicCarpetTopBorderTest {
     /** The ring the dotted border sits on, counted from the design's outer edge. */
     private static final int BORDER_EDGE = 10;
 
-    /** Each tier's shape, as the tier data gives it: tassels, then curled corners. */
     private static final String[] TIERS = {"basic", "advanced", "legendary"};
-
-    private static final boolean[] TASSELS = {false, true, true};
-
-    private static final boolean[] CURLS = {false, false, true};
 
     @Test
     void noMotifPixelIsCutByTheInnerBorder() throws IOException {
-        for (int index = 0; index < TIERS.length; index++) {
-            String tier = TIERS[index];
+        for (String tier : TIERS) {
             BufferedImage texture = load(tier);
-            List<int[]> segments = topFaces(texture, TASSELS[index], CURLS[index]);
+            List<int[]> segments = topFaces(texture);
             Set<Integer> border = borderColours(texture, segments);
             int solid = solidBorderColour(texture, segments);
             List<String> cut = new ArrayList<>();
@@ -59,12 +56,11 @@ class MagicCarpetTopBorderTest {
                     if (edge(x, z) != BORDER_EDGE + 1) {
                         continue;
                     }
-                    Integer inside = pixel(texture, segments, x, z);
-                    Integer outside = pixel(texture, segments, outwardX(x), outwardZ(z));
-                    if (inside == null || outside == null || border.contains(inside)) {
+                    int inside = pixel(texture, segments, x, z);
+                    if (border.contains(inside)) {
                         continue;
                     }
-                    if (outside == solid) {
+                    if (pixel(texture, segments, outwardX(x), outwardZ(z)) == solid) {
                         cut.add("(" + x + ", " + z + ")");
                     }
                 }
@@ -95,8 +91,8 @@ class MagicCarpetTopBorderTest {
      * slab, its two raised side borders and, at the ends, a front or back border; the slab's face
      * is the widest one.
      */
-    private static List<int[]> topFaces(BufferedImage texture, boolean tassels, boolean curls) {
-        ModelPart root = MagicCarpetEntityModel.createBodyLayer(tassels, curls).bakeRoot();
+    private static List<int[]> topFaces(BufferedImage texture) {
+        ModelPart root = MagicCarpetEntityModel.createBodyLayer(false, false).bakeRoot();
         ModelPart carpet = root.getChild("carpet");
         List<int[]> faces = new ArrayList<>();
         for (int segment = 0; segment < SEGMENTS; segment++) {
@@ -119,8 +115,7 @@ class MagicCarpetTopBorderTest {
                 new PoseStack(),
                 (pose, path, index, cube) -> {
                     for (ModelPart.Polygon polygon : cube.polygons) {
-                        if (pose.pose().transformDirection(new Vector3f(polygon.normal())).y()
-                                < 0.5F) {
+                        if (polygon.normal().y() < 0.5F) {
                             continue;
                         }
                         float[] rect = {
@@ -139,19 +134,11 @@ class MagicCarpetTopBorderTest {
         return rects.stream().max((a, b) -> Float.compare(a[2] - a[0], b[2] - b[0])).orElseThrow();
     }
 
-    /**
-     * The colour of the design's art pixel (x, z), or null when no segment carries it. A segment
-     * whose slab is narrower than the design carries a slice of it, centred: the legendary carpet's
-     * front segment is 16 art pixels wide and paints the design's x 8..23.
-     */
-    private static Integer pixel(BufferedImage texture, List<int[]> segments, int x, int z) {
+    /** The colour of the design's art pixel (x, z), read from the segment that carries it. */
+    private static int pixel(BufferedImage texture, List<int[]> segments, int x, int z) {
         int[] face = segments.get(z / SEGMENT_ROWS);
-        int column = x - (DESIGN_W - face[2]) / 2;
-        if (column < 0 || column >= face[2]) {
-            return null;
-        }
         int row = SEGMENT_ROWS - 1 - z % SEGMENT_ROWS;
-        return texture.getRGB(face[0] + column, face[1] + row) & 0xFFFFFF;
+        return texture.getRGB(face[0] + x, face[1] + row) & 0xFFFFFF;
     }
 
     private static int edge(int x, int z) {
@@ -181,9 +168,8 @@ class MagicCarpetTopBorderTest {
         Set<Integer> colours = new HashSet<>();
         for (int z = 0; z < DESIGN_L; z++) {
             for (int x = 0; x < DESIGN_W; x++) {
-                Integer colour = pixel(texture, segments, x, z);
-                if (edge(x, z) == BORDER_EDGE && colour != null) {
-                    colours.add(colour);
+                if (edge(x, z) == BORDER_EDGE) {
+                    colours.add(pixel(texture, segments, x, z));
                 }
             }
         }
@@ -197,9 +183,8 @@ class MagicCarpetTopBorderTest {
         Map<Integer, Integer> counts = new HashMap<>();
         for (int z = 0; z < DESIGN_L; z++) {
             for (int x = 0; x < DESIGN_W; x++) {
-                Integer colour = pixel(texture, segments, x, z);
-                if (edge(x, z) == BORDER_EDGE && colour != null) {
-                    counts.merge(colour, 1, Integer::sum);
+                if (edge(x, z) == BORDER_EDGE) {
+                    counts.merge(pixel(texture, segments, x, z), 1, Integer::sum);
                 }
             }
         }
