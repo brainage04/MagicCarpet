@@ -91,6 +91,51 @@ def noise(x, z):
 
 DESIGN_W, DESIGN_L = 24 * SCALE, 32 * SCALE
 
+# The dotted inner border sits this many rings inside the raised edge, so it lands on edge 10. A motif
+# pixel at edge 11 is the last one the border can cut, so the motifs stay at edge 12 or further in.
+BORDER_RING = 6
+MOTIF_MARGIN = BORDER_RING + 4 + 2
+
+
+def motif(p, x, z):
+    """Colour of the top surface's decoration at art pixel (x, z), or None where the field shows."""
+    cx, cz = (DESIGN_W - 1) / 2, (DESIGN_L - 1) / 2
+    dx, dz = abs(x - cx), abs(z - cz)
+
+    # central medallion: nested diamonds
+    d = dx + dz
+    if d <= 2:
+        return p["highlight"]
+    if d <= 4:
+        return p["accent"]
+    if d <= 6:
+        return p["trim"]
+    if d == 7:
+        return p["dark"]
+    if d <= 9:
+        return p["accent2"] if (x + z) % 2 else None
+    if d <= 11:
+        return p["trim"]
+    if d == 12:
+        return p["dark"]
+
+    # end motifs: a small diamond flanked by pluses
+    for mz in (15.5, DESIGN_L - 1 - 15.5):
+        md = abs(x - cx) + abs(z - mz)
+        if md <= 1:
+            return p["highlight"]
+        if md <= 2:
+            return p["accent"]
+        if md <= 3:
+            return p["trim"]
+        if md <= 4:
+            return p["dark"]
+        for sx in (cx - 9, cx + 9):
+            if (abs(x - sx) <= 0.5 and abs(z - mz) <= 2.5) or (abs(z - mz) <= 0.5 and abs(x - sx) <= 2.5):
+                return p["accent"] if abs(x - sx) + abs(z - mz) <= 1 else p["trim"]
+
+    return None
+
 
 def design(p, x, z):
     """Colour of the carpet's top surface at art pixel (x, z)."""
@@ -108,52 +153,26 @@ def design(p, x, z):
         return p["dark"]
     if ring in (1, 2):
         return p["dark"] if along % 4 == 0 else p["trim"]
-    if ring == 6:
+    if ring == BORDER_RING:
         return p["trim_shade"] if along % 2 == 0 else field(p, x, z)
 
-    cx, cz = (DESIGN_W - 1) / 2, (DESIGN_L - 1) / 2
-    dx, dz = abs(x - cx), abs(z - cz)
+    colour = motif(p, x, z)
+    return field(p, x, z) if colour is None else colour
 
-    # central medallion: nested diamonds with dotted rays
-    d = dx + dz
-    if d <= 2:
-        return p["highlight"]
-    if d <= 4:
-        return p["accent"]
-    if d <= 6:
-        return p["trim"]
-    if d <= 7:
-        return p["dark"]
-    if d <= 9:
-        return p["accent2"] if (x + z) % 2 else field(p, x, z)
-    if 11 <= d <= 12:
-        return p["trim"]
-    if d == 13:
-        return p["dark"]
-    if (dx <= 0.5 or dz <= 0.5) and 14 <= d <= 19 and int(d) % 2 == 0:
-        return p["trim"]
 
-    # end motifs: a small diamond flanked by sparkles
-    for mz in (14.5, DESIGN_L - 1 - 14.5):
-        md = abs(x - cx) + abs(z - mz)
-        if md <= 1:
-            return p["highlight"]
-        if md <= 3:
-            return p["accent"]
-        if md <= 4:
-            return p["trim"]
-        if md <= 5:
-            return p["dark"]
-        for sx in (cx - 11, cx + 11):
-            if (abs(x - sx) <= 0.5 and abs(z - mz) <= 2.5) or (abs(z - mz) <= 0.5 and abs(x - sx) <= 2.5):
-                return p["accent"] if abs(x - sx) + abs(z - mz) <= 1 else p["trim"]
-
-    # scattered sparkles between the motifs
-    for sx, sz in ((cx - 12, cz - 7), (cx + 12, cz + 7), (cx + 12, cz - 7), (cx - 12, cz + 7)):
-        if abs(x - sx) + abs(z - sz) <= 0.5:
-            return p["accent"]
-
-    return field(p, x, z)
+def check_design(tier):
+    """Fails when a motif pixel reaches the dotted inner border, which cuts the motif off."""
+    p = PALETTES[tier]
+    clipped = [
+        (x, z)
+        for z in range(DESIGN_L)
+        for x in range(DESIGN_W)
+        if min(x, DESIGN_W - 1 - x, z, DESIGN_L - 1 - z) < MOTIF_MARGIN and motif(p, x, z) is not None
+    ]
+    if clipped:
+        raise SystemExit(
+            f"{tier}: {len(clipped)} motif pixels reach the dotted inner border, e.g. {clipped[:8]}"
+        )
 
 
 def field(p, x, z):
@@ -359,6 +378,7 @@ DISPLAY = {
 
 def main():
     for tier in PALETTES:
+        check_design(tier)
         tex = paint(tier)
         png = tex.png()
         (ASSETS / f"textures/entity/{tier}_magic_carpet.png").write_bytes(png)
