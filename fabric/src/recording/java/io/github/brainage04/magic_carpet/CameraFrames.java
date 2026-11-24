@@ -87,8 +87,9 @@ final class CameraFrames {
 
     /**
      * The most the speed may change between two neighbouring frames, as a share of the peak speed.
-     * A turn eased with a smoothstep over 8 ticks or more changes by under a third of its peak
-     * between neighbours; one that steps once a tick changes by all of it.
+     * Two frames that straddle one tick of a smoothstep over N ticks differ by 4/N of its peak
+     * speed: 0.33 over 12 ticks and 0.2 over 20. A turn that steps once a tick changes by all of
+     * it.
      */
     private static final double MAX_SPEED_CHANGE = 0.6D;
 

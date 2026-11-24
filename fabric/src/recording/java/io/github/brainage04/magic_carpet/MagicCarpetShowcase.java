@@ -30,7 +30,6 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundEventListener;
 import net.minecraft.client.sounds.WeighedSoundEvents;
@@ -180,27 +179,12 @@ public final class MagicCarpetShowcase {
     private static final long COAST_MILLIS = 500L;
 
     /** Ticks the rider takes to look down to the pitch that flies the carpet down. */
-    private static final int LOOK_DOWN_TICKS = 8;
+    private static final int LOOK_DOWN_TICKS = 12;
 
     /** How far and over how many ticks the rider turns while flying, to show the camera's yaw. */
     private static final float TURN_DEGREES = 90.0F;
 
     private static final int TURN_TICKS = 20;
-
-    /** Ticks the frame log keeps running after a turn, so the frames that end it are drawn. */
-    private static final int SETTLE_TICKS = 2;
-
-    /**
-     * The most, in degrees, that the drawn rotation may change between two samples of a tick while
-     * the rider turns. A turn drawn across the tick's frames steps by the tick's turn over {@link
-     * #FRAME_SAMPLES}, 1.5 degrees of yaw and 1.1 of pitch; a turn that moves both of the rider's
-     * rotation fields is drawn in one frame, so the step is the whole tick's turn, 4.5 and 3.2. The
-     * threshold sits between the two.
-     */
-    private static final float MAX_SAMPLE_STEP = 2.0F;
-
-    /** The samples a tick's turn is measured at, so the step between two of them is measured. */
-    private static final int FRAME_SAMPLES = 3;
 
     private static final int LAND_TIMEOUT_TICKS = 200;
 
@@ -599,29 +583,20 @@ public final class MagicCarpetShowcase {
 
         // A rider that turns while flying: the carpet faces where its rider looks, and the frame
         // draws it at the rider's own interpolated yaw, so the two must never be drawn apart. The
-        // turn is applied between ticks, as the mouse applies it, so the carpet's own tick never
-        // sees the yaw the frame is drawn at.
+        // turn is eased and set at the end of each client tick, so every frame draws it between
+        // two ticks' angles (CameraTurn), and the frames drawn during it are measured.
         float fromYaw = context.computeOnClient(client -> client.player.getYRot());
-        CameraFrames.start(context);
-        int yawStartTick = context.computeOnClient(client -> CameraFrames.ticks());
-        for (int tick = 1; tick <= TURN_TICKS; tick++) {
-            watch.tick(context);
-            turnRider(context, TURN_DEGREES / TURN_TICKS);
-            // Measured after the turn, as the frame is drawn: the carpet's own tick has already
-            // run, so a carpet drawn from its own yaw fields is a tick behind the rider here.
-            watch.measureYawGap(context);
-            watch.measureFrameSteps(context);
-        }
-        for (int tick = 0; tick < SETTLE_TICKS; tick++) {
-            watch.tick(context);
-        }
-        CameraFrames.verify(
-                "yaw turn",
-                CameraFrames.stop(context),
-                CameraFrames.Axis.YAW,
-                yawStartTick,
+        CameraTurn.yaw(
+                context,
+                TURN_DEGREES,
                 TURN_TICKS,
-                TURN_DEGREES);
+                () -> {
+                    watch.tick(context);
+                    // Measured between ticks, as the frame is drawn: the carpet's own tick has
+                    // already run, so a carpet drawn from its own yaw fields is a tick behind the
+                    // rider here.
+                    watch.measureYawGap(context);
+                });
         float turned = context.computeOnClient(client -> client.player.getYRot());
         check(
                 Math.abs(Mth.wrapDegrees(turned - fromYaw - TURN_DEGREES)) < 0.01F,
@@ -629,26 +604,8 @@ public final class MagicCarpetShowcase {
                         + TURN_DEGREES
                         + " degrees, and it turned "
                         + Mth.wrapDegrees(turned - fromYaw));
-        float fromPitch = context.computeOnClient(client -> client.player.getXRot());
-        CameraFrames.start(context);
-        int pitchStartTick = context.computeOnClient(client -> CameraFrames.ticks());
-        for (int tick = 1; tick <= LOOK_DOWN_TICKS; tick++) {
-            watch.tick(context);
-            float pitch =
-                    Mth.lerp((float) tick / LOOK_DOWN_TICKS, fromPitch, CarpetMotion.DIVE_PITCH);
-            context.runOnClient(client -> client.player.setXRot(pitch));
-            watch.measureFrameSteps(context);
-        }
-        for (int tick = 0; tick < SETTLE_TICKS; tick++) {
-            watch.tick(context);
-        }
-        CameraFrames.verify(
-                "look down",
-                CameraFrames.stop(context),
-                CameraFrames.Axis.PITCH,
-                pitchStartTick,
-                LOOK_DOWN_TICKS,
-                CarpetMotion.DIVE_PITCH - fromPitch);
+        CameraTurn.pitchTo(
+                context, CarpetMotion.DIVE_PITCH, LOOK_DOWN_TICKS, () -> watch.tick(context));
         float lookedDown = context.computeOnClient(client -> client.player.getXRot());
         check(
                 Math.abs(lookedDown - CarpetMotion.DIVE_PITCH) < 0.01F,
@@ -816,8 +773,6 @@ public final class MagicCarpetShowcase {
         private float lastRipplePhase;
         private int interpolatingTicks;
         private float widestYawGap;
-        private float steepestFrameStep;
-        private float[] lastFrameEnd;
 
         private RiderWatch(int carpetId, MagicCarpetFlightSound sound) {
             this.carpetId = carpetId;
@@ -875,39 +830,6 @@ public final class MagicCarpetShowcase {
                                                                             partialTick))));
                         }
                     });
-        }
-
-        /**
-         * The largest turn the camera makes between one frame and the next, across the tick the
-         * rider just turned in. The camera reads the rider's interpolated rotation ({@code
-         * Camera.java:259-262} in 26.3), so a turn that moves both of the rider's rotation fields
-         * is drawn in a single frame: the last frame of the tick before the turn and the first
-         * frame of the tick after it are a whole turn step apart. A turn that moves only the
-         * current field is drawn across the tick's frames, so the two frames meet and the tick's
-         * turn is spread over them.
-         */
-        private void measureFrameSteps(ClientGameTestContext context) {
-            float[] previous = this.lastFrameEnd;
-            for (int sample = 0; sample <= FRAME_SAMPLES; sample++) {
-                float partialTick = (float) sample / FRAME_SAMPLES;
-                float[] drawn =
-                        context.computeOnClient(
-                                client ->
-                                        new float[] {
-                                            client.player.getYRot(partialTick),
-                                            client.player.getXRot(partialTick)
-                                        });
-                if (previous != null) {
-                    this.steepestFrameStep =
-                            Math.max(
-                                    this.steepestFrameStep,
-                                    Math.max(
-                                            Math.abs(Mth.wrapDegrees(drawn[0] - previous[0])),
-                                            Math.abs(drawn[1] - previous[1])));
-                }
-                previous = drawn;
-            }
-            this.lastFrameEnd = previous;
         }
 
         private void tick(ClientGameTestContext context) {
@@ -1024,8 +946,7 @@ public final class MagicCarpetShowcase {
                             + " steepest tilt step {} degrees, loudest wind {}, wind volume off by"
                             + " up to {}, steepest camera step {} degrees, steepest animation speed"
                             + " step {}, steepest ripple step {} degrees, interpolating ticks {},"
-                            + " widest carpet-to-rider yaw gap {} degrees, steepest frame step {}"
-                            + " degrees",
+                            + " widest carpet-to-rider yaw gap {} degrees",
                     type,
                     this.movingTicks,
                     this.widestGap,
@@ -1036,8 +957,7 @@ public final class MagicCarpetShowcase {
                     this.steepestSpeedStep,
                     this.steepestRippleStep,
                     this.interpolatingTicks,
-                    this.widestYawGap,
-                    this.steepestFrameStep);
+                    this.widestYawGap);
             writeSamples(type);
             check(
                     this.movingTicks >= MIN_MOVING_TICKS,
@@ -1056,13 +976,6 @@ public final class MagicCarpetShowcase {
                             + " facing where it draws its rider; they were drawn "
                             + this.widestYawGap
                             + " degrees apart");
-            check(
-                    this.steepestFrameStep <= MAX_SAMPLE_STEP,
-                    "The camera must turn smoothly while the rider turns or looks down: the drawn"
-                            + " rotation may not step by more than "
-                            + MAX_SAMPLE_STEP
-                            + " degrees between two samples of a tick, and it stepped by "
-                            + this.steepestFrameStep);
             check(
                     this.steepestRippleStep <= MAX_RIPPLE_STEP,
                     type
@@ -1253,30 +1166,6 @@ public final class MagicCarpetShowcase {
                         .withPermission(PermissionSet.ALL_PERMISSIONS)
                         .withSuppressedOutput();
         server.getCommands().performPrefixedCommand(source, command);
-    }
-
-    /**
-     * Turns the rider by {@code yaw} degrees between ticks and leaves the rotation the frame
-     * interpolates from where it was.
-     *
-     * <p>{@code Entity.turn} moves the current rotation and the old one together ({@code
-     * Entity.java:496-507} in 26.3), so the frame draws the whole turn in one frame: the camera
-     * reads the rider's interpolated rotation ({@code Camera.java:259-262}), and a turn that moves
-     * both ends of the interpolation is a step, not a sweep. The film applies a whole tick's turn
-     * at once, so it must leave the old rotation alone for the frame to sweep across the tick. A
-     * mouse turn applies a frame's own delta and moves both fields, which is why a real 4.5 degree
-     * mouse turn also jumps; a real mouse turn is smooth because each frame's delta is small.
-     */
-    private static void turnRider(ClientGameTestContext context, float yaw) {
-        context.runOnClient(
-                client -> {
-                    LocalPlayer player = client.player;
-                    player.setYRot(player.getYRot() + yaw);
-                    // The drawn head reads yHeadRot (LivingEntityRenderer.java:242), and the tick's
-                    // own copy of it runs before this turn, so without this the head is a tick
-                    // behind the body.
-                    player.setYHeadRot(player.getYRot());
-                });
     }
 
     private static void check(boolean condition, String message) {
