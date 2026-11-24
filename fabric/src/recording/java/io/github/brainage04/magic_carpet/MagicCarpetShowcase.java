@@ -179,7 +179,7 @@ public final class MagicCarpetShowcase {
     private static final long COAST_MILLIS = 500L;
 
     /** Ticks the rider takes to look down to the pitch that flies the carpet down. */
-    private static final int LOOK_DOWN_TICKS = 12;
+    private static final int LOOK_DOWN_TICKS = 8;
 
     /** How far and over how many ticks the rider turns while flying, to show the camera's yaw. */
     private static final float TURN_DEGREES = 90.0F;

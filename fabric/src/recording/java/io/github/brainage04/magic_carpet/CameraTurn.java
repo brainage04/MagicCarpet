@@ -25,19 +25,13 @@ final class CameraTurn {
     /** Client thread only. */
     private static Plan plan;
 
-    /** A turn that eases one angle from where it is by {@code degrees} over {@code ticks}. */
+    /** A turn that eases one angle, and how many of its ticks have been set. */
     private static final class Plan {
-        private final CameraFrames.Axis axis;
-        private final float from;
-        private final float degrees;
-        private final int ticks;
+        private final CameraFrames.Turn turn;
         private int done;
 
-        private Plan(CameraFrames.Axis axis, float from, float degrees, int ticks) {
-            this.axis = axis;
-            this.from = from;
-            this.degrees = degrees;
-            this.ticks = ticks;
+        private Plan(CameraFrames.Turn turn) {
+            this.turn = turn;
         }
     }
 
@@ -60,9 +54,9 @@ final class CameraTurn {
             return;
         }
         current.done++;
-        float angle = current.from + current.degrees * ease((float) current.done / current.ticks);
+        float angle = (float) current.turn.set(current.done);
         LocalPlayer player = client.player;
-        if (current.axis == CameraFrames.Axis.YAW) {
+        if (current.turn.axis() == CameraFrames.Axis.YAW) {
             player.setYRot(angle);
             // The drawn head interpolates yHeadRotO to yHeadRot (LivingEntityRenderer.java:242 in
             // 26.3), so the head turns with the body, as the rider's own turn would.
@@ -70,7 +64,7 @@ final class CameraTurn {
         } else {
             player.setXRot(angle);
         }
-        if (current.done >= current.ticks) {
+        if (current.done >= current.turn.ticks()) {
             plan = null;
         }
     }
@@ -93,7 +87,7 @@ final class CameraTurn {
     }
 
     /** Ticks the frame log keeps running after a turn, so the frames that end it are drawn. */
-    private static final int SETTLE_TICKS = 2;
+    private static final int SETTLE_TICKS = 3;
 
     private static void run(
             ClientGameTestContext context,
@@ -104,19 +98,22 @@ final class CameraTurn {
             Runnable tickWait) {
         install();
         CameraFrames.start(context);
-        int startTick =
+        CameraFrames.Turn turn =
                 context.computeOnClient(
                         client -> {
                             float from =
                                     axis == CameraFrames.Axis.YAW
                                             ? client.player.getYRot()
                                             : client.player.getXRot();
-                            plan = new Plan(axis, from, degrees, ticks);
-                            return CameraFrames.ticks();
+                            CameraFrames.Turn started =
+                                    new CameraFrames.Turn(
+                                            axis, from, degrees, ticks, CameraFrames.ticks());
+                            plan = new Plan(started);
+                            return started;
                         });
         for (int tick = 0; tick < ticks + SETTLE_TICKS; tick++) {
             tickWait.run();
         }
-        CameraFrames.verify(what, CameraFrames.stop(context), axis, startTick, ticks, degrees);
+        CameraFrames.verify(what, CameraFrames.stop(context), turn, CameraFrames.isRecording());
     }
 }
