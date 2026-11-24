@@ -34,3 +34,5 @@ GTR_RECORDING_PROFILE=showcase ./gradlew --no-daemon :fabric:recordClientGameTes
 ```
 
 For a take that renders on a card instead of the recorder's own Xvfb, name that display (`-PrecordingDisplay=:1` or `GTR_RECORDING_DISPLAY=:1`); the conventions README's recording section has the standard and the checks.
+
+The film turns the rider's camera (a 90 degree turn, then the look down) with `CameraTurn`, an eased turn set at the end of each client tick so every frame draws it between two ticks' angles. A turn set from the test thread would be drawn as a jump once a tick: the Fabric gametest API runs the test thread between the client's task queue and its tick, and the tick copies the turned rotation into the old one before any frame is drawn. `CameraFrames` logs the camera angle of every frame the client really draws during a turn, and the film fails when a pair of frames in the middle of the turn does not move, or when the speed changes by more than 60 % of the peak between two neighbouring frames.
