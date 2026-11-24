@@ -278,6 +278,10 @@ final class CameraFrames {
     static Evenness verify(String what, List<Frame> frames, Turn turn, boolean strictTiming) {
         Evenness measured = measure(frames, turn);
         MagicCarpet.LOGGER.info("Camera {} across the drawn frames: {}", what, measured.describe());
+        MagicCarpet.LOGGER.info(
+                "Camera {}: the gap between frames is {}",
+                what,
+                strictTiming ? "enforced" : "logged only");
         if (!frames.isEmpty()) {
             MagicCarpet.LOGGER.info(
                     "TURN_WINDOW {} {} {}",
