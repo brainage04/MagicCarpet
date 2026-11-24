@@ -187,6 +187,9 @@ public final class MagicCarpetShowcase {
 
     private static final int TURN_TICKS = 20;
 
+    /** Ticks the frame log keeps running after a turn, so the frames that end it are drawn. */
+    private static final int SETTLE_TICKS = 2;
+
     /**
      * The most, in degrees, that the drawn rotation may change between two samples of a tick while
      * the rider turns. A turn drawn across the tick's frames steps by the tick's turn over {@link
@@ -599,6 +602,8 @@ public final class MagicCarpetShowcase {
         // turn is applied between ticks, as the mouse applies it, so the carpet's own tick never
         // sees the yaw the frame is drawn at.
         float fromYaw = context.computeOnClient(client -> client.player.getYRot());
+        CameraFrames.start(context);
+        int yawStartTick = context.computeOnClient(client -> CameraFrames.ticks());
         for (int tick = 1; tick <= TURN_TICKS; tick++) {
             watch.tick(context);
             turnRider(context, TURN_DEGREES / TURN_TICKS);
@@ -607,6 +612,16 @@ public final class MagicCarpetShowcase {
             watch.measureYawGap(context);
             watch.measureFrameSteps(context);
         }
+        for (int tick = 0; tick < SETTLE_TICKS; tick++) {
+            watch.tick(context);
+        }
+        CameraFrames.verify(
+                "yaw turn",
+                CameraFrames.stop(context),
+                CameraFrames.Axis.YAW,
+                yawStartTick,
+                TURN_TICKS,
+                TURN_DEGREES);
         float turned = context.computeOnClient(client -> client.player.getYRot());
         check(
                 Math.abs(Mth.wrapDegrees(turned - fromYaw - TURN_DEGREES)) < 0.01F,
@@ -615,6 +630,8 @@ public final class MagicCarpetShowcase {
                         + " degrees, and it turned "
                         + Mth.wrapDegrees(turned - fromYaw));
         float fromPitch = context.computeOnClient(client -> client.player.getXRot());
+        CameraFrames.start(context);
+        int pitchStartTick = context.computeOnClient(client -> CameraFrames.ticks());
         for (int tick = 1; tick <= LOOK_DOWN_TICKS; tick++) {
             watch.tick(context);
             float pitch =
@@ -622,6 +639,16 @@ public final class MagicCarpetShowcase {
             context.runOnClient(client -> client.player.setXRot(pitch));
             watch.measureFrameSteps(context);
         }
+        for (int tick = 0; tick < SETTLE_TICKS; tick++) {
+            watch.tick(context);
+        }
+        CameraFrames.verify(
+                "look down",
+                CameraFrames.stop(context),
+                CameraFrames.Axis.PITCH,
+                pitchStartTick,
+                LOOK_DOWN_TICKS,
+                CarpetMotion.DIVE_PITCH - fromPitch);
         float lookedDown = context.computeOnClient(client -> client.player.getXRot());
         check(
                 Math.abs(lookedDown - CarpetMotion.DIVE_PITCH) < 0.01F,
