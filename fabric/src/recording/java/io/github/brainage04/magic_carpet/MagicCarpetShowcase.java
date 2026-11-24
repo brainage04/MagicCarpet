@@ -764,11 +764,8 @@ public final class MagicCarpetShowcase {
         private float loudest;
         private float volumeError;
         private final List<String> samples = new ArrayList<>();
-        private float steepestCameraStep;
         private float steepestSpeedStep;
         private float steepestRippleStep;
-        private float lastCameraYaw;
-        private float lastCameraPitch;
         private float lastAnimationSpeed;
         private float lastRipplePhase;
         private int interpolatingTicks;
@@ -873,21 +870,11 @@ public final class MagicCarpetShowcase {
                                                                 carpet.getDrawnMovement()
                                                                         .lengthSqr())));
 
-                        // The camera's yaw and pitch come from the rider (Camera.java:259-262 in
-                        // 26.3), and the rider's position from the carpet's current position, so
-                        // a carpet that moves in steps moves the camera in steps.
                         Camera camera = client.gameRenderer.mainCamera();
-                        float cameraStep =
-                                Math.max(
-                                        Math.abs(
-                                                Mth.wrapDegrees(
-                                                        camera.yRot() - this.lastCameraYaw)),
-                                        Math.abs(camera.xRot() - this.lastCameraPitch));
                         if (this.samples.size() > 1) {
                             if (carpet.isInterpolating()) {
                                 this.interpolatingTicks++;
                             }
-                            this.steepestCameraStep = Math.max(this.steepestCameraStep, cameraStep);
                             this.steepestSpeedStep =
                                     Math.max(
                                             this.steepestSpeedStep,
@@ -903,8 +890,6 @@ public final class MagicCarpetShowcase {
                                                                             - this.lastRipplePhase)
                                                                     * Mth.RAD_TO_DEG)));
                         }
-                        this.lastCameraYaw = camera.yRot();
-                        this.lastCameraPitch = camera.xRot();
                         this.lastAnimationSpeed = carpet.animationSpeed;
                         this.lastRipplePhase = carpet.ripplePhase;
                         this.samples.add(
@@ -944,8 +929,8 @@ public final class MagicCarpetShowcase {
             MagicCarpet.LOGGER.info(
                     "Flight of {}: moved in {} ticks, widest carpet-to-rider gap {} blocks,"
                             + " steepest tilt step {} degrees, loudest wind {}, wind volume off by"
-                            + " up to {}, steepest camera step {} degrees, steepest animation speed"
-                            + " step {}, steepest ripple step {} degrees, interpolating ticks {},"
+                            + " up to {}, steepest animation speed step {}, steepest ripple step"
+                            + " {} degrees, interpolating ticks {},"
                             + " widest carpet-to-rider yaw gap {} degrees",
                     type,
                     this.movingTicks,
@@ -953,7 +938,6 @@ public final class MagicCarpetShowcase {
                     this.steepestTiltStep,
                     this.loudest,
                     this.volumeError,
-                    this.steepestCameraStep,
                     this.steepestSpeedStep,
                     this.steepestRippleStep,
                     this.interpolatingTicks,
