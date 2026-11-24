@@ -20,12 +20,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Photographs each tier from below, from the side, and from above at the front and at the back, in
- * the real client, so the joints between the body's segments, the holes and the symmetry of the top
- * texture can be looked at. It does nothing unless the system property {@value #DIRECTORY_PROPERTY}
- * names a directory, and writes {@code <tier>-underside.png}, {@code <tier>-side.png}, {@code
- * <tier>-front.png} and {@code <tier>-back.png} there. The carpet heads towards +z at yaw 0, so the
- * front shot looks north from the +z end.
+ * Photographs each tier from below and from the side, in the real client, so the joints between the
+ * body's segments can be looked at. It does nothing unless the system property {@value
+ * #DIRECTORY_PROPERTY} names a directory, and writes {@code <tier>-underside.png} and {@code
+ * <tier>-side.png} there.
  */
 @SuppressWarnings("UnstableApiUsage")
 public final class MagicCarpetUndersideCapture {
@@ -48,16 +46,6 @@ public final class MagicCarpetUndersideCapture {
      * edges.
      */
     private static final double CAMERA_DISTANCE = 1.5D;
-
-    /**
-     * The top views' camera: above the carpet and beyond one end of it, looking at its middle. The
-     * carpet hangs 1.5 blocks under the ceiling, so the camera stays under it.
-     */
-    private static final double TOP_VIEW_HEIGHT = 1.2D;
-
-    private static final double TOP_VIEW_DISTANCE = 1.5D;
-    private static final float TOP_VIEW_PITCH =
-            (float) Math.toDegrees(Math.atan2(TOP_VIEW_HEIGHT, TOP_VIEW_DISTANCE));
 
     /** One site per tier, clear of the showcase's runway sites. */
     private static final int FIRST_SITE = 700;
@@ -130,30 +118,6 @@ public final class MagicCarpetUndersideCapture {
                     -1.5D,
                     0.0F,
                     -20.0F,
-                    output);
-            shoot(
-                    context,
-                    server,
-                    type,
-                    site,
-                    names[index] + "-front",
-                    0.0D,
-                    TOP_VIEW_HEIGHT,
-                    TOP_VIEW_DISTANCE,
-                    180.0F,
-                    TOP_VIEW_PITCH,
-                    output);
-            shoot(
-                    context,
-                    server,
-                    type,
-                    site,
-                    names[index] + "-back",
-                    0.0D,
-                    TOP_VIEW_HEIGHT,
-                    -TOP_VIEW_DISTANCE,
-                    0.0F,
-                    TOP_VIEW_PITCH,
                     output);
         }
     }
