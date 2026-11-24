@@ -2,6 +2,7 @@ package io.github.brainage04.magic_carpet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
@@ -20,7 +21,8 @@ import net.minecraft.util.Mth;
  * the rider's rotation from the test thread measures the rotation the tick leaves behind, not the
  * one a frame shows: the test thread runs between the client's task queue and its tick ({@code
  * MinecraftMixin.postRunTasksHook} in the Fabric gametest API), and the tick copies the rotation
- * into the old one before any frame is drawn.
+ * into the old one ({@code Entity.commonTick}, {@code Entity.java:522} in 26.3) before any frame is
+ * drawn.
  */
 final class CameraFrames {
     private static final AtomicBoolean INSTALLED = new AtomicBoolean();
@@ -154,6 +156,7 @@ final class CameraFrames {
         double worstChange = 0.0D;
         double slowest = Double.POSITIVE_INFINITY;
         double previousSpeed = Double.NaN;
+        double direction = Math.signum(totalDegrees);
         double middleFrom = startTick + 0.25D * turnTicks + 1.0D;
         double middleTo = startTick + 0.75D * turnTicks;
         for (int i = 1; i < frames.size(); i++) {
@@ -164,7 +167,7 @@ final class CameraFrames {
                 continue;
             }
             double step = Mth.wrapDegrees(axis.of(after) - axis.of(before));
-            double speed = step / gap;
+            double speed = step / gap * direction;
             worstStep = Math.max(worstStep, Math.abs(step));
             peak = Math.max(peak, Math.abs(speed));
             if (!Double.isNaN(previousSpeed)) {
@@ -172,7 +175,7 @@ final class CameraFrames {
             }
             previousSpeed = speed;
             if (before.gameTicks() >= middleFrom && after.gameTicks() <= middleTo) {
-                slowest = Math.min(slowest, Math.abs(speed));
+                slowest = Math.min(slowest, speed);
             }
         }
         double seconds =
@@ -217,6 +220,13 @@ final class CameraFrames {
                             + " were drawn: "
                             + measured.describe());
         }
+        if (Double.isInfinite(measured.slowestMiddleSpeed())) {
+            throw new AssertionError(
+                    "The camera "
+                            + what
+                            + " must be drawn in at least two frames in the middle of the turn: "
+                            + measured.describe());
+        }
         if (measured.slowestMiddleSpeed() < MIN_MIDDLE_SHARE * measured.meanSpeed()) {
             throw new AssertionError(
                     "The camera "
@@ -245,5 +255,67 @@ final class CameraFrames {
                             + measured.describe());
         }
         return measured;
+    }
+
+    /**
+     * Runs {@link #verify} on made-up frames of a turn drawn two ways, so a check that stops
+     * reaching what it guards fails the film before the film shows it. A turn eased between ticks
+     * must pass; one that jumps once a tick, as a turn set before the tick does, a turn with no
+     * frame in its middle, and one that turns back for a frame must each fail.
+     */
+    static void selfTest() {
+        int ticks = 20;
+        float degrees = 90.0F;
+        List<Frame> eased = drawn(ticks, degrees, true);
+        verify("self-test, eased", eased, Axis.YAW, 0, ticks, degrees);
+        List<Frame> turnsBack = new ArrayList<>(eased);
+        Frame middle = turnsBack.get(turnsBack.size() / 2);
+        turnsBack.set(
+                turnsBack.size() / 2,
+                new Frame(middle.gameTicks(), middle.nanos(), middle.yaw() - 8.0F, middle.pitch()));
+        Map<String, List<Frame>> broken =
+                Map.of(
+                        "jumps once a tick", drawn(ticks, degrees, false),
+                        "turns back for a frame", turnsBack,
+                        "has no frame in its middle",
+                                eased.stream()
+                                        .filter(f -> f.gameTicks() < 5.0D || f.gameTicks() > 16.0D)
+                                        .toList());
+        for (Map.Entry<String, List<Frame>> entry : broken.entrySet()) {
+            try {
+                verify(
+                        "self-test, " + entry.getKey(),
+                        entry.getValue(),
+                        Axis.YAW,
+                        0,
+                        ticks,
+                        degrees);
+            } catch (AssertionError expected) {
+                continue;
+            }
+            throw new AssertionError(
+                    "The frame check must fail a turn that " + entry.getKey() + ", and it passed");
+        }
+    }
+
+    /**
+     * The frames of a smoothstep turn of {@code degrees} over {@code ticks} ticks, drawn at 30 a
+     * second: between two ticks' angles when {@code interpolated}, and holding the tick's angle
+     * when not, the way a turn set before the tick is drawn.
+     */
+    private static List<Frame> drawn(int ticks, float degrees, boolean interpolated) {
+        List<Frame> frames = new ArrayList<>();
+        for (double game = 0.0D; game <= ticks + 3; game += 20.0D / 30.0D) {
+            int tick = (int) game;
+            double along = interpolated ? game - tick : 0.0D;
+            double angle =
+                    degrees * Mth.lerp(along, planned(tick, ticks), planned(tick + 1, ticks));
+            frames.add(new Frame(game, (long) (game * 5.0E7D), (float) angle, 0.0F));
+        }
+        return frames;
+    }
+
+    private static double planned(int tick, int ticks) {
+        return CameraTurn.ease(Math.min(1.0F, (float) tick / ticks));
     }
 }

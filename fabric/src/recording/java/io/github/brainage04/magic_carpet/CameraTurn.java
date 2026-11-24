@@ -10,12 +10,14 @@ import net.minecraft.client.player.LocalPlayer;
  * Turns the rider's camera for the film, eased and drawn across the client's frames.
  *
  * <p>The turn is set at the end of each client tick, after the tick has copied the rotation into
- * the old one ({@code Entity.setOldRot}, called from {@code Entity.baseTick}), so a frame draws the
- * camera between the previous tick's angle and this tick's, at its own partial tick. The test
- * thread cannot do this: the Fabric gametest API runs it between the client's task queue and its
- * tick ({@code MinecraftMixin.postRunTasksHook}), so the tick that follows a turn made there copies
- * the turned rotation into the old one and every frame of that tick draws it with nothing to
- * interpolate. That is a jump once a tick, 20 a second, in a film of 30 frames a second.
+ * the old one ({@code Entity.commonTick} calls {@code setOldPosAndRot}, {@code Entity.java:522} in
+ * 26.3, and {@code ClientLevel.tickPassenger} calls it for a rider), so a frame draws the camera
+ * between the previous tick's angle and this tick's, at its own partial tick. The test thread
+ * cannot do this: the Fabric gametest API runs it after {@code Minecraft.runAllTasks} and before
+ * {@code Minecraft.tick} ({@code MinecraftMixin.postRunTasksHook}, {@code Minecraft.java:1163-1178}
+ * in 26.3), so the tick that follows a turn made there copies the turned rotation into the old one
+ * and every frame of that tick draws it with nothing to interpolate. That is a jump once a tick, 20
+ * a second, in a film of 30 frames a second.
  */
 final class CameraTurn {
     private static final AtomicBoolean INSTALLED = new AtomicBoolean();

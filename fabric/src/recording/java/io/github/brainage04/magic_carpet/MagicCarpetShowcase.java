@@ -289,6 +289,7 @@ public final class MagicCarpetShowcase {
 
     /** Films the stages, in order. */
     public static void film(ClientGameTestContext context, TestDedicatedServerContext server) {
+        CameraFrames.selfTest();
         context.runOnClient(
                 client -> {
                     client.options.renderDistance().set(RENDER_DISTANCE);
