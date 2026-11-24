@@ -136,6 +136,11 @@ public final class MagicCarpetBodyMesh {
                         height(heights, BACK_BORDER_START))
                 .face(-INNER, INNER, SLAB_TOP, BORDER_TOP);
 
+        sink.cap(sideBorder(MagicCarpetPose.SEGMENTS - 1, -HALF_WIDTH), Side.SOUTH, backZ, back)
+                .face(-HALF_WIDTH, -INNER, SLAB_TOP, BORDER_TOP);
+        sink.cap(sideBorder(MagicCarpetPose.SEGMENTS - 1, INNER), Side.SOUTH, backZ, back)
+                .face(INNER, HALF_WIDTH, SLAB_TOP, BORDER_TOP);
+
         if (curls) {
             float stepZ = frontZ + MagicCarpetPose.SEGMENT_LENGTH;
             float step = height(heights, MagicCarpetPose.SEGMENT_LENGTH);
@@ -161,10 +166,6 @@ public final class MagicCarpetBodyMesh {
         sink.cap(sideBorder(0, -HALF_WIDTH), Side.NORTH, frontZ, front)
                 .face(-HALF_WIDTH, -INNER, SLAB_TOP, BORDER_TOP);
         sink.cap(sideBorder(0, INNER), Side.NORTH, frontZ, front)
-                .face(INNER, HALF_WIDTH, SLAB_TOP, BORDER_TOP);
-        sink.cap(sideBorder(MagicCarpetPose.SEGMENTS - 1, -HALF_WIDTH), Side.SOUTH, backZ, back)
-                .face(-HALF_WIDTH, -INNER, SLAB_TOP, BORDER_TOP);
-        sink.cap(sideBorder(MagicCarpetPose.SEGMENTS - 1, INNER), Side.SOUTH, backZ, back)
                 .face(INNER, HALF_WIDTH, SLAB_TOP, BORDER_TOP);
     }
 

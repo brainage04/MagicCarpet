@@ -97,9 +97,19 @@ BORDER_RING = 6
 MOTIF_MARGIN = BORDER_RING + 4 + 2
 
 
+def fold(x, z):
+    """The art pixel (x, z) folded into the design's near-front-left quarter.
+
+    Everything inside the dotted inner border is drawn from folded coordinates wherever it would
+    otherwise depend on parity or on a hash, so the field is mirror-symmetric in both axes.
+    """
+    return min(x, DESIGN_W - 1 - x), min(z, DESIGN_L - 1 - z)
+
+
 def motif(p, x, z):
     """Colour of the top surface's decoration at art pixel (x, z), or None where the field shows."""
     cx, cz = (DESIGN_W - 1) / 2, (DESIGN_L - 1) / 2
+    qx, qz = fold(x, z)
     dx, dz = abs(x - cx), abs(z - cz)
 
     # central medallion: nested diamonds
@@ -113,7 +123,7 @@ def motif(p, x, z):
     if d == 7:
         return p["dark"]
     if d <= 9:
-        return p["accent2"] if (x + z) % 2 else None
+        return p["accent2"] if (qx + qz) % 2 else None
     if d <= 11:
         return p["trim"]
     if d == 12:
@@ -148,13 +158,17 @@ def design(p, x, z):
 
     # border band just inside the raised edge
     ring = edge - 4
-    along = x if min(z, DESIGN_L - 1 - z) - 4 == ring else z
+    on_front_or_back = min(z, DESIGN_L - 1 - z) - 4 == ring
+    along = x if on_front_or_back else z
     if ring == 0 or ring == 3:
         return p["dark"]
     if ring in (1, 2):
         return p["dark"] if along % 4 == 0 else p["trim"]
     if ring == BORDER_RING:
-        return p["trim_shade"] if along % 2 == 0 else field(p, x, z)
+        # dots counted from the nearer end of the side, so both ends of it start on a dot
+        qx, qz = fold(x, z)
+        dot = qx if on_front_or_back else qz
+        return p["trim_shade"] if dot % 2 == 0 else field(p, x, z)
 
     colour = motif(p, x, z)
     return field(p, x, z) if colour is None else colour
@@ -178,8 +192,9 @@ def check_design(tier):
 def field(p, x, z):
     # a faint horizontal weave
     variants = p["field"]
-    base = (noise(x // 2, z) % len(variants))
-    if z % 4 == 0:
+    qx, qz = fold(x, z)
+    base = (noise(qx // 2, qz) % len(variants))
+    if qz % 4 == 0:
         base = max(0, base - 3)
     return variants[base]
 
