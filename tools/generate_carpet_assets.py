@@ -17,6 +17,7 @@ ASSETS = ROOT / "common/src/main/resources/assets/magic_carpet"
 TEX_W, TEX_H = 96, 48  # texture units, as declared by the entity model
 SCALE = 2  # art pixels per texture unit
 SEGMENTS = 8
+GEM_BORDER_INSET = 2  # leaves one art pixel of field between the medallion and end-motif dark borders
 TASSEL_X = [-6, -3, 0, 3, 6]
 
 
@@ -115,22 +116,22 @@ def design(p, x, z):
     dx, dz = abs(x - cx), abs(z - cz)
 
     # central medallion: nested diamonds with dotted rays
-    d = dx + dz
-    if d <= 2:
+    gem_d = dx + dz + GEM_BORDER_INSET
+    if gem_d <= 2:
         return p["highlight"]
-    if d <= 4:
+    if gem_d <= 4:
         return p["accent"]
-    if d <= 6:
+    if gem_d <= 6:
         return p["trim"]
-    if d <= 7:
+    if gem_d <= 7:
         return p["dark"]
-    if d <= 9:
+    if gem_d <= 9:
         return p["accent2"] if (x + z) % 2 else field(p, x, z)
-    if 11 <= d <= 12:
+    if 11 <= gem_d <= 12:
         return p["trim"]
-    if d == 13:
+    if gem_d == 13:
         return p["dark"]
-    if (dx <= 0.5 or dz <= 0.5) and 14 <= d <= 19 and int(d) % 2 == 0:
+    if (dx <= 0.5 or dz <= 0.5) and 14 <= gem_d <= 19 and int(gem_d) % 2 == 0:
         return p["trim"]
 
     # end motifs: a small diamond flanked by sparkles
