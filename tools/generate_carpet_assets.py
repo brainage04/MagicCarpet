@@ -96,12 +96,12 @@ DESIGN_W, DESIGN_L = 24 * SCALE, 32 * SCALE
 BORDER_RING = 6
 MOTIF_MARGIN = BORDER_RING + 4 + 2
 
-# Black outlines of the big central gem and of the two small end gems: rings counted outward from each gem's
-# centre, which sit 16 art pixels apart along the carpet. They must leave a gap of at least one pixel.
-MEDALLION_BORDER = 10
+# Black outlines of the big central gem and of the two small end gems, counted as diamond rings outward from each
+# gem's centre. The big gem's outline is one ring in from where it touched the small gems' (12), so one clear pixel
+# separates them.
+MEDALLION_BORDER = 11
 END_GEM_BORDER = 4
 END_GEM_ROWS = (15.5, DESIGN_L - 1 - 15.5)
-MIN_GEM_GAP = 1
 
 
 def fold(x, z):
@@ -119,19 +119,19 @@ def motif(p, x, z):
     qx, qz = fold(x, z)
     dx, dz = abs(x - cx), abs(z - cz)
 
-    # central medallion: nested diamonds, MEDALLION_BORDER rings out from its centre
+    # central medallion: nested diamonds
     d = dx + dz
-    if d <= 1:
+    if d <= 2:
         return p["highlight"]
-    if d <= 3:
+    if d <= 4:
         return p["accent"]
-    if d <= 5:
+    if d <= 6:
         return p["trim"]
-    if d == 6:
+    if d == 7:
         return p["dark"]
-    if d <= 8:
+    if d <= 9:
         return p["accent2"] if (qx + qz) % 2 else None
-    if d == 9:
+    if d < MEDALLION_BORDER:
         return p["trim"]
     if d == MEDALLION_BORDER:
         return p["dark"]
@@ -196,20 +196,29 @@ def check_design(tier):
         )
 
 
-def check_gem_gap():
+def check_gem_gap(tier):
     """Fails when the big gem's black outline touches a small gem's black outline, diagonals included."""
+    p = PALETTES[tier]
     cx, cz = (DESIGN_W - 1) / 2, (DESIGN_L - 1) / 2
-    big = [(x, z) for z in range(DESIGN_L) for x in range(DESIGN_W) if abs(x - cx) + abs(z - cz) == MEDALLION_BORDER]
-    small = [
-        (x, z)
-        for mz in END_GEM_ROWS
-        for z in range(DESIGN_L)
-        for x in range(DESIGN_W)
-        if abs(x - cx) + abs(z - mz) == END_GEM_BORDER
-    ]
-    gap = min(max(abs(bx - sx), abs(bz - sz)) for bx, bz in big for sx, sz in small) - 1
-    if gap < MIN_GEM_GAP:
-        raise SystemExit(f"the big gem's outline is {gap} px from a small gem's outline, wanted at least {MIN_GEM_GAP}")
+    dark = {
+        (x, z) for z in range(DESIGN_L) for x in range(DESIGN_W) if motif(p, x, z) == p["dark"]
+    }
+    seen = set()
+    for start in sorted(dark):
+        if start in seen:
+            continue
+        group, todo = set(), [start]
+        while todo:
+            x, z = todo.pop()
+            if (x, z) in group:
+                continue
+            group.add((x, z))
+            todo += [(x + i, z + j) for i in (-1, 0, 1) for j in (-1, 0, 1) if (x + i, z + j) in dark]
+        seen |= group
+        big = any(abs(x - cx) + abs(z - cz) <= MEDALLION_BORDER for x, z in group)
+        small = any(abs(x - cx) + abs(z - mz) <= END_GEM_BORDER for x, z in group for mz in END_GEM_ROWS)
+        if big and small:
+            raise SystemExit(f"{tier}: the big gem's black outline touches a small gem's, e.g. at {min(group)}")
 
 
 def field(p, x, z):
@@ -415,9 +424,9 @@ DISPLAY = {
 
 
 def main():
-    check_gem_gap()
     for tier in PALETTES:
         check_design(tier)
+        check_gem_gap(tier)
         tex = paint(tier)
         png = tex.png()
         (ASSETS / f"textures/entity/{tier}_magic_carpet.png").write_bytes(png)
